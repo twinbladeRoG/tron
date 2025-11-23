@@ -6,5 +6,16 @@
   "license": "ISC",
   "author": "",
   "main": "index.js",
-  "scripts": {}
+  "scripts": {
+    "celery:flower": "uv run celery -A src.celery.tasks flower",
+    "celery:worker": "uv run celery -A src.celery.tasks worker --loglevel=INFO",
+    "dev": "fastapi dev main.py",
+    "docker:down": "docker compose down --remove-orphans",
+    "docker:up": "docker compose up --build -d",
+    "format": "uv run ruff format",
+    "lint": "uv run ruff check",
+    "migrate": "uv run alembic upgrade head",
+    "migration:history": "uv run alembic history --verbose",
+    "start": "fastapi run main.py"
+  }
 }

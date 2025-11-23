@@ -47,7 +47,9 @@
       "notebook.source.organizeImports": "explicit",
     },
 
-    "cSpell.words": []
+    "cSpell.words": [
+      "Qdrant"
+    ]
   },
 "extensions": {
     "recommendations": [

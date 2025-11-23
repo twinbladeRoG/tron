@@ -1,1 +1,8 @@
-.venv
+__pycache__/
+.venv/
+.ruff_cache/
+.env
+!.env.example
+data/
+uploads/*
+!uploads/.gitkeep
