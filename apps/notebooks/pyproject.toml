@@ -1,0 +1,7 @@
+[project]
+name = "tron-notebooks"
+version = "0.1.0"
+description = "TRON - Notebooks"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
