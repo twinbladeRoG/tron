@@ -2,7 +2,9 @@
   "folders": [
     { "name": "@tron", "path": ".." },
     { "name": "@tron/api", "path": "../apps/api" },
+    { "name": "@tron/notebooks", "path": "../apps/notebooks" },
     { "name": "@tron/web", "path": "../apps/web" },
+    { "name": "@tron/prettier", "path": "../packages/prettier" },
   ],
   "settings": {
     "editor.formatOnSave": true,

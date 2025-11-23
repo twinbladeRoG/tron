@@ -1,15 +1,32 @@
 {
   "name": "tron",
   "private": true,
+  "author": {
+    "name": "Sohan Dutta"
+  },
   "scripts": {
     "build": "turbo run build",
+    "check-types": "turbo run check-types",
+    "cm": "cz",
     "dev": "turbo run dev",
-    "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types"
+    "lint": "turbo run lint",
+    "prepare": "husky"
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-customizable"
+    }
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.1.0",
+    "commitizen": "^4.3.1",
+    "commitlint-config-gitmoji": "^2.3.1",
+    "cz-customizable": "^7.5.1",
+    "husky": "^9.1.7",
     "prettier": "^3.6.2",
+    "prettier-plugin-packagejson": "^2.5.19",
+    "rimraf": "^6.1.2",
     "turbo": "^2.6.1",
     "typescript": "5.9.2"
   },
