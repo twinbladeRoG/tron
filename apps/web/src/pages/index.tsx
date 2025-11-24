@@ -1,0 +1,40 @@
+import { useNavigate } from 'react-router';
+
+import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler';
+
+const Home = () => {
+  const navigate = useNavigate();
+
+  const handleChat = async () => {
+    await navigate('/agent');
+  };
+
+  const handleLogin = async () => {
+    await navigate('/login');
+  };
+
+  return (
+    <main className="dark:bg-dark bg-white">
+      <section className="relative h-dvh w-full">
+        <div className="absolute top-1/2 left-1/2 flex -translate-1/2 flex-col items-center">
+          <h1 className="mb-6 text-center">
+            <span className="pointer-events-none z-10 bg-gradient-to-b from-[#ffd319] via-[#ff2975] to-[#8c1eff] bg-clip-text text-center text-7xl leading-none font-bold tracking-tighter whitespace-pre-wrap text-transparent">
+              AI Resume Agent
+            </span>
+          </h1>
+
+          <div className="flex gap-4">
+            <RainbowButton onClick={handleChat}>Chat</RainbowButton>
+            <RainbowButton onClick={handleLogin}>Login</RainbowButton>
+
+            <AnimatedThemeToggler />
+          </div>
+        </div>
+        <RetroGrid />
+      </section>
+      <SmoothCursor />
+    </main>
+  );
+};
+
+export default Home;
