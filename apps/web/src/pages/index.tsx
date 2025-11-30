@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router';
+import { Button } from '@mantine/core';
 
-import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler';
+import Navbar from '@/components/modules/shared/Navbar';
+import { BackgroundLines } from '@/components/ui/background-lines';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -14,25 +16,35 @@ const Home = () => {
   };
 
   return (
-    <main className="dark:bg-dark bg-white">
+    <main className="flow-root">
+      <Navbar className="fixed top-0 z-10 w-full p-4" />
       <section className="relative h-dvh w-full">
-        <div className="absolute top-1/2 left-1/2 flex -translate-1/2 flex-col items-center">
-          <h1 className="mb-6 text-center">
-            <span className="pointer-events-none z-10 bg-gradient-to-b from-[#ffd319] via-[#ff2975] to-[#8c1eff] bg-clip-text text-center text-7xl leading-none font-bold tracking-tighter whitespace-pre-wrap text-transparent">
-              AI Resume Agent
-            </span>
-          </h1>
+        <BackgroundLines className="flex w-full flex-col items-center justify-center bg-gray-100 px-4 dark:bg-gray-950">
+          <div className="absolute top-1/2 left-1/2 flex -translate-1/2 flex-col items-center">
+            <h1 className="mb-6 text-center">
+              <span className="pointer-events-none z-10 bg-linear-to-b from-[#ffd319] via-[#ff2975] to-[#8c1eff] bg-clip-text text-center text-7xl leading-none font-bold tracking-tighter whitespace-pre-wrap text-transparent">
+                {import.meta.env.VITE_APP_NAME}
+              </span>
+            </h1>
+            <h2 className="mb-6">AI Agentic Orchestration</h2>
 
-          <div className="flex gap-4">
-            <RainbowButton onClick={handleChat}>Chat</RainbowButton>
-            <RainbowButton onClick={handleLogin}>Login</RainbowButton>
-
-            <AnimatedThemeToggler />
+            <div className="flex gap-4">
+              <Button
+                variant="gradient"
+                gradient={{ from: 'red', to: 'indigo', deg: 127 }}
+                onClick={handleChat}>
+                Chat
+              </Button>
+              <Button
+                variant="gradient"
+                gradient={{ from: 'red', to: 'indigo', deg: 127 }}
+                onClick={handleLogin}>
+                Login
+              </Button>
+            </div>
           </div>
-        </div>
-        <RetroGrid />
+        </BackgroundLines>
       </section>
-      <SmoothCursor />
     </main>
   );
 };

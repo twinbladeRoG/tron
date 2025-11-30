@@ -1,30 +1,18 @@
 import { Navigate, Outlet, useNavigate } from 'react-router';
 import { Icon } from '@iconify/react';
-import {
-  ActionIcon,
-  AppShell,
-  Avatar,
-  Burger,
-  Card,
-  Group,
-  Menu,
-  NavLink,
-  ScrollArea,
-  Skeleton,
-  Text,
-  Title,
-} from '@mantine/core';
+import { ActionIcon, Avatar, Menu, Skeleton, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { modals } from '@mantine/modals';
 import { useQueryClient } from '@tanstack/react-query';
+import { AnimatePresence, motion } from 'motion/react';
 
 import { useActiveUser } from '@/apis/queries/auth.queries';
 import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler';
+import { cn } from '@/lib/utils';
 
 import AppNavLink from './AppNavLink';
 
 const RootLayout = () => {
-  const [mobileOpened, { toggle: toggleMobile }] = useDisclosure();
   const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(true);
 
   const user = useActiveUser();
@@ -52,100 +40,100 @@ const RootLayout = () => {
   };
 
   return (
-    <AppShell
-      header={{ height: 60 }}
-      navbar={{
-        width: 300,
-        breakpoint: 'md',
-        collapsed: { mobile: !mobileOpened, desktop: !desktopOpened },
-      }}
-      padding="md">
-      <AppShell.Header>
-        <Group h="100%" px="md">
-          <Burger opened={mobileOpened} onClick={toggleMobile} hiddenFrom="md" size="md" />
-          <Burger opened={desktopOpened} onClick={toggleDesktop} visibleFrom="md" size="md" />
-
-          <Title order={3}>AI Resume Agent</Title>
-        </Group>
-      </AppShell.Header>
-
-      <AppShell.Navbar p="md">
-        <AppShell.Section grow component={ScrollArea}>
-          <AppNavLink
-            to="/agent"
-            label="Chat"
-            leftSection={<Icon icon="mingcute:ai-line" className="text-xl" />}
+    <main
+      className={cn(
+        'grid h-dvh grid-rows-[40px_auto_32px] bg-gray-100 dark:bg-gray-950',
+        'transition-[grid-template-columns] duration-500',
+        {
+          'grid-cols-[280px_1fr]': desktopOpened,
+          'grid-cols-[66px_1fr] sm:grid-cols-[80px_1fr]': !desktopOpened,
+        }
+      )}>
+      <header className="col-span-2 col-start-1 row-start-1 flex items-center gap-2 px-4">
+        <ActionIcon variant="subtle" color="dark" onClick={toggleDesktop}>
+          <Icon
+            icon="solar:sidebar-minimalistic-bold-duotone"
+            className={cn('transition-transform duration-500', {
+              'rotate-180': desktopOpened,
+            })}
           />
+        </ActionIcon>
 
-          <NavLink
-            href="#data-lab"
-            label="Data Lab"
-            leftSection={<Icon icon="hugeicons:ai-chemistry-03" className="text-xl" />}
-            childrenOffset={28}
-            defaultOpened>
-            <AppNavLink
-              to="/documents"
-              label="Documents"
-              leftSection={<Icon icon="mdi:file-document-multiple" className="text-xl" />}
-            />
-            <AppNavLink
-              to="/knowledge-base"
-              label="Knowledge Base"
-              leftSection={<Icon icon="hugeicons:ai-book" className="text-xl" />}
-            />
-            <AppNavLink
-              to="/candidates"
-              label="Candidates"
-              leftSection={<Icon icon="mdi:person-group" className="text-xl" />}
-            />
-          </NavLink>
-        </AppShell.Section>
+        <h1
+          className={cn(
+            'pointer-events-none z-10 bg-linear-to-b from-[#ffd319] via-[#ff2975] to-[#8c1eff] bg-clip-text tracking-tighter whitespace-pre-wrap text-transparent',
+            'm-0 text-center text-2xl leading-none font-bold'
+          )}>
+          {import.meta.env.VITE_APP_NAME}
+        </h1>
 
-        <AppShell.Section>
-          {user.isLoading ? (
-            <Skeleton h={100} mt="sm" animate={false} />
-          ) : (
-            <Card>
-              <div className="flex items-center gap-4">
-                <Avatar size="md">
-                  {user.data?.first_name?.charAt(0)}
-                  {user.data?.last_name?.charAt(0)}
-                </Avatar>
-                <div className="">
-                  <Text size="xs">
-                    {user.data?.first_name} {user.data?.last_name}
-                  </Text>
-                  <Text size="xs">@{user.data?.username}</Text>
-                </div>
+        <AnimatedThemeToggler className="ml-auto" />
+      </header>
 
-                <AnimatedThemeToggler className="ml-auto" />
+      <nav className="flex flex-col px-2 sm:px-4">
+        <AppNavLink
+          to="/agent"
+          label="Chat"
+          icon="solar:chat-square-bold-duotone"
+          isCollapsed={!desktopOpened}
+        />
 
-                <Menu>
-                  <Menu.Target>
-                    <ActionIcon variant="subtle">
-                      <Icon icon="mdi:dots-vertical" className="text-2xl" />
-                    </ActionIcon>
-                  </Menu.Target>
+        {user.isLoading ? (
+          <Skeleton h={100} mt="sm" animate={false} />
+        ) : (
+          <div className="mt-auto flex h-10 items-center gap-4">
+            <Avatar size={40}>
+              {user.data?.first_name?.charAt(0)}
+              {user.data?.last_name?.charAt(0)}
+            </Avatar>
 
-                  <Menu.Dropdown>
-                    <Menu.Item
-                      leftSection={<Icon icon="mdi:logout" />}
-                      color="red"
-                      onClick={handleLogout}>
-                      Logout
-                    </Menu.Item>
-                  </Menu.Dropdown>
-                </Menu>
-              </div>
-            </Card>
-          )}
-        </AppShell.Section>
-      </AppShell.Navbar>
+            <AnimatePresence>
+              {desktopOpened && (
+                <motion.div
+                  className="flex flex-1 items-center"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1, transition: { delay: 0.3 } }}
+                  exit={{ opacity: 0, transition: { duration: 0.2 } }}>
+                  <div className="">
+                    <Text size="xs" fw="bold">
+                      {user.data?.first_name} {user.data?.last_name}
+                    </Text>
+                    <Text size="xs" opacity={0.7}>
+                      @{user.data?.username}
+                    </Text>
+                  </div>
 
-      <AppShell.Main className="">
+                  <Menu>
+                    <Menu.Target>
+                      <ActionIcon variant="subtle" ml="auto">
+                        <Icon icon="mdi:dots-vertical" className="text-2xl" />
+                      </ActionIcon>
+                    </Menu.Target>
+
+                    <Menu.Dropdown>
+                      <Menu.Item
+                        leftSection={<Icon icon="mdi:logout" />}
+                        color="red"
+                        onClick={handleLogout}>
+                        Logout
+                      </Menu.Item>
+                    </Menu.Dropdown>
+                  </Menu>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+      </nav>
+
+      <section className="mr-4 overflow-auto rounded-2xl bg-gray-50 p-4 shadow-xl dark:bg-gray-900">
         {user.isError ? <Navigate to="/login" /> : <Outlet />}
-      </AppShell.Main>
-    </AppShell>
+      </section>
+
+      <footer className="col-start-2 row-start-3 flex w-full items-center justify-center">
+        <p className="text-xs"> {import.meta.env.VITE_APP_NAME}</p>
+      </footer>
+    </main>
   );
 };
 

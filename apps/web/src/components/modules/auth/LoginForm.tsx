@@ -6,7 +6,6 @@ import { notifications } from '@mantine/notifications';
 import * as yup from 'yup';
 
 import { useLogin } from '@/apis/queries/auth.queries';
-import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler';
 import { MagicCard } from '@/components/ui/magic-card';
 
 const schema = yup.object({
@@ -55,9 +54,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ className }) => {
       className={className}
       gradientColor={colorScheme === 'dark' ? '#262626' : '#D9D9D975'}>
       <form onSubmit={handleSubmit}>
-        <Title className="mb-3 text-center text-2xl font-bold">
-          Login <AnimatedThemeToggler />
-        </Title>
+        <Title className="mb-3 text-center text-2xl font-bold">Login</Title>
 
         <TextInput
           {...form.register('username')}
