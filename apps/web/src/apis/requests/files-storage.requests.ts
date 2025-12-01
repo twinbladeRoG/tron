@@ -1,26 +1,8 @@
 import { type FileWithPath } from '@mantine/dropzone';
 
-import type { IFile, IFileFilterQuery, IPagination } from '@/types';
+import type { IFile } from '@/types';
 
 import http from '../http';
-
-export const getUsersFiles = async (page = 0, limit = 10, filter?: IFileFilterQuery) => {
-  const params = new URLSearchParams({
-    page: String(page),
-    limit: String(limit),
-  });
-
-  if (filter?.search) params.append('search', filter.search);
-  if (filter?.file_types) {
-    filter.file_types.forEach((item) => {
-      params.append('file_types', item);
-    });
-  }
-
-  return http.get<{ data: Array<IFile>; pagination: IPagination }>(
-    `/api/file-storage/?${params.toString()}`
-  );
-};
 
 export const uploadFile = (file: File | FileWithPath) => {
   const headers = new Headers();

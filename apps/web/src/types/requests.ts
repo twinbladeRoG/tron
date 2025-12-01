@@ -7,8 +7,3 @@ export interface ITokenResponse {
   access_token: string;
   refresh_token: string;
 }
-
-export interface IFileFilterQuery {
-  search?: string;
-  file_types?: string[];
-}

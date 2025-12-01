@@ -1,9 +1,9 @@
-import Agent from '@/components/modules/Agent';
+import Agent from '@/components/modules/chat/Agent';
 
 const AgentPage = () => {
   return (
     <main className="flex h-full w-full overflow-hidden">
-      <Agent className="flex-1" />
+      <Agent className="w-full" />
     </main>
   );
 };

@@ -7,7 +7,7 @@ import * as yup from 'yup';
 
 import { cn } from '@/lib/utils';
 
-import { ShineBorder } from '../ui/shine-border';
+import { ShineBorder } from '../../ui/shine-border';
 
 interface ChatInputProps {
   className?: string;
@@ -51,7 +51,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
     <form
       className={cn(
         className,
-        'relative flex items-start gap-x-3 rounded-lg border bg-white p-4 dark:bg-slate-950'
+        'relative flex flex-col items-start gap-x-3 rounded-lg border bg-white p-2 dark:bg-slate-950'
       )}
       onSubmit={handleSubmit}>
       {isStreaming && (
@@ -63,8 +63,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
         name="message"
         render={({ field, fieldState }) => (
           <Textarea
-            className="flex-1"
-            error={fieldState.error?.message}
+            className="w-full"
+            error={!!fieldState.error?.message}
             autosize
             minRows={2}
             maxRows={6}
@@ -72,13 +72,18 @@ const ChatInput: React.FC<ChatInputProps> = ({
             onKeyDown={handleKeyDown}
             disabled={disabled}
             placeholder={placeholder}
+            classNames={{
+              input: '!bg-transparent !border-0',
+            }}
           />
         )}
       />
 
-      <ActionIcon size="xl" type="submit" disabled={disabled}>
-        <Icon icon="mdi:send" className="text-2xl" />
-      </ActionIcon>
+      <div className="flex w-full items-center gap-2">
+        <ActionIcon size="md" type="submit" ml="auto" disabled={disabled}>
+          <Icon icon="solar:map-arrow-up-bold-duotone" className="text-xl" />
+        </ActionIcon>
+      </div>
     </form>
   );
 };

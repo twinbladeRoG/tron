@@ -1,10 +1,11 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
-import { Link } from 'react-router';
 import { Icon } from '@iconify/react';
 import { ActionIcon, Divider, ScrollArea, Tabs, Tooltip } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { EventStreamContentType, fetchEventSource } from '@microsoft/fetch-event-source';
 import { ReactFlowProvider } from '@xyflow/react';
+import { AnimatePresence, motion } from 'motion/react';
 import { v4 as uuid } from 'uuid';
 
 import { getToken } from '@/apis/http';
@@ -29,6 +30,7 @@ const Agent: React.FC<AgentProps> = ({ className }) => {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [tab, setTab] = useState<string | null>('graph');
+  const [showPanel, panelHandler] = useDisclosure();
 
   const {
     messages,
@@ -143,7 +145,15 @@ const Agent: React.FC<AgentProps> = ({ className }) => {
   };
 
   return (
-    <section className={cn(className, 'grid grid-cols-[1fr_380px] gap-4')}>
+    <section
+      className={cn(
+        className,
+        'relative grid grid-cols-[1fr_0px] transition-[grid-template-columns] duration-500 lg:gap-4',
+        {
+          'lg:grid-cols-[1fr_380px]': showPanel,
+          'lg:grid-cols-[1fr_0px]': !showPanel,
+        }
+      )}>
       <div className="flex w-full flex-col overflow-y-auto">
         <div className="flex w-full items-center gap-4">
           <div className="flex items-center gap-4">
@@ -156,17 +166,15 @@ const Agent: React.FC<AgentProps> = ({ className }) => {
             </ActionIcon>
           </Tooltip>
 
-          <Tooltip label="Knowledge Base">
-            <ActionIcon variant="subtle" to="/knowledge-base" component={Link}>
-              <Icon icon="streamline-plump-color:database-flat" className="text-2xl" />
-            </ActionIcon>
-          </Tooltip>
+          <ActionIcon variant="subtle" onClick={panelHandler.toggle}>
+            <Icon icon="solar:siderbar-bold-duotone" className="text-2xl" />
+          </ActionIcon>
         </div>
 
         <Divider className="my-3" />
 
         <ScrollArea.Autosize offsetScrollbars viewportRef={scrollRef} className="mb-4">
-          <div className="flex flex-col gap-y-3">
+          <div className="mx-auto flex w-full max-w-2xl flex-col gap-y-3">
             {messages.map((message) => (
               <ChatMessage key={message.id} {...message} />
             ))}
@@ -174,40 +182,65 @@ const Agent: React.FC<AgentProps> = ({ className }) => {
         </ScrollArea.Autosize>
 
         <ChatInput
-          className="mt-auto"
+          className="mx-auto mt-auto w-full max-w-2xl"
           onSubmit={handleSubmit}
           disabled={isStreaming}
           isStreaming={isStreaming}
+          placeholder="Ask anything"
         />
       </div>
 
-      <Tabs
-        value={tab}
-        onChange={setTab}
-        keepMounted={false}
-        classNames={{
-          root: '!flex !flex-col !min-h-0',
-          panel: '!grow h-full flex flex-col overflow-auto',
-        }}>
-        <Tabs.List>
-          <Tabs.Tab value="graph">Graph</Tabs.Tab>
-          <Tabs.Tab value="mermaid">Mermaid</Tabs.Tab>
-        </Tabs.List>
+      <AnimatePresence>
+        {showPanel && (
+          <motion.div
+            transition={{ ease: 'easeInOut', duration: 0.3 }}
+            initial={{ opacity: 0, translateX: 280 }}
+            animate={{ opacity: 1, translateX: 0 }}
+            exit={{ opacity: 0, translateX: 280 }}>
+            <Tabs
+              value={tab}
+              onChange={setTab}
+              keepMounted={false}
+              classNames={{
+                root: cn(
+                  '!flex !flex-col !min-h-0',
+                  '!absolute !top-0 !bottom-0 !right-0 bg-white dark:bg-gray-950 w-[280px]',
+                  'lg:!static lg:w-full',
+                  {
+                    'w-0': !showPanel,
+                  }
+                ),
+                panel: '!grow h-full flex flex-col overflow-auto',
+              }}>
+              <Tabs.List>
+                <Tabs.Tab value="graph">Graph</Tabs.Tab>
+                <Tabs.Tab value="mermaid">Mermaid</Tabs.Tab>
+                <ActionIcon
+                  className="ml-auto self-center"
+                  variant="subtle"
+                  color="red"
+                  onClick={panelHandler.toggle}>
+                  <Icon icon="solar:close-square-bold-duotone" />
+                </ActionIcon>
+              </Tabs.List>
 
-        <Tabs.Panel value="graph">
-          {workflow.data?.state ? (
-            <ReactFlowProvider>
-              <AgentGraph graph={workflow.data.state} visitedNodes={visitedNodes} />
-            </ReactFlowProvider>
-          ) : null}
-        </Tabs.Panel>
+              <Tabs.Panel value="graph">
+                {workflow.data?.state ? (
+                  <ReactFlowProvider>
+                    <AgentGraph graph={workflow.data.state} visitedNodes={visitedNodes} />
+                  </ReactFlowProvider>
+                ) : null}
+              </Tabs.Panel>
 
-        <Tabs.Panel value="mermaid">
-          <div className="rounded py-7 dark:bg-amber-50">
-            {workflow.data?.mermaid ? <Mermaid>{workflow.data.mermaid}</Mermaid> : null}
-          </div>
-        </Tabs.Panel>
-      </Tabs>
+              <Tabs.Panel value="mermaid">
+                <div className="rounded py-7 dark:bg-amber-50">
+                  {workflow.data?.mermaid ? <Mermaid>{workflow.data.mermaid}</Mermaid> : null}
+                </div>
+              </Tabs.Panel>
+            </Tabs>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 };

@@ -1,9 +1,7 @@
 import type { FileWithPath } from '@mantine/dropzone';
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { IFileFilterQuery } from '@/types';
-
-import { getFile, getUsersFiles, removeFile, uploadFile } from '../requests/files-storage.requests';
+import { getFile, removeFile, uploadFile } from '../requests/files-storage.requests';
 
 export const useUploadFile = () => {
   const queryClient = useQueryClient();
@@ -18,16 +16,6 @@ export const useUploadFile = () => {
     },
   });
 };
-
-export const useUserFiles = (page = 0, limit = 10, filter?: IFileFilterQuery) =>
-  useQuery({
-    queryKey: ['user-files', page, limit, filter],
-    queryFn: async () => {
-      const res = await getUsersFiles(page, limit, filter);
-      return res;
-    },
-    placeholderData: keepPreviousData,
-  });
 
 export const useRemoveFile = () => {
   const queryClient = useQueryClient();

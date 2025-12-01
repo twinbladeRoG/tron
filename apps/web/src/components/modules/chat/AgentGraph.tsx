@@ -89,9 +89,9 @@ const AgentNode: React.FC<AgentNodeProps> = ({ data }) => {
         'bg-teal-600/20': isStartNode,
         'bg-emerald-600/20': isEndNode,
         'bg-green-600': data.isVisited && (isStartNode || isEndNode),
-        'animate-pulse bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600':
+        'animate-pulse bg-linear-to-r from-indigo-600 via-purple-600 to-pink-600':
           data.isActive && isStartNode,
-        'animate-pulse bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500':
+        'animate-pulse bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500':
           data.isActive && !isEndNode && !isStartNode,
         'flex size-10 items-center justify-center rounded-full border-0': isStartNode || isEndNode,
       })}>

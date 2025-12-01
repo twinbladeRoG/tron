@@ -7,7 +7,7 @@ import { motion } from 'motion/react';
 
 import { cn } from '@/lib/utils';
 
-import renderer from '../markdown';
+import renderer from '../../markdown';
 
 import type { IMessage } from './types';
 
