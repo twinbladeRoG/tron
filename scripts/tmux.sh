@@ -9,12 +9,15 @@ tmux new-session -d -s "$SESSION" -n main
 tmux split-window -h -t "$SESSION":1
 tmux split-window -v -t "$SESSION":1.1
 tmux split-window -v -t "$SESSION":1.2
-tmux split-window -v -p 70 -t "$SESSION":1.4
+tmux split-window -v -t "$SESSION":1.4
+tmux split-window -v -t "$SESSION":1.5
 
 tmux send-keys -t "$SESSION":1.1 "pnpm -F api docker:up && source ./apps/api/.venv/bin/activate && pnpm -F api dev" C-m
 tmux send-keys -t "$SESSION":1.2 "source ./apps/api/.venv/bin/activate && pnpm -F api celery:flower" C-m
 tmux send-keys -t "$SESSION":1.3 "pnpm -F web dev" C-m
 tmux send-keys -t "$SESSION":1.4 "nvtop" C-m
-tmux send-keys -t "$SESSION":1.5 "btop" C-m
+tmux send-keys -t "$SESSION":1.5 "cd ~/llama.cpp/build/bin && ./llama-server -m ../../models/DeepSeek-R1-Distill-Qwen-14B-Q4_K_L.gguf --port 8090 --jinja -ngl 35" C-m
+tmux send-keys -t "$SESSION":1.6 "cd ~/llama.cpp/build/bin && ./llama-server -m ../../models/bge-large-en-v1.5_fp32.gguf --embedding --pooling cls -ub 8192 --port 9090" C-m
+
 
 tmux attach-session -t "$SESSION"

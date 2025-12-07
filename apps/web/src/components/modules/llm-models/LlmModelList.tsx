@@ -20,7 +20,7 @@ const LlmModelList = () => {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
       {models.data?.map((model) => (
         <Card key={model.id} shadow="lg">
           <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3">

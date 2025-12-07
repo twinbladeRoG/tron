@@ -4,6 +4,7 @@ from src.core.controller.base import BaseController
 from src.core.exception import NotFoundException
 from src.models.models import LlmModel
 
+from .llms.llama_cpp import LlamaCppProvider
 from .llms.openai import OpenAIModelProvider
 from .repository import LlmModelRepository
 from .schema import LlmModelBase, LlmProvider
@@ -36,5 +37,8 @@ class LlmModelController(BaseController[LlmModel]):
             case LlmProvider.OPEN_AI.value:
                 openai = OpenAIModelProvider()
                 return openai.get_model(model.name)
+            case LlmProvider.LLAMA_CPP.value:
+                llama_cpp = LlamaCppProvider()
+                return llama_cpp.get_model(model.name)
             case _:
                 raise NotFoundException(f"No model found named: {model.name}")

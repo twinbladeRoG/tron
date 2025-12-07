@@ -38,7 +38,7 @@ const useChatMessages = () => {
       }
 
       // eslint-disable-next-line no-console
-      console.log('Event:', message.event, safeJSONParse(message.data));
+      console.log('Event:', message.event, JSON.stringify(safeJSONParse(message.data), null, 2));
 
       switch (message.event) {
         case 'conversationId': {

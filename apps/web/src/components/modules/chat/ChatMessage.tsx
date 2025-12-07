@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Icon } from '@iconify/react/dist/iconify.js';
-import { Accordion, ActionIcon, Loader, Popover, Skeleton, Text } from '@mantine/core';
-import { useClipboard } from '@mantine/hooks';
+import { ActionIcon, Button, Collapse, Popover, Skeleton, Text } from '@mantine/core';
+import { useClipboard, useDisclosure } from '@mantine/hooks';
 import Markdown from 'marked-react';
 import { motion } from 'motion/react';
 
@@ -27,46 +27,46 @@ const ChatMessage: React.FC<IMessage> = ({
   usage,
 }) => {
   const isUser = role === 'user';
+
   // for reasoning model, we split the message into content and thought
   // TODO: implement this as remark/rehype plugin in the future
   const { content, thought, isThinking }: SplitMessage = useMemo(() => {
-    if (message === null || isUser) return { content: message };
+    // handle null / user message early and return all fields
+    if (message === null || isUser) {
+      return { content: message ?? '', thought: '', isThinking: false };
+    }
 
-    let actualContent = '';
-    let thought = '';
     let isThinking = false;
+    const thoughts: string[] = [];
 
-    const hasOpeningThinkTag = message.includes('<think>');
-    const hasClosingThinkTag = message.includes('</think>');
+    // 1) Extract all complete <think>...</think> blocks (non-greedy) and remove them from content
+    // ([\s\S]*?) matches across lines
+    const cleaned = message.replace(/<think>([\s\S]*?)<\/think>/g, (_match, inner) => {
+      thoughts.push(inner as string);
+      return ''; // remove the matched block from content
+    });
 
-    let thinkSplit: string[] = [];
+    let finalContent = cleaned;
 
-    if (hasOpeningThinkTag && hasClosingThinkTag) {
-      thinkSplit = message.split('<think>', 2);
-      actualContent += thinkSplit[0];
-    } else if (hasClosingThinkTag && !hasOpeningThinkTag) {
-      thinkSplit = ['', message];
-    } else {
-      return { content: message };
-    }
-
-    while (thinkSplit[1] !== undefined) {
-      // <think> tag found
-      thinkSplit = thinkSplit[1].split('</think>', 2);
-      thought += thinkSplit[0];
+    // 2) If there's an opening <think> with no corresponding </think>, treat the trailing part as "in-progress thought"
+    if (message.includes('<think>') && !message.includes('</think>')) {
       isThinking = true;
-      if (thinkSplit[1] !== undefined) {
-        // </think> closing tag found
-        isThinking = false;
-        thinkSplit = thinkSplit[1].split('<think>', 2);
-        actualContent += thinkSplit[0];
-      }
+      const lastOpenIdx = message.lastIndexOf('<think>');
+      const trailingThought = message.slice(lastOpenIdx + '<think>'.length);
+      thoughts.push(trailingThought);
+      // content should exclude the trailing open-think and whatever follows it
+      finalContent = message.slice(0, lastOpenIdx).replace(/<think>([\s\S]*?)<\/think>/g, ''); // also ensure any closed ones already removed
     }
 
-    return { content: actualContent, thought, isThinking };
+    return {
+      content: finalContent,
+      thought: thoughts.join(''), // join if you want a single string; or change to thoughts if you want array
+      isThinking,
+    };
   }, [message, isUser]);
 
   const clipboard = useClipboard({ timeout: 500 });
+  const [opened, handler] = useDisclosure(false);
 
   return (
     <motion.div
@@ -87,23 +87,24 @@ const ChatMessage: React.FC<IMessage> = ({
         })}>
         {isLoading ? <Skeleton height={40} /> : null}
 
-        {!isLoading && !isUser && (reason || thought) ? (
-          <Accordion
-            defaultValue={null}
-            mb="md"
-            classNames={{
-              label: '!py-2',
-            }}>
-            <Accordion.Item value="thought">
-              <Accordion.Control icon={<Icon icon="mdi:thought-bubble" />}>
-                Thought {isThinking ? <Loader /> : null}
-              </Accordion.Control>
-              <Accordion.Panel className="">
-                {reason ? <Markdown renderer={renderer}>{reason}</Markdown> : null}
-                {thought ? <Markdown renderer={renderer}>{thought}</Markdown> : null}
-              </Accordion.Panel>
-            </Accordion.Item>
-          </Accordion>
+        {!isUser && (reason || thought) ? (
+          <div className="">
+            <Button
+              size="compact-xs"
+              variant="subtle"
+              color="blue"
+              leftSection={isThinking ? <Icon icon="svg-spinners:270-ring-with-bg" /> : undefined}
+              rightSection={<Icon icon="solar:alt-arrow-down-bold-duotone" />}
+              onClick={handler.toggle}>
+              {isThinking ? 'Thinking' : 'Thought'}
+            </Button>
+            <Collapse
+              in={opened || isThinking}
+              className="mt-1 mb-2 rounded-2xl bg-purple-700/20 p-4">
+              {reason ? <Markdown renderer={renderer}>{reason}</Markdown> : null}
+              {thought ? <Markdown renderer={renderer}>{thought}</Markdown> : null}
+            </Collapse>
+          </div>
         ) : null}
 
         <Markdown renderer={renderer}>{content}</Markdown>
@@ -125,7 +126,9 @@ const ChatMessage: React.FC<IMessage> = ({
           variant="subtle"
           color={clipboard.copied ? 'teal' : 'blue'}
           onClick={() => clipboard.copy(content)}>
-          <Icon icon={clipboard.copied ? 'mdi:check' : 'mdi:content-copy'} />
+          <Icon
+            icon={clipboard.copied ? 'solar:check-read-line-duotone' : 'solar:copy-bold-duotone'}
+          />
         </ActionIcon>
 
         {usage && (
