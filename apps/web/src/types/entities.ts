@@ -48,5 +48,6 @@ export interface IFile extends IBaseEntity {
 
 export interface ILlmModel extends IBaseEntity {
   name: string;
+  display_name: string;
   provider: LlmProvider;
 }

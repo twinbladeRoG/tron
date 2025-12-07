@@ -15,6 +15,7 @@ interface ChatInputProps {
   disabled?: boolean;
   isStreaming?: boolean;
   placeholder?: string;
+  children?: React.ReactNode;
 }
 
 const schema = yup.object({
@@ -27,6 +28,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   disabled,
   isStreaming,
   placeholder,
+  children,
 }) => {
   const form = useForm({
     resolver: yupResolver(schema),
@@ -73,13 +75,15 @@ const ChatInput: React.FC<ChatInputProps> = ({
             disabled={disabled}
             placeholder={placeholder}
             classNames={{
-              input: '!bg-transparent !border-0',
+              input: '!bg-transparent !border-0 !p-0',
             }}
           />
         )}
       />
 
       <div className="flex w-full items-center gap-2">
+        {children}
+
         <ActionIcon size="md" type="submit" ml="auto" disabled={disabled}>
           <Icon icon="solar:map-arrow-up-bold-duotone" className="text-xl" />
         </ActionIcon>

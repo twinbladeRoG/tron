@@ -13,18 +13,22 @@ import {
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { EventStreamContentType, fetchEventSource } from '@microsoft/fetch-event-source';
+import { ReactFlowProvider } from '@xyflow/react';
 import { AnimatePresence, motion } from 'motion/react';
 import { v4 as uuid } from 'uuid';
 
 import { getToken } from '@/apis/http';
+import { useAgentWorkflow } from '@/apis/queries/agent.queries';
 import { useLlmModels } from '@/apis/queries/llm-models.queries';
 import { cn, getLlmProviderIcon } from '@/lib/utils';
 import type { LlmProvider } from '@/types';
 
-import ChatInput from './ChatInput';
-import ChatMessage from './ChatMessage';
-import useChatMessages from './hook';
-import type { IMessage } from './types';
+import AgentGraph from '../chat/AgentGraph';
+import ChatInput from '../chat/ChatInput';
+import ChatMessage from '../chat/ChatMessage';
+import useChatMessages from '../chat/hook';
+import Mermaid from '../chat/Mermaid';
+import type { IMessage } from '../chat/types';
 
 interface AgentProps {
   className?: string;
@@ -33,6 +37,7 @@ interface AgentProps {
 const API_URL = import.meta.env.VITE_API_URL;
 
 const Agent: React.FC<AgentProps> = ({ className }) => {
+  const workflow = useAgentWorkflow();
   const models = useLlmModels();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -66,6 +71,7 @@ const Agent: React.FC<AgentProps> = ({ className }) => {
     updateMessage,
     conversationId,
     setConversationId,
+    visitedNodes,
     appendVisitedNode,
     setVisitedNodes,
   } = useChatMessages();
@@ -112,57 +118,20 @@ const Agent: React.FC<AgentProps> = ({ className }) => {
       },
       body: JSON.stringify({
         message: messageToSent,
-        model: model,
         conversation_id: conversationId,
         interrupt_response: hasInterrupt ? { message: message } : undefined,
       }),
       signal: ctrl.signal,
-
+      // eslint-disable-next-line @typescript-eslint/require-await
       async onopen(response) {
         if (response.ok && response.headers.get('content-type') === EventStreamContentType) {
           appendVisitedNode('__start__');
           return;
         } else if (response.status >= 400 && response.status < 500 && response.status !== 429) {
-          let err_message: string | undefined = undefined;
-          let error: string | undefined = undefined;
-
-          if (response.headers.get('content-type') === 'application/json') {
-            const result = (await response.json()) as {
-              details: string[];
-              error: string;
-              type: string;
-            };
-            error = result?.error ?? 'An error has occurred';
-
-            if (result?.type === 'RequestValidationError') {
-              err_message = result?.details?.join('.');
-            } else {
-              err_message = result?.error;
-            }
-          }
-
           notifications.show({
             color: 'red',
-            message: err_message,
-            title: error,
+            message: 'Fatal error occurred!',
           });
-
-          setMessages((prev) =>
-            prev.map((message) => {
-              if (message.id !== botMessageId) return message;
-
-              return {
-                ...message,
-                id: botMessageId,
-                message: err_message ?? 'An error has occurred',
-                role: 'bot',
-                isLoading: false,
-                isError: true,
-              } satisfies IMessage;
-            })
-          );
-          ctrl.abort();
-          setIsStreaming(false);
         } else {
           notifications.show({
             color: 'yellow',
@@ -180,7 +149,6 @@ const Agent: React.FC<AgentProps> = ({ className }) => {
               id: botMessageId,
               message: err as string,
               isLoading: false,
-              isError: true,
               role: 'bot',
             } satisfies IMessage;
           })
@@ -317,6 +285,20 @@ const Agent: React.FC<AgentProps> = ({ className }) => {
                   <Icon icon="solar:close-square-bold-duotone" />
                 </ActionIcon>
               </Tabs.List>
+
+              <Tabs.Panel value="graph">
+                {workflow.data?.state ? (
+                  <ReactFlowProvider>
+                    <AgentGraph graph={workflow.data.state} visitedNodes={visitedNodes} />
+                  </ReactFlowProvider>
+                ) : null}
+              </Tabs.Panel>
+
+              <Tabs.Panel value="mermaid">
+                <div className="rounded py-7 dark:bg-amber-50">
+                  {workflow.data?.mermaid ? <Mermaid>{workflow.data.mermaid}</Mermaid> : null}
+                </div>
+              </Tabs.Panel>
             </Tabs>
           </motion.div>
         )}

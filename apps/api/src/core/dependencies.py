@@ -11,6 +11,7 @@ from sqlmodel import Session
 from src.models.models import User
 from src.modules.auth.controller import AuthController
 from src.modules.auth.schema import TokenPayload
+from src.modules.chat.controller import ChatController
 from src.modules.llm_models.controller import LlmModelController
 from src.modules.users.controller import UserController
 
@@ -77,3 +78,4 @@ AuthControllerDeps = Annotated[AuthController, Depends(Factory().get_auth_contro
 LlmModelControllerDeps = Annotated[
     LlmModelController, Depends(Factory().get_llm_model_controller)
 ]
+ChatControllerDeps = Annotated[ChatController, Depends(Factory().get_chat_controller)]

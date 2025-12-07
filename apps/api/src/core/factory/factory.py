@@ -3,6 +3,7 @@ from functools import partial
 from src.core.dependencies import SessionDep
 from src.models.models import LlmModel, User
 from src.modules.auth.controller import AuthController
+from src.modules.chat.controller import ChatController
 from src.modules.llm_models.controller import LlmModelController
 from src.modules.llm_models.repository import LlmModelRepository
 from src.modules.users.controller import UserController
@@ -23,3 +24,6 @@ class Factory:
         return LlmModelController(
             repository=self.llm_models_repository(session=db_session)
         )
+
+    def get_chat_controller(self):
+        return ChatController()

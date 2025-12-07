@@ -18,7 +18,7 @@ const renderer = {
   table(children) {
     return (
       <div className="mb-4 max-w-[60dvw] overflow-x-auto">
-        <Table withTableBorder withColumnBorders className="!w-full !max-w-[400px]">
+        <Table withTableBorder withColumnBorders className="w-full! max-w-[400px]!">
           {children}
         </Table>
       </div>
@@ -53,9 +53,9 @@ const renderer = {
     return (
       <Text
         component={motion.p}
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.25 }}
+        initial={{ opacity: 0, translateY: -10 }}
+        animate={{ opacity: 1, translateY: 0 }}
+        transition={{ duration: 1 }}
         size="sm">
         {text}
       </Text>

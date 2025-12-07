@@ -1,11 +1,12 @@
 from uuid import UUID
 
 from src.core.controller.base import BaseController
+from src.core.exception import NotFoundException
 from src.models.models import LlmModel
 
-from .llms.openai import OpenAIModelProvider, OpenAIModels
+from .llms.openai import OpenAIModelProvider
 from .repository import LlmModelRepository
-from .schema import LlmModelBase
+from .schema import LlmModelBase, LlmProvider
 
 
 class LlmModelController(BaseController[LlmModel]):
@@ -27,15 +28,13 @@ class LlmModelController(BaseController[LlmModel]):
     def get_llm_models(self):
         return self.repository.get_all()
 
-    def chat(self, message: str):
-        openai = OpenAIModelProvider()
-        llm = openai.get_model(OpenAIModels.GPT_4o_mini)
-        messages = [
-            (
-                "system",
-                "You are a helpful assistant that translates English to French. Translate the user sentence.",
-            ),
-            ("human", message),
-        ]
-        response = llm.invoke(input=messages)
-        return response
+    def get_llm_model_by_name(self, model_name: str):
+        return self.repository.get_by("name", model_name, unique=True)
+
+    def get_chat_model(self, model: LlmModel):
+        match model.provider:
+            case LlmProvider.OPEN_AI.value:
+                openai = OpenAIModelProvider()
+                return openai.get_model(model.name)
+            case _:
+                raise NotFoundException(f"No model found named: {model.name}")

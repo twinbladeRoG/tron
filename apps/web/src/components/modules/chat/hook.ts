@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { type EventSourceMessage } from '@microsoft/fetch-event-source';
 
-import type { IMessage } from './types';
+import type { IMessage, ITokenUsage } from './types';
 
 const useChatMessages = () => {
   const [messages, setMessages] = useState<IMessage[]>([]);
@@ -57,7 +57,7 @@ const useChatMessages = () => {
               return {
                 ...message,
                 id: botMessageId,
-                message: data.text,
+                message: `${message.message}${data.text}`,
                 isLoading: false,
                 role: 'bot',
                 isStreaming: true,
@@ -85,6 +85,19 @@ const useChatMessages = () => {
             })
           );
 
+          break;
+        }
+
+        case 'usage': {
+          const data = JSON.parse(message.data) as ITokenUsage;
+
+          setMessages((prev) =>
+            prev.map((message) => {
+              if (message.id !== botMessageId) return message;
+
+              return { ...message, usage: data } satisfies IMessage;
+            })
+          );
           break;
         }
 

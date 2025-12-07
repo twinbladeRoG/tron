@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Icon } from '@iconify/react/dist/iconify.js';
-import { Accordion, ActionIcon, Loader, Skeleton } from '@mantine/core';
+import { Accordion, ActionIcon, Loader, Popover, Skeleton, Text } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
 import Markdown from 'marked-react';
 import { motion } from 'motion/react';
@@ -24,6 +24,7 @@ const ChatMessage: React.FC<IMessage> = ({
   isLoading,
   isStreaming,
   role,
+  usage,
 }) => {
   const isUser = role === 'user';
   // for reasoning model, we split the message into content and thought
@@ -75,14 +76,13 @@ const ChatMessage: React.FC<IMessage> = ({
       className={cn('flex max-w-[90%] flex-col', {
         'self-end': isUser,
         'self-start': !isUser,
-        'bg-red-950': isError,
         'min-w-3/4': isLoading,
       })}>
       <div
         className={cn('mb-2 rounded-lg', {
-          'bg-gray-200 p-4 dark:bg-gray-900': isUser,
+          'bg-gray-200 p-4 dark:bg-gray-800': isUser,
           'self-start': !isUser,
-          'bg-red-950': isError,
+          'bg-red-950 p-4': isError,
           'min-w-3/4': isLoading,
         })}>
         {isLoading ? <Skeleton height={40} /> : null}
@@ -110,21 +110,45 @@ const ChatMessage: React.FC<IMessage> = ({
 
         {isStreaming && !isUser ? (
           <div className="mt-2">
-            <Skeleton height={16} radius="sm" />
-            <Skeleton height={16} mt={12} radius="sm" />
-            <Skeleton height={16} mt={12} width="70%" radius="sm" />
+            <Skeleton height={16} width={100} radius="sm" />
           </div>
         ) : null}
       </div>
 
-      <ActionIcon
-        disabled={isLoading || isStreaming}
-        className={isUser ? 'self-end' : 'self-start'}
-        variant="subtle"
-        color={clipboard.copied ? 'teal' : 'blue'}
-        onClick={() => clipboard.copy(content)}>
-        <Icon icon={clipboard.copied ? 'mdi:check' : 'mdi:content-copy'} />
-      </ActionIcon>
+      <div
+        className={cn('flex w-full items-center gap-3', {
+          'justify-end': isUser,
+        })}>
+        <ActionIcon
+          disabled={isLoading || isStreaming}
+          className={isUser ? 'self-end' : 'self-start'}
+          variant="subtle"
+          color={clipboard.copied ? 'teal' : 'blue'}
+          onClick={() => clipboard.copy(content)}>
+          <Icon icon={clipboard.copied ? 'mdi:check' : 'mdi:content-copy'} />
+        </ActionIcon>
+
+        {usage && (
+          <Popover width={100} position="bottom" withArrow shadow="md">
+            <Popover.Target>
+              <ActionIcon variant="subtle">
+                <Icon icon="solar:chart-square-bold-duotone" />
+              </ActionIcon>
+            </Popover.Target>
+            <Popover.Dropdown style={{ pointerEvents: 'none' }} p="xs">
+              <Text size="xs">
+                Token: <strong>{usage.input_tokens}</strong>
+              </Text>
+              <Text size="xs">
+                Token: <strong>{usage.output_tokens}</strong>
+              </Text>
+              <Text size="xs">
+                Token: <strong>{usage.total_tokens}</strong>
+              </Text>
+            </Popover.Dropdown>
+          </Popover>
+        )}
+      </div>
     </motion.div>
   );
 };

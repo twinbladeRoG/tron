@@ -14,7 +14,7 @@ class OpenAIModelProvider:
     def __init__(self):
         pass
 
-    def get_model(self, model_name: OpenAIModels) -> ChatOpenAI:
+    def get_model(self, model_name: str) -> ChatOpenAI:
         llm = ChatOpenAI(
             api_key=settings.OPEN_API_KEY,
             model=model_name,
