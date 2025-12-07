@@ -1,4 +1,5 @@
 import type { IBaseEntity } from './common';
+import type { LlmProvider } from './enums';
 
 export interface IAgentWorkflowEdge {
   source: string;
@@ -43,4 +44,9 @@ export interface IFile extends IBaseEntity {
   content_length: number;
   original_filename: string;
   owner_id: string;
+}
+
+export interface ILlmModel extends IBaseEntity {
+  name: string;
+  provider: LlmProvider;
 }

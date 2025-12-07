@@ -11,6 +11,7 @@ from sqlmodel import Session
 from src.models.models import User
 from src.modules.auth.controller import AuthController
 from src.modules.auth.schema import TokenPayload
+from src.modules.llm_models.controller import LlmModelController
 from src.modules.users.controller import UserController
 
 from .config import Settings
@@ -73,3 +74,6 @@ from .factory import Factory  # noqa: E402
 
 UserControllerDeps = Annotated[UserController, Depends(Factory().get_user_controller)]
 AuthControllerDeps = Annotated[AuthController, Depends(Factory().get_auth_controller)]
+LlmModelControllerDeps = Annotated[
+    LlmModelController, Depends(Factory().get_llm_model_controller)
+]

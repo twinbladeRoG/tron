@@ -73,6 +73,7 @@
       "njqdev.vscode-python-typehint",
       "mintlify.document",
       "oderwat.indent-rainbow",
+      "cstrap.python-snippets",
     ],
   },
 }

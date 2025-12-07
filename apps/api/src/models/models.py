@@ -1,6 +1,7 @@
 from pydantic import field_validator
 
 from src.core.security import PasswordHandler
+from src.modules.llm_models.schema import LlmModelBase
 from src.modules.users.schema import UserBase
 
 from .mixins import BaseModelMixin
@@ -16,3 +17,7 @@ class User(BaseModelMixin, UserBase, table=True):
 
     def __repr__(self) -> str:
         return f"{self.id}: {self.username}, {self.email}"
+
+
+class LlmModel(BaseModelMixin, LlmModelBase, table=True):
+    pass

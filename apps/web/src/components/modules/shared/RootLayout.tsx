@@ -77,6 +77,7 @@ const RootLayout = () => {
           icon="solar:chat-square-bold-duotone"
           isCollapsed={!desktopOpened}
         />
+        <AppNavLink to="/models" label="Models" icon="si:ai-duotone" isCollapsed={!desktopOpened} />
 
         {user.isLoading ? (
           <Skeleton h={100} mt="sm" animate={false} />

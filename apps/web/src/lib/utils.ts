@@ -3,7 +3,7 @@ import { MIME_TYPES } from '@mantine/dropzone';
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
-import { EXTRACTION_STATUS, type ExtractionStatus } from '@/types';
+import { EXTRACTION_STATUS, type ExtractionStatus, type LlmProvider } from '@/types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -76,4 +76,21 @@ export const formatMonths = (totalMonths: number) => {
     return `${years} year${years > 1 ? 's' : ''} ${months} month${months > 1 ? 's' : ''}`;
   if (years) return `${years} year${years > 1 ? 's' : ''}`;
   return `${months} month${months > 1 ? 's' : ''}`;
+};
+
+export const getLlmProviderIcon = (value: LlmProvider) => {
+  switch (value) {
+    case 'aws':
+      return 'mdi:aws';
+    case 'azure':
+      return 'devicon:azure';
+    case 'openai':
+      return 'ph:open-ai-logo-duotone';
+    case 'google':
+      return 'devicon:google';
+    case 'llama-cpp':
+      return 'simple-icons:ollama';
+    default:
+      return 'si:ai-duotone';
+  }
 };
