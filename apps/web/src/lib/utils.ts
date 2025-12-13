@@ -1,6 +1,8 @@
 import type { DefaultMantineColor } from '@mantine/core';
 import { MIME_TYPES } from '@mantine/dropzone';
 import { type ClassValue, clsx } from 'clsx';
+import dayjs from 'dayjs';
+import duration from 'dayjs/plugin/duration';
 import { twMerge } from 'tailwind-merge';
 
 import { EXTRACTION_STATUS, type ExtractionStatus, type LlmProvider } from '@/types';
@@ -94,3 +96,23 @@ export const getLlmProviderIcon = (value: LlmProvider) => {
       return 'si:ai-duotone';
   }
 };
+
+dayjs.extend(duration);
+
+export function formatDuration(seconds: number): string {
+  const d = dayjs.duration(seconds, 'seconds');
+
+  const h = Math.floor(d.asHours());
+  const m = d.minutes();
+  const s = d.seconds();
+  const ms = d.milliseconds();
+
+  const parts: string[] = [];
+
+  if (h > 0) parts.push(`${h}h`);
+  if (m > 0) parts.push(`${m}m`);
+  if (s > 0) parts.push(`${s}s`);
+  if (s <= 0) parts.push(`${ms}ms`);
+
+  return parts.join(' ');
+}

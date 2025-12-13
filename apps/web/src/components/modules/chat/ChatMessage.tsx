@@ -5,7 +5,7 @@ import { useClipboard, useDisclosure } from '@mantine/hooks';
 import Markdown from 'marked-react';
 import { motion } from 'motion/react';
 
-import { cn } from '@/lib/utils';
+import { cn, formatDuration } from '@/lib/utils';
 
 import renderer from '../../markdown';
 
@@ -27,6 +27,14 @@ const ChatMessage: React.FC<IMessage> = ({
   usage,
 }) => {
   const isUser = role === 'user';
+
+  const currencyFormatter = useMemo(() => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+    });
+  }, []);
 
   // for reasoning model, we split the message into content and thought
   // TODO: implement this as remark/rehype plugin in the future
@@ -132,7 +140,7 @@ const ChatMessage: React.FC<IMessage> = ({
         </ActionIcon>
 
         {usage && (
-          <Popover width={100} position="bottom" withArrow shadow="md">
+          <Popover width={180} position="bottom" withArrow shadow="md">
             <Popover.Target>
               <ActionIcon variant="subtle">
                 <Icon icon="solar:chart-square-bold-duotone" />
@@ -140,13 +148,22 @@ const ChatMessage: React.FC<IMessage> = ({
             </Popover.Target>
             <Popover.Dropdown style={{ pointerEvents: 'none' }} p="xs">
               <Text size="xs">
-                Token: <strong>{usage.input_tokens}</strong>
+                Prompt Token: <strong>{usage.prompt_tokens}</strong>
               </Text>
               <Text size="xs">
-                Token: <strong>{usage.output_tokens}</strong>
+                Completion Token: <strong>{usage.completion_tokens}</strong>
               </Text>
               <Text size="xs">
-                Token: <strong>{usage.total_tokens}</strong>
+                Reasoning Token: <strong>{usage.reasoning_tokens}</strong>
+              </Text>
+              <Text size="xs">
+                Total Token: <strong>{usage.total_tokens}</strong>
+              </Text>
+              <Text size="xs">
+                Total Cost: <strong>{currencyFormatter.format(usage.total_cost)}</strong>
+              </Text>
+              <Text size="xs">
+                Total Time: <strong>{formatDuration(usage.time)}</strong>
               </Text>
             </Popover.Dropdown>
           </Popover>

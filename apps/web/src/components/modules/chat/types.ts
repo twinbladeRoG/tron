@@ -6,13 +6,25 @@ export interface IMessage {
   isLoading?: boolean;
   isError?: boolean;
   isStreaming?: boolean;
-  usage?: ITokenUsage;
+  token_usage?: ITokenUsage;
+  usage?: IUsage;
 }
 
 export interface ITokenUsage {
-  input_tokens: 22;
-  output_tokens: 132;
-  total_tokens: 154;
-  input_token_details: { audio: 0; cache_read: 0 };
-  output_token_details: { audio: 0; reasoning: 0 };
+  input_tokens: number;
+  output_tokens: number;
+  total_tokens: number;
+  input_token_details: { audio: number; cache_read: number };
+  output_token_details: { audio: number; reasoning: number };
+}
+
+export interface IUsage {
+  total_tokens: number;
+  prompt_tokens: number;
+  prompt_tokens_cached: number;
+  completion_tokens: number;
+  reasoning_tokens: number;
+  successful_requests: number;
+  total_cost: number;
+  time: number;
 }

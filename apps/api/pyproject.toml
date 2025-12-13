@@ -9,6 +9,7 @@ dependencies = [
     "celery[redis,sqlalchemy]>=5.5.3",
     "fastapi[standard]>=0.121.3",
     "langchain>=1.0.8",
+    "langchain-community>=0.4.1",
     "langchain-deepseek>=1.0.1",
     "langchain-openai>=1.0.3",
     "langchain-text-splitters>=1.0.0",

@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { type EventSourceMessage } from '@microsoft/fetch-event-source';
 
-import type { IMessage, ITokenUsage } from './types';
+import type { IMessage, ITokenUsage, IUsage } from './types';
 
 const useChatMessages = () => {
   const [messages, setMessages] = useState<IMessage[]>([]);
@@ -88,8 +88,21 @@ const useChatMessages = () => {
           break;
         }
 
-        case 'usage': {
+        case 'token_usage': {
           const data = JSON.parse(message.data) as ITokenUsage;
+
+          setMessages((prev) =>
+            prev.map((message) => {
+              if (message.id !== botMessageId) return message;
+
+              return { ...message, token_usage: data } satisfies IMessage;
+            })
+          );
+          break;
+        }
+
+        case 'usage': {
+          const data = JSON.parse(message.data) as IUsage;
 
           setMessages((prev) =>
             prev.map((message) => {

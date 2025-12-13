@@ -25,5 +25,5 @@ class Factory:
             repository=self.llm_models_repository(session=db_session)
         )
 
-    def get_chat_controller(self):
-        return ChatController()
+    def get_chat_controller(self, db_session: SessionDep):
+        return ChatController(session=db_session)

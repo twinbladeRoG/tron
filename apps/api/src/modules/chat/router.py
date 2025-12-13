@@ -3,7 +3,7 @@ from fastapi.responses import StreamingResponse
 
 from src.core.dependencies import (
     ChatControllerDeps,
-    # CurrentUser,
+    CurrentUser,
     LlmModelControllerDeps,
 )
 
@@ -14,13 +14,13 @@ router = APIRouter(prefix="/chat", tags=["Chat"])
 
 @router.post("/")
 async def chat(
-    # user: CurrentUser,
+    user: CurrentUser,
     controller: ChatControllerDeps,
     llm_model_controller: LlmModelControllerDeps,
     body: ChatPayload,
 ):
     return StreamingResponse(
-        controller.chat(body, llm_model_controller=llm_model_controller),
+        controller.chat(body, user=user, llm_model_controller=llm_model_controller),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

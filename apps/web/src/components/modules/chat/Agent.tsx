@@ -1,4 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router';
 import { Icon } from '@iconify/react';
 import {
   ActionIcon,
@@ -38,15 +39,19 @@ const Agent: React.FC<AgentProps> = ({ className }) => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [tab, setTab] = useState<string | null>('graph');
   const [showPanel, panelHandler] = useDisclosure();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [model, setModel] = useState<string | null>(null);
 
   useEffect(() => {
-    if (models.data && models.data.length > 0) {
+    if (model === null && searchParams.get('model') !== null) {
       // eslint-disable-next-line react-hooks/set-state-in-effect, @eslint-react/hooks-extra/no-direct-set-state-in-use-effect
+      setModel(searchParams.get('model'));
+    } else if (model === null && models.data && models.data.length > 0) {
+      // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect
       setModel(models.data[0].name);
     }
-  }, [models.data]);
+  }, [searchParams, model, models.data]);
 
   const renderSelectOption: SelectProps['renderOption'] = ({ option, checked }) => (
     <Group flex="1" gap="xs">
@@ -230,7 +235,7 @@ const Agent: React.FC<AgentProps> = ({ className }) => {
       <div className="flex w-full flex-col overflow-y-auto">
         <div className="flex w-full items-center gap-4">
           <div className="flex items-center gap-4">
-            <h1 className="font-bold">Agent Chat</h1>
+            <h1 className="font-bold">Chat</h1>
           </div>
 
           <Tooltip label="New Conversation">
@@ -270,7 +275,11 @@ const Agent: React.FC<AgentProps> = ({ className }) => {
             }))}
             renderOption={renderSelectOption}
             value={model}
-            onChange={setModel}
+            defaultValue={models?.data?.[0].name}
+            onChange={(value) => {
+              setModel(value);
+              if (value) setSearchParams({ model: value });
+            }}
             leftSection={
               <Icon
                 icon={getLlmProviderIcon(
@@ -307,7 +316,6 @@ const Agent: React.FC<AgentProps> = ({ className }) => {
                 panel: '!grow h-full flex flex-col overflow-auto',
               }}>
               <Tabs.List>
-                <Tabs.Tab value="graph">Graph</Tabs.Tab>
                 <Tabs.Tab value="mermaid">Mermaid</Tabs.Tab>
                 <ActionIcon
                   className="ml-auto self-center"
