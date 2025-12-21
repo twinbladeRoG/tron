@@ -8,7 +8,7 @@ const Home = () => {
   const navigate = useNavigate();
 
   const handleChat = async () => {
-    await navigate('/agent');
+    await navigate('/chat');
   };
 
   const handleLogin = async () => {

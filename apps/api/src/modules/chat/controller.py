@@ -34,7 +34,7 @@ class ChatController:
 
         try:
             tokens = get_num_tokens_from_messages(messages, chat_model)
-            if tokens > 2:
+            if tokens > 4000:
                 raise BadRequestException("Insufficient Tokens")
 
             with get_llm_callback(self.session) as cb:
@@ -59,6 +59,6 @@ class ChatController:
                 yield f"event: usage\ndata: {cb.get_usage().model_dump_json()}\n\n"
         except Exception as e:
             logger.error(e)
-            yield f"event: error\ndata: {e.__class__.__name__}: {e}\n\n"
+            yield f"event: error\ndata: {e}\n\n"
         finally:
             yield "event: done\ndata: end\n\n"

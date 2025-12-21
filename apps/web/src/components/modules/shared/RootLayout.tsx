@@ -72,12 +72,18 @@ const RootLayout = () => {
 
       <nav className="flex flex-col px-2 sm:px-4">
         <AppNavLink
-          to="/agent"
+          to="/chat"
           label="Chat"
           icon="solar:chat-square-bold-duotone"
           isCollapsed={!desktopOpened}
         />
         <AppNavLink to="/models" label="Models" icon="si:ai-duotone" isCollapsed={!desktopOpened} />
+        <AppNavLink
+          to="/agent"
+          label="Agent"
+          icon="ph:robot-duotone"
+          isCollapsed={!desktopOpened}
+        />
         <AppNavLink
           to="/scrapper"
           label="Scrapper"

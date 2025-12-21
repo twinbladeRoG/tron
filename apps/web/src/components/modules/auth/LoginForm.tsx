@@ -35,7 +35,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ className }) => {
         localStorage.setItem('ACCESS_TOKEN', res.tokens.access_token);
         localStorage.setItem('REFRESH_TOKEN', res.tokens.refresh_token);
 
-        await navigate('/agent');
+        await navigate('/chat');
       },
       onError: (error) => {
         notifications.show({

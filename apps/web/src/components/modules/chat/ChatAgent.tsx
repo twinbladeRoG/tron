@@ -27,13 +27,13 @@ import ChatMessage from './ChatMessage';
 import useChatMessages from './hook';
 import type { IMessage } from './types';
 
-interface AgentProps {
+interface ChatAgentProps {
   className?: string;
 }
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const Agent: React.FC<AgentProps> = ({ className }) => {
+const ChatAgent: React.FC<ChatAgentProps> = ({ className }) => {
   const models = useLlmModels();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -333,4 +333,4 @@ const Agent: React.FC<AgentProps> = ({ className }) => {
   );
 };
 
-export default Agent;
+export default ChatAgent;
