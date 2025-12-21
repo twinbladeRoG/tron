@@ -51,3 +51,12 @@ export interface ILlmModel extends IBaseEntity {
   display_name: string;
   provider: LlmProvider;
 }
+
+export interface IScrapeResult {
+  result: string;
+  metadata: {
+    page_content: string;
+    page_type: string;
+    customer_persona: string;
+  };
+}

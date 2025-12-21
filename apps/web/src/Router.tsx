@@ -6,6 +6,7 @@ import NotFound from './components/NotFound';
 import AgentPage from './pages/agent';
 import LlmModelsPage from './pages/llm-models';
 import LoginPage from './pages/login';
+import ScrapperPage from './pages/scrapper';
 import Home from './pages';
 
 const router = createBrowserRouter([
@@ -20,6 +21,7 @@ const router = createBrowserRouter([
     children: [
       { path: '/agent', element: <AgentPage /> },
       { path: '/models', element: <LlmModelsPage /> },
+      { path: '/scrapper', element: <ScrapperPage /> },
     ],
   },
   {

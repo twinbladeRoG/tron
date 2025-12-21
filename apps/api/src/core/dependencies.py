@@ -13,6 +13,7 @@ from src.modules.auth.controller import AuthController
 from src.modules.auth.schema import TokenPayload
 from src.modules.chat.controller import ChatController
 from src.modules.llm_models.controller import LlmModelController
+from src.modules.scrapper.controller import ScrapeController
 from src.modules.users.controller import UserController
 
 from .config import Settings
@@ -79,3 +80,6 @@ LlmModelControllerDeps = Annotated[
     LlmModelController, Depends(Factory().get_llm_model_controller)
 ]
 ChatControllerDeps = Annotated[ChatController, Depends(Factory().get_chat_controller)]
+ScrapeControllerDeps = Annotated[
+    ScrapeController, Depends(Factory().get_scrape_controller)
+]

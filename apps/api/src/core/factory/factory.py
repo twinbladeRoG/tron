@@ -6,6 +6,7 @@ from src.modules.auth.controller import AuthController
 from src.modules.chat.controller import ChatController
 from src.modules.llm_models.controller import LlmModelController
 from src.modules.llm_models.repository import LlmModelRepository
+from src.modules.scrapper.controller import ScrapeController
 from src.modules.users.controller import UserController
 from src.modules.users.repository import UserRepository
 
@@ -27,3 +28,6 @@ class Factory:
 
     def get_chat_controller(self, db_session: SessionDep):
         return ChatController(session=db_session)
+
+    def get_scrape_controller(self, db_session: SessionDep):
+        return ScrapeController(session=db_session)

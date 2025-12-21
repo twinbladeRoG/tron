@@ -7,6 +7,8 @@ import { twMerge } from 'tailwind-merge';
 
 import { EXTRACTION_STATUS, type ExtractionStatus, type LlmProvider } from '@/types';
 
+dayjs.extend(duration);
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -96,8 +98,6 @@ export const getLlmProviderIcon = (value: LlmProvider) => {
       return 'si:ai-duotone';
   }
 };
-
-dayjs.extend(duration);
 
 export function formatDuration(seconds: number): string {
   const d = dayjs.duration(seconds, 'seconds');

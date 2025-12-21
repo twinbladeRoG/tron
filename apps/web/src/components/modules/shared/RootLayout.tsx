@@ -78,6 +78,12 @@ const RootLayout = () => {
           isCollapsed={!desktopOpened}
         />
         <AppNavLink to="/models" label="Models" icon="si:ai-duotone" isCollapsed={!desktopOpened} />
+        <AppNavLink
+          to="/scrapper"
+          label="Scrapper"
+          icon="solar:shield-network-bold-duotone"
+          isCollapsed={!desktopOpened}
+        />
 
         {user.isLoading ? (
           <Skeleton h={100} mt="sm" animate={false} />
