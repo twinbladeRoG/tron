@@ -137,9 +137,10 @@ const nodeTypes = {
 interface AgentGraphProps {
   graph: IAgentWorkflow['state'];
   visitedNodes?: string[];
+  className?: string;
 }
 
-const AgentGraph: React.FC<AgentGraphProps> = ({ graph, visitedNodes }) => {
+const AgentGraph: React.FC<AgentGraphProps> = ({ graph, visitedNodes, className }) => {
   const { fitView } = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -223,7 +224,7 @@ const AgentGraph: React.FC<AgentGraphProps> = ({ graph, visitedNodes }) => {
   }, [visitedNodes, setNodes]);
 
   return (
-    <div className="w-full flex-1">
+    <div className={className}>
       <ReactFlow
         colorMode={colorScheme === 'dark' ? 'dark' : 'light'}
         nodeTypes={nodeTypes}

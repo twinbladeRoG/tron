@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from src.modules.agent.router import router as agent_router
 from src.modules.auth.router import router as auth_router
 from src.modules.chat.router import router as chat_router
 from src.modules.llm_models.router import router as llm_models_router
@@ -13,3 +14,4 @@ router.include_router(auth_router)
 router.include_router(llm_models_router)
 router.include_router(chat_router)
 router.include_router(scrapper_router)
+router.include_router(agent_router)

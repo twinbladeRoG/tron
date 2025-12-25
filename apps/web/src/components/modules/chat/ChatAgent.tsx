@@ -8,13 +8,10 @@ import {
   ScrollArea,
   Select,
   type SelectProps,
-  Tabs,
   Tooltip,
 } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { EventStreamContentType, fetchEventSource } from '@microsoft/fetch-event-source';
-import { AnimatePresence, motion } from 'motion/react';
 import { v4 as uuid } from 'uuid';
 
 import { getToken } from '@/apis/http';
@@ -37,8 +34,6 @@ const ChatAgent: React.FC<ChatAgentProps> = ({ className }) => {
   const models = useLlmModels();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
-  const [tab, setTab] = useState<string | null>('graph');
-  const [showPanel, panelHandler] = useDisclosure();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [model, setModel] = useState<string | null>(null);
@@ -226,11 +221,7 @@ const ChatAgent: React.FC<ChatAgentProps> = ({ className }) => {
     <section
       className={cn(
         className,
-        'relative grid grid-cols-[1fr_0px] transition-[grid-template-columns] duration-500 lg:gap-4',
-        {
-          'lg:grid-cols-[1fr_380px]': showPanel,
-          'lg:grid-cols-[1fr_0px]': !showPanel,
-        }
+        'relative grid grid-cols-[1fr_0px] transition-[grid-template-columns] duration-500 lg:gap-4'
       )}>
       <div className="flex w-full flex-col overflow-y-auto">
         <div className="flex w-full items-center gap-4">
@@ -243,10 +234,6 @@ const ChatAgent: React.FC<ChatAgentProps> = ({ className }) => {
               <Icon icon="mdi:chat-plus" className="text-2xl" />
             </ActionIcon>
           </Tooltip>
-
-          <ActionIcon variant="subtle" onClick={panelHandler.toggle}>
-            <Icon icon="solar:siderbar-bold-duotone" className="text-2xl" />
-          </ActionIcon>
         </div>
 
         <Divider className="my-3" />
@@ -292,43 +279,6 @@ const ChatAgent: React.FC<ChatAgentProps> = ({ className }) => {
           />
         </ChatInput>
       </div>
-
-      <AnimatePresence>
-        {showPanel && (
-          <motion.div
-            transition={{ ease: 'easeInOut', duration: 0.3 }}
-            initial={{ opacity: 0, translateX: 280 }}
-            animate={{ opacity: 1, translateX: 0 }}
-            exit={{ opacity: 0, translateX: 280 }}>
-            <Tabs
-              value={tab}
-              onChange={setTab}
-              keepMounted={false}
-              classNames={{
-                root: cn(
-                  '!flex !flex-col !min-h-0',
-                  '!absolute !top-0 !bottom-0 !right-0 bg-white dark:bg-gray-950 w-[280px]',
-                  'lg:!static lg:w-full',
-                  {
-                    'w-0': !showPanel,
-                  }
-                ),
-                panel: '!grow h-full flex flex-col overflow-auto',
-              }}>
-              <Tabs.List>
-                <Tabs.Tab value="mermaid">Mermaid</Tabs.Tab>
-                <ActionIcon
-                  className="ml-auto self-center"
-                  variant="subtle"
-                  color="red"
-                  onClick={panelHandler.toggle}>
-                  <Icon icon="solar:close-square-bold-duotone" />
-                </ActionIcon>
-              </Tabs.List>
-            </Tabs>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </section>
   );
 };

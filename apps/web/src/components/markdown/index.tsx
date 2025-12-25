@@ -10,9 +10,11 @@ const renderer = {
   },
   code(code: React.ReactNode) {
     return (
-      <Code block my="md">
-        {code}
-      </Code>
+      <div className="w-full overflow-x-auto! whitespace-pre!">
+        <Code block my="md" className="overflow-x-auto! whitespace-pre!">
+          {code}
+        </Code>
+      </div>
     );
   },
   table(children) {

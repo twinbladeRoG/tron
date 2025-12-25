@@ -16,7 +16,7 @@ tmux send-keys -t "$SESSION":1.1 "pnpm -F api docker:up && source ./apps/api/.ve
 tmux send-keys -t "$SESSION":1.2 "source ./apps/api/.venv/bin/activate && pnpm -F api celery:flower" C-m
 tmux send-keys -t "$SESSION":1.3 "pnpm -F web dev" C-m
 tmux send-keys -t "$SESSION":1.4 "nvtop" C-m
-tmux send-keys -t "$SESSION":1.5 "cd ~/llama.cpp/build/bin && ./llama-server -m ../../models/DeepSeek-R1-Distill-Qwen-14B-Q4_K_L.gguf --port 8090 --jinja -ngl 35" C-m
+tmux send-keys -t "$SESSION":1.5 "cd ~/llama.cpp/build/bin && ./llama-server -m ../../models/Qwen3-14B-Q6_K.gguf --port 8090 --jinja -ngl 35" C-m
 tmux send-keys -t "$SESSION":1.6 "cd ~/llama.cpp/build/bin && ./llama-server -m ../../models/bge-large-en-v1.5_fp32.gguf --embedding --pooling cls -ub 8192 --port 9090" C-m
 
 

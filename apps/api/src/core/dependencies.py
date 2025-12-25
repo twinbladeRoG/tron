@@ -9,6 +9,7 @@ from qdrant_client import QdrantClient
 from sqlmodel import Session
 
 from src.models.models import User
+from src.modules.agent.controller import AgentController
 from src.modules.auth.controller import AuthController
 from src.modules.auth.schema import TokenPayload
 from src.modules.chat.controller import ChatController
@@ -82,4 +83,7 @@ LlmModelControllerDeps = Annotated[
 ChatControllerDeps = Annotated[ChatController, Depends(Factory().get_chat_controller)]
 ScrapeControllerDeps = Annotated[
     ScrapeController, Depends(Factory().get_scrape_controller)
+]
+AgentControllerDeps = Annotated[
+    AgentController, Depends(Factory().get_agent_controller)
 ]

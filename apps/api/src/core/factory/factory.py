@@ -2,6 +2,7 @@ from functools import partial
 
 from src.core.dependencies import SessionDep
 from src.models.models import LlmModel, User
+from src.modules.agent.controller import AgentController
 from src.modules.auth.controller import AuthController
 from src.modules.chat.controller import ChatController
 from src.modules.llm_models.controller import LlmModelController
@@ -31,3 +32,6 @@ class Factory:
 
     def get_scrape_controller(self, db_session: SessionDep):
         return ScrapeController(session=db_session)
+
+    def get_agent_controller(self):
+        return AgentController()

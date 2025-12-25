@@ -3,6 +3,7 @@ import { RouterProvider } from 'react-router/dom';
 
 import RootLayout from './components/modules/shared/RootLayout';
 import NotFound from './components/NotFound';
+import AgentPage from './pages/agent';
 import ChatPage from './pages/chat';
 import LlmModelsPage from './pages/llm-models';
 import LoginPage from './pages/login';
@@ -22,6 +23,7 @@ const router = createBrowserRouter([
       { path: '/chat', element: <ChatPage /> },
       { path: '/models', element: <LlmModelsPage /> },
       { path: '/scrapper', element: <ScrapperPage /> },
+      { path: '/agent', element: <AgentPage /> },
     ],
   },
   {

@@ -1,4 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router';
 import { Icon } from '@iconify/react';
 import {
   ActionIcon,
@@ -23,12 +24,13 @@ import { useLlmModels } from '@/apis/queries/llm-models.queries';
 import { cn, getLlmProviderIcon } from '@/lib/utils';
 import type { LlmProvider } from '@/types';
 
-import AgentGraph from '../chat/AgentGraph';
 import ChatInput from '../chat/ChatInput';
-import ChatMessage from '../chat/ChatMessage';
-import useChatMessages from '../chat/hook';
-import Mermaid from '../chat/Mermaid';
-import type { IMessage } from '../chat/types';
+
+import AgentGraph from './AgentGraph';
+import ChatMessage from './ChatMessage';
+import useChatMessages from './hook';
+import Mermaid from './Mermaid';
+import type { IMessage } from './types';
 
 interface AgentProps {
   className?: string;
@@ -37,21 +39,24 @@ interface AgentProps {
 const API_URL = import.meta.env.VITE_API_URL;
 
 const Agent: React.FC<AgentProps> = ({ className }) => {
-  const workflow = useAgentWorkflow();
   const models = useLlmModels();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [tab, setTab] = useState<string | null>('graph');
-  const [showPanel, panelHandler] = useDisclosure();
-
+  const [showPanel, panelHandler] = useDisclosure(true);
   const [model, setModel] = useState<string | null>(null);
+  const workflow = useAgentWorkflow(model);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
-    if (models.data && models.data.length > 0) {
+    if (model === null && searchParams.get('model') !== null) {
       // eslint-disable-next-line react-hooks/set-state-in-effect, @eslint-react/hooks-extra/no-direct-set-state-in-use-effect
+      setModel(searchParams.get('model'));
+    } else if (model === null && models.data && models.data.length > 0) {
+      // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect
       setModel(models.data[0].name);
     }
-  }, [models.data]);
+  }, [searchParams, model, models.data]);
 
   const renderSelectOption: SelectProps['renderOption'] = ({ option, checked }) => (
     <Group flex="1" gap="xs">
@@ -76,7 +81,7 @@ const Agent: React.FC<AgentProps> = ({ className }) => {
     setVisitedNodes,
   } = useChatMessages();
 
-  const handleSubmit = async (message: string, hasInterrupt: boolean = false) => {
+  const handleSubmit = async (message: string) => {
     if (!model) {
       notifications.show({
         message: 'Please select a model',
@@ -106,20 +111,16 @@ const Agent: React.FC<AgentProps> = ({ className }) => {
 
     const ctrl = new AbortController();
 
-    const messageToSent = hasInterrupt
-      ? (messages.find((m) => m.role === 'user')?.message ?? 'Hi')
-      : message;
-
-    await fetchEventSource(`${API_URL}/api/chat`, {
+    await fetchEventSource(`${API_URL}/api/agent`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${await getToken()}`,
       },
       body: JSON.stringify({
-        message: messageToSent,
+        message: message,
+        model: model,
         conversation_id: conversationId,
-        interrupt_response: hasInterrupt ? { message: message } : undefined,
       }),
       signal: ctrl.signal,
       // eslint-disable-next-line @typescript-eslint/require-await
@@ -132,11 +133,13 @@ const Agent: React.FC<AgentProps> = ({ className }) => {
             color: 'red',
             message: 'Fatal error occurred!',
           });
+          setIsStreaming(false);
         } else {
           notifications.show({
             color: 'yellow',
             message: 'Retry again!',
           });
+          setIsStreaming(false);
         }
       },
       onerror(err) {
@@ -238,7 +241,10 @@ const Agent: React.FC<AgentProps> = ({ className }) => {
             }))}
             renderOption={renderSelectOption}
             value={model}
-            onChange={setModel}
+            onChange={(value) => {
+              setModel(value);
+              if (value) setSearchParams({ model: value });
+            }}
             leftSection={
               <Icon
                 icon={getLlmProviderIcon(
@@ -255,6 +261,7 @@ const Agent: React.FC<AgentProps> = ({ className }) => {
       <AnimatePresence>
         {showPanel && (
           <motion.div
+            className="flex"
             transition={{ ease: 'easeInOut', duration: 0.3 }}
             initial={{ opacity: 0, translateX: 280 }}
             animate={{ opacity: 1, translateX: 0 }}
@@ -289,13 +296,17 @@ const Agent: React.FC<AgentProps> = ({ className }) => {
               <Tabs.Panel value="graph">
                 {workflow.data?.state ? (
                   <ReactFlowProvider>
-                    <AgentGraph graph={workflow.data.state} visitedNodes={visitedNodes} />
+                    <AgentGraph
+                      className="h-full w-full"
+                      graph={workflow.data.state}
+                      visitedNodes={visitedNodes}
+                    />
                   </ReactFlowProvider>
                 ) : null}
               </Tabs.Panel>
 
               <Tabs.Panel value="mermaid">
-                <div className="rounded py-7 dark:bg-amber-50">
+                <div className="rounded py-7">
                   {workflow.data?.mermaid ? <Mermaid>{workflow.data.mermaid}</Mermaid> : null}
                 </div>
               </Tabs.Panel>
