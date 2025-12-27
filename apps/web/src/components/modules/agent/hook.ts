@@ -61,6 +61,7 @@ const useChatMessages = () => {
                 isLoading: false,
                 role: 'bot',
                 isStreaming: true,
+                isThinking: false,
               } satisfies IMessage;
             })
           );
@@ -77,8 +78,9 @@ const useChatMessages = () => {
               return {
                 ...message,
                 id: botMessageId,
-                reason: data.text,
+                reason: `${message?.reason ?? ''}${data.text}`,
                 isLoading: false,
+                isThinking: true,
                 role: 'bot',
                 isStreaming: true,
               } satisfies IMessage;
@@ -148,6 +150,7 @@ const useChatMessages = () => {
                 message: data,
                 isLoading: false,
                 isStreaming: true,
+                isThinking: false,
                 isError: true,
               } satisfies IMessage;
             })
@@ -163,6 +166,7 @@ const useChatMessages = () => {
               return {
                 ...message,
                 isStreaming: false,
+                isThinking: false,
               } satisfies IMessage;
             })
           );

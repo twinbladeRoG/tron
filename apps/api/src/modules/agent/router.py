@@ -5,6 +5,8 @@ from src.core.dependencies import (
     AgentControllerDeps,
     CurrentUser,
     LlmModelControllerDeps,
+    ModelUsageLogControllerDeps,
+    SessionDep,
 )
 
 from .schema import AgentWorkflowResponse, ChatPayload
@@ -19,9 +21,17 @@ async def chat(
     body: ChatPayload,
     *,
     llm_model_controller: LlmModelControllerDeps,
+    model_usage_log_controller: ModelUsageLogControllerDeps,
+    session: SessionDep,
 ):
     return StreamingResponse(
-        controller.chat(body, user=user, llm_model_controller=llm_model_controller),
+        controller.chat(
+            body,
+            user=user,
+            llm_model_controller=llm_model_controller,
+            model_usage_log_controller=model_usage_log_controller,
+            session=session,
+        ),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
@@ -41,6 +51,7 @@ def get_workflow(
     llm_model_controller: LlmModelControllerDeps,
 ):
     state, mermaid = controller.get_agent_workflow(
-        model, llm_model_controller=llm_model_controller
+        model,
+        llm_model_controller=llm_model_controller,
     )
     return AgentWorkflowResponse(mermaid=mermaid, state=state)

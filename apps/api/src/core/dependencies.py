@@ -15,6 +15,7 @@ from src.modules.auth.schema import TokenPayload
 from src.modules.chat.controller import ChatController
 from src.modules.llm_models.controller import LlmModelController
 from src.modules.scrapper.controller import ScrapeController
+from src.modules.usage_log.controller import ModelUsageLogController
 from src.modules.users.controller import UserController
 
 from .config import Settings
@@ -86,4 +87,7 @@ ScrapeControllerDeps = Annotated[
 ]
 AgentControllerDeps = Annotated[
     AgentController, Depends(Factory().get_agent_controller)
+]
+ModelUsageLogControllerDeps = Annotated[
+    ModelUsageLogController, Depends(Factory().get_model_usage_log_controller)
 ]

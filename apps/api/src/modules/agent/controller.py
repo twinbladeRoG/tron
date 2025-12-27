@@ -6,11 +6,13 @@ from langchain.agents import create_agent
 from langchain.messages import AIMessageChunk, HumanMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.memory import InMemorySaver
+from sqlmodel import Session
 
 from src.core.logger import logger
 from src.models.models import User
 from src.modules.llm_models.controller import LlmModelController
 from src.modules.llm_models.llms.utils.callbacks import get_llm_callback
+from src.modules.usage_log.controller import ModelUsageLogController
 
 from .schema import ChatPayload
 from .tools import get_current_time, get_webpage_content
@@ -41,7 +43,7 @@ class AgentController:
             context_schema=Context,
         )
 
-        return agent
+        return agent, llm_model
 
     def get_agent_workflow(
         self, model: str, *, llm_model_controller: LlmModelController
@@ -55,6 +57,7 @@ class AgentController:
             checkpointer=checkpointer,
             system_prompt="You are a helpful assistant",
             context_schema=Context,
+            name="ai-agent",
         )
 
         mermaid = agent.get_graph(xray=True).draw_mermaid()
@@ -63,17 +66,28 @@ class AgentController:
         return state, mermaid
 
     async def chat(
-        self, data: ChatPayload, *, user: User, llm_model_controller: LlmModelController
+        self,
+        data: ChatPayload,
+        *,
+        user: User,
+        session: Session,
+        llm_model_controller: LlmModelController,
+        model_usage_log_controller: ModelUsageLogController,
     ):
         conversation_id = data.conversation_id if data.conversation_id else uuid4()
         yield f"event: conversationId\ndata: {conversation_id.hex}\n\n"
 
         try:
-            agent = self.get_agent(
+            agent, llm_model = self.get_agent(
                 data.model, llm_model_controller=llm_model_controller
             )
 
-            with get_llm_callback(llm_model_controller.repository.session) as cb:
+            with get_llm_callback(
+                user,
+                session,
+                llm_model,
+                model_usage_log_controller=model_usage_log_controller,
+            ) as cb:
                 async for mode, event in agent.astream(
                     input={"messages": [HumanMessage(content=data.message)]},
                     stream_mode=["messages", "updates"],
@@ -100,10 +114,10 @@ class AgentController:
                                 yield f"event: node\ndata: {node}\n\n"
 
                     if mode == "messages":
-                        chunk = event[0]
-                        if isinstance(chunk, AIMessageChunk):
-                            if len(chunk.tool_calls) > 0:
-                                for tool_call in chunk.tool_calls:
+                        message = event[0]
+                        if isinstance(message, AIMessageChunk):
+                            if len(message.tool_calls) > 0:
+                                for tool_call in message.tool_calls:
                                     tool_name = tool_call.get("name")
                                     if tool_name:
                                         tools_details = {
@@ -113,8 +127,13 @@ class AgentController:
                                         }
                                         yield f"event: tool_call\ndata: {json.dumps(tools_details)}\n\n"
 
-                            message = {"text": chunk.content}
-                            yield f"event: message\ndata: {json.dumps(message)}\n\n"
+                            reason = message.additional_kwargs.get("reasoning_content")
+                            if reason:
+                                yield f"event: reason\ndata: {json.dumps({'text': reason})}\n\n"
+
+                            content = message.content
+                            if content:
+                                yield f"event: message\ndata: {json.dumps({'text': content})}\n\n"
 
                 yield f"event: usage\ndata: {cb.get_usage().model_dump_json()}\n\n"
 

@@ -6,6 +6,7 @@ export interface IMessage {
   isLoading?: boolean;
   isError?: boolean;
   isStreaming?: boolean;
+  isThinking?: boolean;
   token_usage?: ITokenUsage;
   usage?: IUsage;
   tools_calls?: Array<IToolCall>;

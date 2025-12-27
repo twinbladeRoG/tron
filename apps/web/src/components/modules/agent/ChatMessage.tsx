@@ -24,6 +24,7 @@ const ChatMessage: React.FC<IMessage> = ({
   isError,
   isLoading,
   isStreaming,
+  isThinking: isReasoning,
   role,
   usage,
   tools_calls,
@@ -104,13 +105,17 @@ const ChatMessage: React.FC<IMessage> = ({
               size="compact-xs"
               variant="subtle"
               color="blue"
-              leftSection={isThinking ? <Icon icon="svg-spinners:270-ring-with-bg" /> : undefined}
+              leftSection={
+                isThinking || isReasoning ? (
+                  <Icon icon="svg-spinners:270-ring-with-bg" />
+                ) : undefined
+              }
               rightSection={<Icon icon="solar:alt-arrow-down-bold-duotone" />}
               onClick={handler.toggle}>
-              {isThinking ? 'Thinking' : 'Thought'}
+              {isThinking || isReasoning ? 'Thinking' : 'Thought'}
             </Button>
             <Collapse
-              in={opened || isThinking}
+              in={opened || isThinking || !!isReasoning}
               className="mt-1 mb-2 rounded-2xl bg-purple-700/20 p-4">
               {reason ? <Markdown renderer={renderer}>{reason}</Markdown> : null}
               {thought ? <Markdown renderer={renderer}>{thought}</Markdown> : null}

@@ -1,7 +1,6 @@
 import threading
 from contextlib import contextmanager
 from contextvars import ContextVar
-from datetime import datetime
 from typing import (
     Any,
     Generator,
@@ -19,71 +18,50 @@ from langchain_core.callbacks import BaseCallbackHandler
 from langchain_core.messages import AIMessage
 from langchain_core.outputs import ChatGeneration, LLMResult
 from langchain_core.tracers.context import register_configure_hook
-from pydantic import BaseModel
 from sqlmodel import Session
 
+from src.models.models import LlmModel, User
+from src.modules.usage_log.controller import ModelUsageLogController
+from src.modules.usage_log.schema import ModelUsageLogBase
 from src.utils.time import utcnow
-
-
-class LlmUsage(BaseModel):
-    total_tokens: int = 0
-    prompt_tokens: int = 0
-    prompt_tokens_cached: int = 0
-    completion_tokens: int = 0
-    reasoning_tokens: int = 0
-    successful_requests: int = 0
-    total_cost: float = 0.0
-    _start_time: datetime | None = None
-    _end_time: datetime | None = None
-    time: float = 0
 
 
 class LlmUsageCallbackHandler(BaseCallbackHandler):
     """Callback Handler that tracks LLM info."""
 
-    total_tokens: int = 0
-    prompt_tokens: int = 0
-    prompt_tokens_cached: int = 0
-    completion_tokens: int = 0
-    reasoning_tokens: int = 0
-    successful_requests: int = 0
-    total_cost: float = 0.0
-    _start_time: datetime | None = None
-    _end_time: datetime | None = None
-    time: float = 0
+    usage_log: ModelUsageLogBase = ModelUsageLogBase()
 
     raise_error = True
 
-    def __init__(self, session: Session) -> None:
+    def __init__(
+        self,
+        user: User,
+        session: Session,
+        model: LlmModel,
+        *,
+        model_usage_log_controller: ModelUsageLogController,
+    ) -> None:
         super().__init__()
         self._lock = threading.Lock()
         self.session = session
+        self.user = user
+        self.model = model
+        self.model_usage_log_controller = model_usage_log_controller
 
     def __repr__(self) -> str:
         return (
-            f"Tokens Used: {self.total_tokens}\n"
-            f"\tPrompt Tokens: {self.prompt_tokens}\n"
-            f"\t\tPrompt Tokens Cached: {self.prompt_tokens_cached}\n"
-            f"\tCompletion Tokens: {self.completion_tokens}\n"
-            f"\t\tReasoning Tokens: {self.reasoning_tokens}\n"
-            f"Successful Requests: {self.successful_requests}\n"
-            f"Total Cost (USD): ${self.total_cost}\n"
-            f"Total Time: {self.time} seconds"
+            f"Tokens Used: {self.usage_log.total_tokens}\n"
+            f"\tPrompt Tokens: {self.usage_log.prompt_tokens}\n"
+            f"\t\tPrompt Tokens Cached: {self.usage_log.prompt_tokens_cached}\n"
+            f"\tCompletion Tokens: {self.usage_log.completion_tokens}\n"
+            f"\t\tReasoning Tokens: {self.usage_log.reasoning_tokens}\n"
+            f"Successful Requests: {self.usage_log.successful_requests}\n"
+            f"Total Cost (USD): ${self.usage_log.total_cost}\n"
+            f"Total Time: {self.usage_log.time} seconds"
         )
 
-    def get_usage(self) -> LlmUsage:
-        return LlmUsage(
-            total_tokens=self.total_tokens,
-            prompt_tokens=self.prompt_tokens,
-            prompt_tokens_cached=self.prompt_tokens_cached,
-            completion_tokens=self.completion_tokens,
-            reasoning_tokens=self.reasoning_tokens,
-            successful_requests=self.successful_requests,
-            total_cost=self.total_cost,
-            _start_time=self._start_time,
-            _end_time=self._end_time,
-            time=self.time,
-        )
+    def get_usage(self) -> ModelUsageLogBase:
+        return self.usage_log
 
     def on_llm_start(
         self,
@@ -97,7 +75,7 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
         **kwargs: Any,
     ) -> Any:
         with self._lock:
-            self._start_time = utcnow()
+            self.usage_log.start_time = utcnow()
 
     def on_llm_end(
         self,
@@ -185,16 +163,24 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
             prompt_cost = 0
 
         with self._lock:
-            self.total_cost += prompt_cost + completion_cost
-            self.total_tokens += token_usage.get("total_tokens", 0)
-            self.prompt_tokens += prompt_tokens
-            self.prompt_tokens_cached += prompt_tokens_cached
-            self.completion_tokens += completion_tokens
-            self.reasoning_tokens += reasoning_tokens
-            self.successful_requests += 1
-            self._end_time = utcnow()
-            if self._start_time is not None and self._end_time is not None:
-                self.time = (self._end_time - self._start_time).total_seconds()
+            self.usage_log.total_cost += prompt_cost + completion_cost
+            self.usage_log.total_tokens += token_usage.get("total_tokens", 0)
+            self.usage_log.prompt_tokens += prompt_tokens
+            self.usage_log.prompt_tokens_cached += prompt_tokens_cached
+            self.usage_log.completion_tokens += completion_tokens
+            self.usage_log.reasoning_tokens += reasoning_tokens
+            self.usage_log.successful_requests += 1
+            self.usage_log.end_time = utcnow()
+            if (
+                self.usage_log.start_time is not None
+                and self.usage_log.end_time is not None
+            ):
+                self.usage_log.time = (
+                    self.usage_log.end_time - self.usage_log.start_time
+                ).total_seconds()
+
+            # Log usage to database
+            self.model_usage_log_controller.log(self.usage_log, self.user, self.model)
 
 
 llm_callback_var: ContextVar[Optional[LlmUsageCallbackHandler]] = ContextVar(
@@ -206,7 +192,11 @@ register_configure_hook(llm_callback_var, True)
 
 @contextmanager
 def get_llm_callback(
+    user: User,
     session: Session,
+    model: LlmModel,
+    *,
+    model_usage_log_controller: ModelUsageLogController,
 ) -> Generator[LlmUsageCallbackHandler, None, None]:
     """Get the LLM callback handler in a context manager.
     which conveniently exposes token and cost information.
@@ -218,7 +208,9 @@ def get_llm_callback(
         >>> with get_llm_callback() as cb:
         ...     # Use the OpenAI callback handler
     """
-    cb = LlmUsageCallbackHandler(session)
+    cb = LlmUsageCallbackHandler(
+        user, session, model, model_usage_log_controller=model_usage_log_controller
+    )
     llm_callback_var.set(cb)
     yield cb
     llm_callback_var.set(None)
