@@ -8,6 +8,7 @@ import ChatPage from './pages/chat';
 import LlmModelsPage from './pages/llm-models';
 import LoginPage from './pages/login';
 import ScrapperPage from './pages/scrapper';
+import UsageLogPage from './pages/usage-logs';
 import Home from './pages';
 
 const router = createBrowserRouter([
@@ -24,6 +25,7 @@ const router = createBrowserRouter([
       { path: '/models', element: <LlmModelsPage /> },
       { path: '/scrapper', element: <ScrapperPage /> },
       { path: '/agent', element: <AgentPage /> },
+      { path: '/usage-logs', element: <UsageLogPage /> },
     ],
   },
   {

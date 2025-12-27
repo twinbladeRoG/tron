@@ -77,11 +77,17 @@ const RootLayout = () => {
           icon="solar:chat-square-bold-duotone"
           isCollapsed={!desktopOpened}
         />
-        <AppNavLink to="/models" label="Models" icon="si:ai-duotone" isCollapsed={!desktopOpened} />
         <AppNavLink
           to="/agent"
           label="Agent"
           icon="ph:robot-duotone"
+          isCollapsed={!desktopOpened}
+        />
+        <AppNavLink to="/models" label="Models" icon="si:ai-duotone" isCollapsed={!desktopOpened} />
+        <AppNavLink
+          to="/usage-logs"
+          label="Model Usage"
+          icon="solar:graph-bold-duotone"
           isCollapsed={!desktopOpened}
         />
         <AppNavLink

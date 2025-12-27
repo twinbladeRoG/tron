@@ -15,3 +15,9 @@ export interface IAddLlmModelRequest {
   display_name: string;
   provider: LlmProvider;
 }
+
+export interface IUsageLogQueryParams {
+  model_name: string;
+  from_date?: Date;
+  to_date?: Date;
+}

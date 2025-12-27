@@ -1,8 +1,9 @@
 from src.core.controller.base import BaseController
 from src.models.models import LlmModel, ModelUsageLog, User
+from src.modules.llm_models.controller import LlmModelController
 
 from .repository import ModelUsageLogRepository
-from .schema import CreateModelUsageLog, ModelUsageLogBase
+from .schema import CreateModelUsageLog, FilterParams, ModelUsageLogBase
 
 
 class ModelUsageLogController(BaseController[ModelUsageLog]):
@@ -15,3 +16,14 @@ class ModelUsageLogController(BaseController[ModelUsageLog]):
             **data.model_dump(), user_id=user.id, model_id=model.id
         )
         return self.repository.create(payload.model_dump())
+
+    def get_usage_logs(
+        self,
+        user: User,
+        filter: FilterParams,
+        *,
+        llm_model_controller: LlmModelController,
+    ):
+        return self.repository.get_user_logs(
+            user.id, filter, llm_model_controller=llm_model_controller
+        )

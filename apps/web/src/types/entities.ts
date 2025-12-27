@@ -60,3 +60,16 @@ export interface IScrapeResult {
     customer_persona: string;
   };
 }
+
+export interface IUsageLog extends IBaseEntity {
+  total_tokens: number;
+  prompt_tokens: number;
+  prompt_tokens_cached: number;
+  completion_tokens: number;
+  reasoning_tokens: number;
+  successful_requests: number;
+  total_cost: number;
+  start_time: string;
+  end_time: string;
+  time: number;
+}

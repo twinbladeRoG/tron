@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
+from pydantic import model_validator
 from sqlmodel import Field, SQLModel
 
 
@@ -21,3 +22,21 @@ class ModelUsageLogBase(SQLModel):
 class CreateModelUsageLog(ModelUsageLogBase):
     model_id: UUID
     user_id: UUID
+
+
+class FilterParams(SQLModel):
+    model_name: str = Field()
+    from_date: datetime | None = Field(default=None)
+    to_date: datetime | None = Field(default=None)
+
+    @model_validator(mode="after")
+    def validate_dates(self):
+        # Rule 1: to_date required if from_date is provided
+        if self.from_date and not self.to_date:
+            raise ValueError("`to_date` is required when `from_date` is provided.")
+
+        # Rule 2: to_date >= from_date
+        if self.from_date and self.to_date and self.to_date < self.from_date:
+            raise ValueError("`to_date` cannot be older than `from_date`.")
+
+        return self
