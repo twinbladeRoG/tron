@@ -20,7 +20,8 @@ from langchain_core.outputs import ChatGeneration, LLMResult
 from langchain_core.tracers.context import register_configure_hook
 from sqlmodel import Session
 
-from src.models.models import LlmModel, User
+from src.models.models import Conversation, LlmModel, User
+from src.modules.conversation.controller import ConversationController
 from src.modules.usage_log.controller import ModelUsageLogController
 from src.modules.usage_log.schema import ModelUsageLogBase
 from src.utils.time import utcnow
@@ -38,15 +39,19 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
         user: User,
         session: Session,
         model: LlmModel,
+        conversation: Conversation,
         *,
         model_usage_log_controller: ModelUsageLogController,
+        conversation_controller: ConversationController,
     ) -> None:
         super().__init__()
         self._lock = threading.Lock()
         self.session = session
         self.user = user
         self.model = model
+        self.conversation = conversation
         self.model_usage_log_controller = model_usage_log_controller
+        self.conversation_controller = conversation_controller
 
     def __repr__(self) -> str:
         return (
@@ -180,7 +185,9 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
                 ).total_seconds()
 
             # Log usage to database
-            self.model_usage_log_controller.log(self.usage_log, self.user, self.model)
+            self.model_usage_log_controller.log(
+                self.usage_log, self.user, self.model, self.conversation
+            )
 
 
 llm_callback_var: ContextVar[Optional[LlmUsageCallbackHandler]] = ContextVar(
@@ -195,8 +202,10 @@ def get_llm_callback(
     user: User,
     session: Session,
     model: LlmModel,
+    conversation: Conversation,
     *,
     model_usage_log_controller: ModelUsageLogController,
+    conversation_controller: ConversationController,
 ) -> Generator[LlmUsageCallbackHandler, None, None]:
     """Get the LLM callback handler in a context manager.
     which conveniently exposes token and cost information.
@@ -209,7 +218,12 @@ def get_llm_callback(
         ...     # Use the OpenAI callback handler
     """
     cb = LlmUsageCallbackHandler(
-        user, session, model, model_usage_log_controller=model_usage_log_controller
+        user,
+        session,
+        model,
+        conversation,
+        model_usage_log_controller=model_usage_log_controller,
+        conversation_controller=conversation_controller,
     )
     llm_callback_var.set(cb)
     yield cb

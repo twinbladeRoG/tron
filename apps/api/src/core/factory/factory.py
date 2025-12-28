@@ -1,10 +1,12 @@
 from functools import partial
 
 from src.core.dependencies import SessionDep
-from src.models.models import LlmModel, ModelUsageLog, User
+from src.models.models import Conversation, LlmModel, ModelUsageLog, User
 from src.modules.agent.controller import AgentController
 from src.modules.auth.controller import AuthController
 from src.modules.chat.controller import ChatController
+from src.modules.conversation.controller import ConversationController
+from src.modules.conversation.repository import ConversationRepository
 from src.modules.llm_models.controller import LlmModelController
 from src.modules.llm_models.repository import LlmModelRepository
 from src.modules.scrapper.controller import ScrapeController
@@ -18,6 +20,7 @@ class Factory:
     user_repository = partial(UserRepository, User)
     llm_models_repository = partial(LlmModelRepository, LlmModel)
     model_usage_log_repository = partial(ModelUsageLogRepository, ModelUsageLog)
+    conversation_repository = partial(ConversationRepository, Conversation)
 
     def get_user_controller(self, db_session: SessionDep):
         return UserController(repository=self.user_repository(session=db_session))
@@ -42,4 +45,9 @@ class Factory:
     def get_model_usage_log_controller(self, db_session: SessionDep):
         return ModelUsageLogController(
             repository=self.model_usage_log_repository(session=db_session)
+        )
+
+    def get_conversation_controller(self, db_session: SessionDep):
+        return ConversationController(
+            repository=self.conversation_repository(session=db_session)
         )

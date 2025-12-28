@@ -3,6 +3,7 @@ from fastapi.responses import StreamingResponse
 
 from src.core.dependencies import (
     AgentControllerDeps,
+    ConversationControllerDeps,
     CurrentUser,
     LlmModelControllerDeps,
     ModelUsageLogControllerDeps,
@@ -22,15 +23,17 @@ async def chat(
     *,
     llm_model_controller: LlmModelControllerDeps,
     model_usage_log_controller: ModelUsageLogControllerDeps,
+    conversation_controller: ConversationControllerDeps,
     session: SessionDep,
 ):
     return StreamingResponse(
         controller.chat(
             body,
             user=user,
+            session=session,
             llm_model_controller=llm_model_controller,
             model_usage_log_controller=model_usage_log_controller,
-            session=session,
+            conversation_controller=conversation_controller,
         ),
         media_type="text/event-stream",
         headers={
@@ -42,7 +45,7 @@ async def chat(
     )
 
 
-@router.get("/workflow/{model}")
+@router.get("/workflow/{model}", response_model=AgentWorkflowResponse)
 def get_workflow(
     user: CurrentUser,
     controller: AgentControllerDeps,

@@ -21,3 +21,9 @@ export interface IUsageLogQueryParams {
   from_date?: Date;
   to_date?: Date;
 }
+
+export interface IConversationQueryParams {
+  from_date: Date;
+  to_date?: Date;
+  search?: string;
+}

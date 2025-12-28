@@ -1,5 +1,5 @@
 from src.core.controller.base import BaseController
-from src.models.models import LlmModel, ModelUsageLog, User
+from src.models.models import Conversation, LlmModel, ModelUsageLog, User
 from src.modules.llm_models.controller import LlmModelController
 
 from .repository import ModelUsageLogRepository
@@ -11,9 +11,18 @@ class ModelUsageLogController(BaseController[ModelUsageLog]):
         super().__init__(model=ModelUsageLog, repository=repository)
         self.repository = repository
 
-    def log(self, data: ModelUsageLogBase, user: User, model: LlmModel):
+    def log(
+        self,
+        data: ModelUsageLogBase,
+        user: User,
+        model: LlmModel,
+        conversation: Conversation,
+    ):
         payload = CreateModelUsageLog(
-            **data.model_dump(), user_id=user.id, model_id=model.id
+            **data.model_dump(),
+            user_id=user.id,
+            model_id=model.id,
+            conversation_id=conversation.id,
         )
         return self.repository.create(payload.model_dump())
 

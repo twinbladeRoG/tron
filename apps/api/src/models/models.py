@@ -4,6 +4,7 @@ from pydantic import field_validator
 from sqlmodel import Field, Relationship
 
 from src.core.security import PasswordHandler
+from src.modules.conversation.schema import ConversationBase
 from src.modules.llm_models.schema import LlmModelBase
 from src.modules.usage_log.schema import ModelUsageLogBase
 from src.modules.users.schema import UserBase
@@ -23,6 +24,7 @@ class User(BaseModelMixin, UserBase, table=True):
         return f"{self.id}: {self.username}, {self.email}"
 
     usage_logs: list["ModelUsageLog"] = Relationship(back_populates="user")
+    conversations: list["Conversation"] = Relationship(back_populates="user")
 
 
 class LlmModel(BaseModelMixin, LlmModelBase, table=True):
@@ -35,3 +37,13 @@ class ModelUsageLog(BaseModelMixin, ModelUsageLogBase, table=True):
 
     user_id: UUID = Field(foreign_key="user.id", nullable=False)
     user: User = Relationship(back_populates="usage_logs")
+
+    conversation_id: UUID = Field(foreign_key="conversation.id", nullable=False)
+    conversation: "Conversation" = Relationship(back_populates="usage_logs")
+
+
+class Conversation(BaseModelMixin, ConversationBase, table=True):
+    user_id: UUID = Field(foreign_key="user.id", nullable=False)
+    user: User = Relationship(back_populates="conversations")
+
+    usage_logs: list[ModelUsageLog] = Relationship(back_populates="conversation")

@@ -72,4 +72,14 @@ export interface IUsageLog extends IBaseEntity {
   start_time: string;
   end_time: string;
   time: number;
+
+  model_id: string;
+  user_id: string;
+  conversation_id: string;
+}
+
+export interface IConversation extends IBaseEntity {
+  title: string;
+
+  user_id: string;
 }

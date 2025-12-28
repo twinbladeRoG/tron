@@ -7,13 +7,14 @@ from src.core.dependencies import (
     LlmModelControllerDeps,
     ModelUsageLogControllerDeps,
 )
+from src.models.models import ModelUsageLog
 
 from .schema import FilterParams
 
 router = APIRouter(prefix="/usage-logs", tags=["Usage Logs"])
 
 
-@router.get("/")
+@router.get("/", response_model=list[ModelUsageLog])
 def get_user_logs(
     user: CurrentUser,
     controller: ModelUsageLogControllerDeps,

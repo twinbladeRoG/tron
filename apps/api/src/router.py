@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from src.modules.agent.router import router as agent_router
 from src.modules.auth.router import router as auth_router
 from src.modules.chat.router import router as chat_router
+from src.modules.conversation.router import router as conversation_router
 from src.modules.llm_models.router import router as llm_models_router
 from src.modules.scrapper.router import router as scrapper_router
 from src.modules.usage_log.router import router as usage_log_router
@@ -17,3 +18,4 @@ router.include_router(chat_router)
 router.include_router(scrapper_router)
 router.include_router(agent_router)
 router.include_router(usage_log_router)
+router.include_router(conversation_router)

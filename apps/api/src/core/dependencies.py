@@ -13,6 +13,7 @@ from src.modules.agent.controller import AgentController
 from src.modules.auth.controller import AuthController
 from src.modules.auth.schema import TokenPayload
 from src.modules.chat.controller import ChatController
+from src.modules.conversation.controller import ConversationController
 from src.modules.llm_models.controller import LlmModelController
 from src.modules.scrapper.controller import ScrapeController
 from src.modules.usage_log.controller import ModelUsageLogController
@@ -90,4 +91,7 @@ AgentControllerDeps = Annotated[
 ]
 ModelUsageLogControllerDeps = Annotated[
     ModelUsageLogController, Depends(Factory().get_model_usage_log_controller)
+]
+ConversationControllerDeps = Annotated[
+    ConversationController, Depends(Factory().get_conversation_controller)
 ]

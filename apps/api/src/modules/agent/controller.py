@@ -1,6 +1,6 @@
 import json
 from dataclasses import dataclass
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from langchain.agents import create_agent
 from langchain.messages import AIMessageChunk, HumanMessage
@@ -10,6 +10,8 @@ from sqlmodel import Session
 
 from src.core.logger import logger
 from src.models.models import User
+from src.modules.conversation.controller import ConversationController
+from src.modules.conversation.schema import ConversationBase
 from src.modules.llm_models.controller import LlmModelController
 from src.modules.llm_models.llms.utils.callbacks import get_llm_callback
 from src.modules.usage_log.controller import ModelUsageLogController
@@ -73,9 +75,18 @@ class AgentController:
         session: Session,
         llm_model_controller: LlmModelController,
         model_usage_log_controller: ModelUsageLogController,
+        conversation_controller: ConversationController,
     ):
-        conversation_id = data.conversation_id if data.conversation_id else uuid4()
-        yield f"event: conversationId\ndata: {conversation_id.hex}\n\n"
+        if data.conversation_id:
+            conversation = conversation_controller.get_conversation(
+                data.conversation_id, user
+            )
+        else:
+            conversation = conversation_controller.create_conversation(
+                user, ConversationBase(title=data.message[:25])
+            )
+
+        yield f"event: conversationId\ndata: {conversation.id.hex}\n\n"
 
         try:
             agent, llm_model = self.get_agent(
@@ -86,19 +97,21 @@ class AgentController:
                 user,
                 session,
                 llm_model,
+                conversation,
                 model_usage_log_controller=model_usage_log_controller,
-            ) as cb:
+                conversation_controller=conversation_controller,
+            ) as callback:
                 async for mode, event in agent.astream(
                     input={"messages": [HumanMessage(content=data.message)]},
                     stream_mode=["messages", "updates"],
                     context=Context(user_id=user.id),
                     config=RunnableConfig(
-                        configurable={"thread_id": conversation_id.hex}
+                        configurable={"thread_id": conversation.id.hex}
                     ),
                 ):
                     state = agent.get_state(
                         config=RunnableConfig(
-                            configurable={"thread_id": conversation_id.hex}
+                            configurable={"thread_id": conversation.id.hex}
                         )
                     )
 
@@ -135,7 +148,7 @@ class AgentController:
                             if content:
                                 yield f"event: message\ndata: {json.dumps({'text': content})}\n\n"
 
-                yield f"event: usage\ndata: {cb.get_usage().model_dump_json()}\n\n"
+                yield f"event: usage\ndata: {callback.get_usage().model_dump_json()}\n\n"
 
         except Exception as e:
             logger.error(e)

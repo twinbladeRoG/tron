@@ -25,6 +25,7 @@ import { cn, getLlmProviderIcon } from '@/lib/utils';
 import type { LlmProvider } from '@/types';
 
 import ChatInput from '../chat/ChatInput';
+import Conversations from '../conversations/Conversations';
 
 import AgentGraph from './AgentGraph';
 import ChatMessage from './ChatMessage';
@@ -284,6 +285,7 @@ const Agent: React.FC<AgentProps> = ({ className }) => {
               <Tabs.List>
                 <Tabs.Tab value="graph">Graph</Tabs.Tab>
                 <Tabs.Tab value="mermaid">Mermaid</Tabs.Tab>
+                <Tabs.Tab value="conversations">Conversations</Tabs.Tab>
                 <ActionIcon
                   className="ml-auto self-center"
                   variant="subtle"
@@ -309,6 +311,10 @@ const Agent: React.FC<AgentProps> = ({ className }) => {
                 <div className="rounded py-7">
                   {workflow.data?.mermaid ? <Mermaid>{workflow.data.mermaid}</Mermaid> : null}
                 </div>
+              </Tabs.Panel>
+
+              <Tabs.Panel value="conversations">
+                <Conversations />
               </Tabs.Panel>
             </Tabs>
           </motion.div>
