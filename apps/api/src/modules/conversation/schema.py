@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from sqlmodel import Field, SQLModel
 
@@ -19,10 +19,3 @@ class ConversationFilterParams(SQLModel):
     from_date: datetime
     to_date: datetime | None = utcnow()
     search: Optional[str] = None
-
-
-class MessageBase(SQLModel):
-    model_id: UUID = Field(default_factory=uuid4, primary_key=True)
-    content: str = Field()
-    reason: Optional[str] = Field()
-    type: str

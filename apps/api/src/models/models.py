@@ -6,6 +6,7 @@ from sqlmodel import Field, Relationship
 from src.core.security import PasswordHandler
 from src.modules.conversation.schema import ConversationBase
 from src.modules.llm_models.schema import LlmModelBase
+from src.modules.messages.schema import MessageBase
 from src.modules.usage_log.schema import ModelUsageLogBase
 from src.modules.users.schema import UserBase
 
@@ -25,6 +26,7 @@ class User(BaseModelMixin, UserBase, table=True):
 
     usage_logs: list["ModelUsageLog"] = Relationship(back_populates="user")
     conversations: list["Conversation"] = Relationship(back_populates="user")
+    messages: list["Message"] = Relationship(back_populates="user")
 
 
 class LlmModel(BaseModelMixin, LlmModelBase, table=True):
@@ -47,3 +49,15 @@ class Conversation(BaseModelMixin, ConversationBase, table=True):
     user: User = Relationship(back_populates="conversations")
 
     usage_logs: list[ModelUsageLog] = Relationship(back_populates="conversation")
+
+    messages: list["Message"] = Relationship(back_populates="conversation")
+
+
+class Message(BaseModelMixin, MessageBase, table=True):
+    user_id: UUID = Field(foreign_key="user.id", nullable=False)
+    user: User = Relationship(back_populates="messages")
+
+    conversation_id: UUID = Field(foreign_key="conversation.id", nullable=False)
+    conversation: Conversation = Relationship(back_populates="messages")
+
+    model_id: UUID = Field(foreign_key="llmmodel.id", nullable=False)

@@ -101,8 +101,10 @@ class AgentController:
                 model_usage_log_controller=model_usage_log_controller,
                 conversation_controller=conversation_controller,
             ) as callback:
+                human_message = HumanMessage(content=data.message)
+
                 async for mode, event in agent.astream(
-                    input={"messages": [HumanMessage(content=data.message)]},
+                    input={"messages": [human_message]},
                     stream_mode=["messages", "updates"],
                     context=Context(user_id=user.id),
                     config=RunnableConfig(

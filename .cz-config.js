@@ -32,7 +32,7 @@ module.exports = {
       name: '🚚 chore:\tChanges to the build process or auxiliary tools\n\t\tand libraries such as documentation generation',
     },
     { value: ':rewind: revert', name: '⏪️ revert:\tRevert to a commit' },
-    { value: ':construction: WIP', name: '🚧 WIP:\tWork in progress' },
+    { value: ':construction: wip', name: '🚧 wip:\tWork in progress' },
     {
       value: ':construction_worker: build',
       name: '👷 build:\tAdd or update regards to build process',
