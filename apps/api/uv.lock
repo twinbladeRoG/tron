@@ -3540,6 +3540,7 @@ dependencies = [
     { name = "langchain-openai" },
     { name = "langchain-text-splitters" },
     { name = "langgraph" },
+    { name = "lxml" },
     { name = "passlib", extra = ["argon2"] },
     { name = "psycopg2-binary" },
     { name = "pydantic-settings" },
@@ -3547,6 +3548,7 @@ dependencies = [
     { name = "qdrant-client" },
     { name = "sqlmodel" },
     { name = "typed-settings" },
+    { name = "websockets" },
 ]
 
 [package.dev-dependencies]
@@ -3568,6 +3570,7 @@ requires-dist = [
     { name = "langchain-openai", specifier = ">=1.0.3" },
     { name = "langchain-text-splitters", specifier = ">=1.0.0" },
     { name = "langgraph", specifier = ">=1.0.3" },
+    { name = "lxml", specifier = ">=5.4.0" },
     { name = "passlib", extras = ["argon2"], specifier = ">=1.7.4" },
     { name = "psycopg2-binary", specifier = ">=2.9.11" },
     { name = "pydantic-settings", specifier = ">=2.12.0" },
@@ -3575,6 +3578,7 @@ requires-dist = [
     { name = "qdrant-client", specifier = ">=1.16.0" },
     { name = "sqlmodel", specifier = ">=0.0.27" },
     { name = "typed-settings", specifier = ">=25.2.0" },
+    { name = "websockets", specifier = ">=15.0.1" },
 ]
 
 [package.metadata.requires-dev]

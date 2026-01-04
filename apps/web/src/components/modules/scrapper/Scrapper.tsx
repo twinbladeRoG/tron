@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { type ChangeEvent, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Button, Loader, TextInput } from '@mantine/core';
+import { Badge, Button, Checkbox, Loader, Skeleton, Table, Text, TextInput } from '@mantine/core';
 import * as yup from 'yup';
 
-import { useScrapper } from '@/apis/queries/scrapper.queries';
-import type { IScrapeResult } from '@/types';
+import { useDiscoverUrls } from '@/apis/queries/scrapper.queries';
+import { cn } from '@/lib/utils';
+
+import UrlExtraction from './UrlExtraction';
 
 const schema = yup.object({
   url: yup.string().required('Required').url(),
@@ -21,43 +23,114 @@ const Scrapper: React.FC<ScrapperProps> = ({ className }) => {
     defaultValues: { url: 'https://letsboing.com/' },
   });
 
-  const scrape = useScrapper();
+  const discoverUrls = useDiscoverUrls();
 
-  const [result, setResult] = useState<IScrapeResult | null>(null);
+  const [urls, setUrls] = useState<string[]>([]);
+  const [selectedUrls, setSelectedUrls] = useState<string[]>([]);
+  const [mode, setMode] = useState<'initial' | 'discovery' | 'extraction'>('initial');
 
   const handleSubmit = form.handleSubmit((data) => {
-    setResult(null);
-    scrape.mutate(data.url, {
+    setUrls([]);
+    discoverUrls.mutate(data.url, {
       onSuccess: (data) => {
-        setResult(data);
+        setUrls(data);
+        setMode('discovery');
+        setSelectedUrls([]);
       },
     });
   });
 
+  const handleSelectAll = (event: ChangeEvent<HTMLInputElement>) => {
+    if (event.target.checked) {
+      setSelectedUrls(urls);
+    } else {
+      setSelectedUrls([]);
+    }
+  };
+
   return (
-    <div className={className}>
-      <form onSubmit={handleSubmit} className="flex gap-4">
+    <div className={cn(className, 'flex flex-col')}>
+      <form onSubmit={handleSubmit} className="mb-7 flex gap-4">
         <TextInput
           placeholder="https://example.com"
           radius="lg"
           type="url"
           {...form.register('url')}
-          disabled={scrape.isPending}
+          disabled={discoverUrls.isPending}
           className="flex-1"
         />
-        <Button type="submit" radius="lg" loading={scrape.isPending}>
+        <Button type="submit" radius="lg" loading={discoverUrls.isPending}>
           Submit
         </Button>
       </form>
 
-      {scrape.isPending ? (
+      {discoverUrls.isPending ? (
         <div className="my-4 flex items-center gap-4">
           <p className="text-xs">Scraping website...</p>
           <Loader size="xs" />
         </div>
       ) : null}
 
-      {result ? (
+      {discoverUrls.isPending ? (
+        <div className="">
+          <Skeleton h={40} />
+        </div>
+      ) : (
+        <div className="flex flex-col overflow-auto">
+          <div className="mb-4 grid grid-cols-3 gap-4">
+            <div className="flex items-center gap-3">
+              <Text size="sm">Total URLs discoverd:</Text>
+              <Badge variant="light">{urls.length}</Badge>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Text size="sm">Total URLs Selected:</Text>
+              <Badge variant="light">{selectedUrls.length}</Badge>
+            </div>
+
+            <div className="flex justify-end gap-3"></div>
+          </div>
+
+          <UrlExtraction urls={selectedUrls} onStartExtraction={() => setMode('extraction')} />
+
+          {mode === 'discovery' && (
+            <Table.ScrollContainer minWidth={500}>
+              <Table stickyHeader stickyHeaderOffset={0}>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>
+                      <Checkbox onChange={handleSelectAll} />
+                    </Table.Th>
+                    <Table.Th>URL</Table.Th>
+                  </Table.Tr>
+                </Table.Thead>
+
+                <Table.Tbody>
+                  {urls.map((url) => (
+                    <Table.Tr key={url}>
+                      <Table.Td>
+                        <Checkbox
+                          checked={selectedUrls.includes(url)}
+                          onChange={(event) => {
+                            if (event.target.checked) {
+                              setSelectedUrls((prev) => [...prev, url]);
+                            } else {
+                              setSelectedUrls((prev) => prev.filter((i) => i !== url));
+                            }
+                          }}
+                        />
+                      </Table.Td>
+                      <Table.Td>{url}</Table.Td>
+                    </Table.Tr>
+                  ))}
+                </Table.Tbody>
+              </Table>
+            </Table.ScrollContainer>
+          )}
+        </div>
+      )}
+
+      {/* {result ? (
         <div className="mt-4">
           <div className="">
             <p className="">
@@ -71,7 +144,7 @@ const Scrapper: React.FC<ScrapperProps> = ({ className }) => {
             </p>
           </div>
         </div>
-      ) : null}
+      ) : null} */}
     </div>
   );
 };

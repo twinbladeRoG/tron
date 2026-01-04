@@ -1,5 +1,10 @@
+from typing import Set
+from urllib.parse import urljoin
+
+import requests
 from crawl4ai import AsyncWebCrawler
 from langchain.messages import HumanMessage, SystemMessage
+from lxml import etree  # type: ignore
 from pydantic import BaseModel, Field
 from sqlmodel import Session
 
@@ -53,3 +58,48 @@ class ScrapeController:
         )
 
         return response
+
+    def discover_urls_from_sitemap(
+        self,
+        base_url: str,
+        sitemap_url: str | None = None,
+        timeout: int = 10,
+    ) -> list[str]:
+        """
+        Discover all URLs from sitemap.xml (supports sitemap index).
+        """
+        HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; SitemapCrawler/1.0)"}
+
+        if sitemap_url is None:
+            sitemap_url = urljoin(base_url, "/sitemap.xml")
+
+        discovered_urls: Set[str] = set()
+        visited_sitemaps: Set[str] = set()
+
+        def fetch_sitemap(url: str):
+            if url in visited_sitemaps:
+                return
+            visited_sitemaps.add(url)
+
+            resp = requests.get(url, headers=HEADERS, timeout=timeout)
+            resp.raise_for_status()
+
+            xml = etree.fromstring(resp.content)
+
+            ns = {"ns": xml.nsmap.get(None)} if None in xml.nsmap else {}
+
+            # Case 1: Sitemap index
+            sitemap_tags = xml.findall(".//ns:sitemap/ns:loc", namespaces=ns)
+            if sitemap_tags:
+                for loc in sitemap_tags:
+                    fetch_sitemap(loc.text.strip())
+                return
+
+            # Case 2: URL set
+            url_tags = xml.findall(".//ns:url/ns:loc", namespaces=ns)
+            for loc in url_tags:
+                discovered_urls.add(loc.text.strip())
+
+        fetch_sitemap(sitemap_url)
+
+        return sorted(discovered_urls)
