@@ -160,7 +160,7 @@ class AgentController:
                             if content:
                                 yield f"event: message\ndata: {json.dumps({'text': content})}\n\n"
 
-                yield f"event: usage\ndata: {callback.get_usage().model_dump_json()}\n\n"
+                yield f"event: usage\ndata: {callback.get_cumulative_usage().model_dump_json()}\n\n"
 
         except Exception as e:
             logger.error(e)

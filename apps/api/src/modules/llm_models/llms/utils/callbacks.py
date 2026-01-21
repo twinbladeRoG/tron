@@ -20,7 +20,7 @@ from langchain_core.outputs import ChatGeneration, LLMResult
 from langchain_core.tracers.context import register_configure_hook
 from sqlmodel import Session
 
-from src.models.models import Conversation, LlmModel, Message, User
+from src.models.models import Conversation, LlmModel, Message, ModelUsageLog, User
 from src.modules.conversation.controller import ConversationController
 from src.modules.messages.controller import MessageController
 from src.modules.messages.schema import MessageBase
@@ -33,6 +33,7 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
     """Callback Handler that tracks LLM info."""
 
     usage_log: ModelUsageLogBase = ModelUsageLogBase()
+    usage_logs: list[dict] = []
 
     raise_error = True
 
@@ -69,8 +70,24 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
             f"Total Time: {self.usage_log.time} seconds"
         )
 
-    def get_usage(self) -> ModelUsageLogBase:
+    def get_current_usage(self):
         return self.usage_log
+
+    def get_cumulative_usage(self):
+        usage_log = ModelUsageLogBase()
+
+        for log in self.usage_logs:
+            current_log = ModelUsageLog(**log)
+            usage_log.total_cost += current_log.total_cost
+            usage_log.total_tokens += current_log.total_tokens
+            usage_log.prompt_tokens += current_log.prompt_tokens
+            usage_log.prompt_tokens_cached += current_log.prompt_tokens_cached
+            usage_log.completion_tokens += current_log.completion_tokens
+            usage_log.reasoning_tokens += current_log.reasoning_tokens
+            usage_log.time += current_log.time
+            usage_log.successful_requests = 1
+
+        return usage_log
 
     def on_llm_start(
         self,
@@ -233,13 +250,14 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
 
             # Log usage to database
             if llm_message is not None:
-                self.model_usage_log_controller.log(
+                model_usage_log = self.model_usage_log_controller.log(
                     self.usage_log,
                     user=self.user,
                     model=self.model,
                     conversation=self.conversation,
                     message=llm_message,
                 )
+                self.usage_logs.append(model_usage_log.model_dump())
 
 
 llm_callback_var: ContextVar[Optional[LlmUsageCallbackHandler]] = ContextVar(

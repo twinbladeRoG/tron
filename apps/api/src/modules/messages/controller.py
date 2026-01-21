@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from src.core.controller.base import BaseController
 from src.models.models import Conversation, LlmModel, Message, User
 
@@ -17,7 +19,7 @@ class MessageController(BaseController[Message]):
         user: User,
         conversation: Conversation,
         model: LlmModel,
-    ):
+    ) -> Message:
         return self.repository.add_message(
             CreateMessage(
                 **data.model_dump(),
@@ -26,3 +28,9 @@ class MessageController(BaseController[Message]):
                 model_id=model.id,
             )
         )
+
+    def get_message_of_conversation(self, conversation_id: UUID) -> list[Message]:
+        query = self.repository._query()
+        query.where(self.model_class.conversation_id == conversation_id)
+        result = self.repository.session.exec(query)
+        return list(result)
