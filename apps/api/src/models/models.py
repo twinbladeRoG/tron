@@ -31,6 +31,7 @@ class User(BaseModelMixin, UserBase, table=True):
 
 class LlmModel(BaseModelMixin, LlmModelBase, table=True):
     usage_logs: list["ModelUsageLog"] = Relationship(back_populates="model")
+    messages: list["Message"] = Relationship(back_populates="model")
 
 
 class ModelUsageLog(BaseModelMixin, ModelUsageLogBase, table=True):
@@ -42,6 +43,9 @@ class ModelUsageLog(BaseModelMixin, ModelUsageLogBase, table=True):
 
     conversation_id: UUID = Field(foreign_key="conversation.id", nullable=False)
     conversation: "Conversation" = Relationship(back_populates="usage_logs")
+
+    message_id: UUID = Field(foreign_key="message.id", nullable=False)
+    message: "Message" = Relationship(back_populates="usage_logs")
 
 
 class Conversation(BaseModelMixin, ConversationBase, table=True):
@@ -61,3 +65,6 @@ class Message(BaseModelMixin, MessageBase, table=True):
     conversation: Conversation = Relationship(back_populates="messages")
 
     model_id: UUID = Field(foreign_key="llmmodel.id", nullable=False)
+    model: LlmModel = Relationship(back_populates="messages")
+
+    usage_logs: list[ModelUsageLog] = Relationship(back_populates="message")

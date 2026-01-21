@@ -180,7 +180,7 @@ const UsageLogs: React.FC<UsageLogsProps> = ({ className }) => {
                   <Table.Td>{formatDuration(log.time)}</Table.Td>
                   <Table.Td>{currencyFormatter.format(log.total_cost)}</Table.Td>
                   <Table.Td className="whitespace-nowrap">
-                    {dayjs(log.end_time).format('h:mm a, DD MMM YYYY')}
+                    {dayjs(log.end_time).format('h:mm:ss a, DD MMM YYYY')}
                   </Table.Td>
                 </Table.Tr>
               ))

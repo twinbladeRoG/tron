@@ -23,6 +23,7 @@ class CreateModelUsageLog(ModelUsageLogBase):
     model_id: UUID
     user_id: UUID
     conversation_id: UUID
+    message_id: UUID
 
 
 class FilterParams(SQLModel):

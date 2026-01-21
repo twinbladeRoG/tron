@@ -14,6 +14,8 @@ from src.modules.conversation.controller import ConversationController
 from src.modules.conversation.schema import ConversationBase
 from src.modules.llm_models.controller import LlmModelController
 from src.modules.llm_models.llms.utils.callbacks import get_llm_callback
+from src.modules.messages.controller import MessageController
+from src.modules.messages.schema import MessageBase
 from src.modules.usage_log.controller import ModelUsageLogController
 
 from .schema import ChatPayload
@@ -76,6 +78,7 @@ class AgentController:
         llm_model_controller: LlmModelController,
         model_usage_log_controller: ModelUsageLogController,
         conversation_controller: ConversationController,
+        message_controller: MessageController,
     ):
         if data.conversation_id:
             conversation = conversation_controller.get_conversation(
@@ -100,8 +103,15 @@ class AgentController:
                 conversation,
                 model_usage_log_controller=model_usage_log_controller,
                 conversation_controller=conversation_controller,
+                message_controller=message_controller,
             ) as callback:
                 human_message = HumanMessage(content=data.message)
+                message_controller.upsert_message(
+                    MessageBase(content=data.message, type="human", reason=None),
+                    conversation=conversation,
+                    user=user,
+                    model=llm_model,
+                )
 
                 async for mode, event in agent.astream(
                     input={"messages": [human_message]},

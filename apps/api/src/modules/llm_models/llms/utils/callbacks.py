@@ -20,8 +20,10 @@ from langchain_core.outputs import ChatGeneration, LLMResult
 from langchain_core.tracers.context import register_configure_hook
 from sqlmodel import Session
 
-from src.models.models import Conversation, LlmModel, User
+from src.models.models import Conversation, LlmModel, Message, User
 from src.modules.conversation.controller import ConversationController
+from src.modules.messages.controller import MessageController
+from src.modules.messages.schema import MessageBase
 from src.modules.usage_log.controller import ModelUsageLogController
 from src.modules.usage_log.schema import ModelUsageLogBase
 from src.utils.time import utcnow
@@ -43,6 +45,7 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
         *,
         model_usage_log_controller: ModelUsageLogController,
         conversation_controller: ConversationController,
+        message_controller: MessageController,
     ) -> None:
         super().__init__()
         self._lock = threading.Lock()
@@ -52,6 +55,7 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
         self.conversation = conversation
         self.model_usage_log_controller = model_usage_log_controller
         self.conversation_controller = conversation_controller
+        self.message_controller = message_controller
 
     def __repr__(self) -> str:
         return (
@@ -80,6 +84,7 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
         **kwargs: Any,
     ) -> Any:
         with self._lock:
+            self.usage_log = ModelUsageLogBase()
             self.usage_log.start_time = utcnow()
 
     def on_llm_end(
@@ -95,12 +100,51 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
         except IndexError:
             generation = None
 
+        llm_message: Message | None = None
+
         if isinstance(generation, ChatGeneration):
             try:
                 message = generation.message
                 if isinstance(message, AIMessage):
                     usage_metadata = message.usage_metadata
                     response_metadata = message.response_metadata
+
+                    # For Agent end message
+                    if message.response_metadata.get("finish_reason", None) == "stop":
+                        llm_message = self.message_controller.upsert_message(
+                            data=MessageBase(
+                                type="ai",
+                                content=str(message.content),
+                                reason=message.additional_kwargs.get(
+                                    "reasoning_content", None
+                                ),
+                                run_id=run_id,
+                            ),
+                            user=self.user,
+                            conversation=self.conversation,
+                            model=self.model,
+                        )
+
+                    # For Agent toll call message
+                    elif (
+                        message.response_metadata.get("finish_reason", None)
+                        == "tool_calls"
+                    ):
+                        llm_message = self.message_controller.upsert_message(
+                            data=MessageBase(
+                                type="ai",
+                                content=str(message.content),
+                                reason=message.additional_kwargs.get(
+                                    "reasoning_content", None
+                                ),
+                                run_id=run_id,
+                                tool_calls=message.tool_calls,  # type: ignore
+                            ),
+                            user=self.user,
+                            conversation=self.conversation,
+                            model=self.model,
+                        )
+
                 else:
                     usage_metadata = None
                     response_metadata = None
@@ -118,6 +162,7 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
             token_usage = {"total_tokens": usage_metadata["total_tokens"]}
             completion_tokens = usage_metadata["output_tokens"]
             prompt_tokens = usage_metadata["input_tokens"]
+
             if response_model_name := (response_metadata or {}).get("model_name"):
                 model_name = standardize_model_name(response_model_name)
             elif response.llm_output is None:
@@ -126,6 +171,7 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
                 model_name = standardize_model_name(
                     response.llm_output.get("model_name", "")
                 )
+
             if "cache_read" in usage_metadata.get("input_token_details", {}):
                 prompt_tokens_cached = usage_metadata.get(
                     "input_token_details", {}
@@ -176,6 +222,7 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
             self.usage_log.reasoning_tokens += reasoning_tokens
             self.usage_log.successful_requests += 1
             self.usage_log.end_time = utcnow()
+
             if (
                 self.usage_log.start_time is not None
                 and self.usage_log.end_time is not None
@@ -185,9 +232,14 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
                 ).total_seconds()
 
             # Log usage to database
-            self.model_usage_log_controller.log(
-                self.usage_log, self.user, self.model, self.conversation
-            )
+            if llm_message is not None:
+                self.model_usage_log_controller.log(
+                    self.usage_log,
+                    user=self.user,
+                    model=self.model,
+                    conversation=self.conversation,
+                    message=llm_message,
+                )
 
 
 llm_callback_var: ContextVar[Optional[LlmUsageCallbackHandler]] = ContextVar(
@@ -206,6 +258,7 @@ def get_llm_callback(
     *,
     model_usage_log_controller: ModelUsageLogController,
     conversation_controller: ConversationController,
+    message_controller: MessageController,
 ) -> Generator[LlmUsageCallbackHandler, None, None]:
     """Get the LLM callback handler in a context manager.
     which conveniently exposes token and cost information.
@@ -224,6 +277,7 @@ def get_llm_callback(
         conversation,
         model_usage_log_controller=model_usage_log_controller,
         conversation_controller=conversation_controller,
+        message_controller=message_controller,
     )
     llm_callback_var.set(cb)
     yield cb

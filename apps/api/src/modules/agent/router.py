@@ -6,6 +6,7 @@ from src.core.dependencies import (
     ConversationControllerDeps,
     CurrentUser,
     LlmModelControllerDeps,
+    MessageControllerDeps,
     ModelUsageLogControllerDeps,
     SessionDep,
 )
@@ -24,6 +25,7 @@ async def chat(
     llm_model_controller: LlmModelControllerDeps,
     model_usage_log_controller: ModelUsageLogControllerDeps,
     conversation_controller: ConversationControllerDeps,
+    message_controller: MessageControllerDeps,
     session: SessionDep,
 ):
     return StreamingResponse(
@@ -34,6 +36,7 @@ async def chat(
             llm_model_controller=llm_model_controller,
             model_usage_log_controller=model_usage_log_controller,
             conversation_controller=conversation_controller,
+            message_controller=message_controller,
         ),
         media_type="text/event-stream",
         headers={

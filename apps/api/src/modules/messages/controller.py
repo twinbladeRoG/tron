@@ -10,8 +10,13 @@ class MessageController(BaseController[Message]):
         super().__init__(model=Message, repository=repository)
         self.repository = repository
 
-    def add_message(
-        self, data: MessageBase, user: User, conversation: Conversation, model: LlmModel
+    def upsert_message(
+        self,
+        data: MessageBase,
+        *,
+        user: User,
+        conversation: Conversation,
+        model: LlmModel,
     ):
         return self.repository.add_message(
             CreateMessage(
