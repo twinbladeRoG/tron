@@ -59,7 +59,7 @@ const useChatMessages = () => {
                 id: botMessageId,
                 message: `${message.message}${data.text}`,
                 isLoading: false,
-                role: 'bot',
+                role: 'ai',
                 isStreaming: true,
                 isThinking: false,
               } satisfies IMessage;
@@ -81,7 +81,7 @@ const useChatMessages = () => {
                 reason: `${message?.reason ?? ''}${data.text}`,
                 isLoading: false,
                 isThinking: true,
-                role: 'bot',
+                role: 'ai',
                 isStreaming: true,
               } satisfies IMessage;
             })

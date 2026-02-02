@@ -29,7 +29,7 @@ const ChatMessage: React.FC<IMessage> = ({
   usage,
   tools_calls,
 }) => {
-  const isUser = role === 'user';
+  const isUser = role === 'human';
 
   const currencyFormatter = useMemo(() => {
     return new Intl.NumberFormat('en-US', {

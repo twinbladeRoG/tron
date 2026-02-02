@@ -1,6 +1,6 @@
 export interface IMessage {
   id: string;
-  role: 'bot' | 'user';
+  role: 'human' | 'ai';
   message: string;
   reason?: string;
   isLoading?: boolean;

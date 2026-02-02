@@ -83,3 +83,20 @@ export interface IConversation extends IBaseEntity {
 
   user_id: string;
 }
+
+export interface IConversationMessage extends IBaseEntity {
+  content: string;
+  reason?: string;
+  type: 'human' | 'ai';
+  run_id?: string | null;
+  tool_calls?: Array<{
+    id: string;
+    name: string;
+    type: 'tool_call';
+    args?: Record<string, string>;
+  }>;
+
+  user_id: string;
+  conversation_id: string;
+  model_id: string;
+}

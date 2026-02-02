@@ -57,6 +57,7 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
         self.model_usage_log_controller = model_usage_log_controller
         self.conversation_controller = conversation_controller
         self.message_controller = message_controller
+        self.llm_message: Message | None = None
 
     def __repr__(self) -> str:
         return (
@@ -117,8 +118,6 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
         except IndexError:
             generation = None
 
-        llm_message: Message | None = None
-
         if isinstance(generation, ChatGeneration):
             try:
                 message = generation.message
@@ -128,7 +127,7 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
 
                     # For Agent end message
                     if message.response_metadata.get("finish_reason", None) == "stop":
-                        llm_message = self.message_controller.upsert_message(
+                        self.llm_message = self.message_controller.upsert_message(
                             data=MessageBase(
                                 type="ai",
                                 content=str(message.content),
@@ -140,6 +139,7 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
                             user=self.user,
                             conversation=self.conversation,
                             model=self.model,
+                            previous_message=self.llm_message,
                         )
 
                     # For Agent toll call message
@@ -147,7 +147,7 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
                         message.response_metadata.get("finish_reason", None)
                         == "tool_calls"
                     ):
-                        llm_message = self.message_controller.upsert_message(
+                        self.llm_message = self.message_controller.upsert_message(
                             data=MessageBase(
                                 type="ai",
                                 content=str(message.content),
@@ -160,6 +160,7 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
                             user=self.user,
                             conversation=self.conversation,
                             model=self.model,
+                            previous_message=self.llm_message,
                         )
 
                 else:
@@ -249,13 +250,13 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
                 ).total_seconds()
 
             # Log usage to database
-            if llm_message is not None:
+            if self.llm_message is not None:
                 model_usage_log = self.model_usage_log_controller.log(
                     self.usage_log,
                     user=self.user,
                     model=self.model,
                     conversation=self.conversation,
-                    message=llm_message,
+                    message=self.llm_message,
                 )
                 self.usage_logs.append(model_usage_log.model_dump())
 

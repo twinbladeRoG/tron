@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 
-import type { IConversation, IConversationQueryParams } from '@/types';
+import type { IConversation, IConversationMessage, IConversationQueryParams } from '@/types';
 
 import http from '../http';
 
@@ -10,3 +10,9 @@ export const getUserConversations = (filter: IConversationQueryParams) => {
 
   return http.get<Array<IConversation>>(`/api/conversations?${query}`);
 };
+
+export const getConversationMessages = (conversationId: string) =>
+  http.get<Array<IConversationMessage>>(`/api/conversations/${conversationId}/messages`);
+
+export const deleteConversation = (id: string) =>
+  http.delete<IConversation>(`/api/conversations/${id}`);

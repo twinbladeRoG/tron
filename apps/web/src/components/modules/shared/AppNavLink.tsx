@@ -23,7 +23,7 @@ const AppNavLink: React.FC<AppNavLinkProps> = ({ to, icon, label, className, isC
         'flex h-12 items-center gap-3 rounded-2xl px-3 py-1',
         'hover:bg-gray-200 dark:hover:bg-gray-800',
         {
-          'bg-gray-300 text-blue-400 dark:bg-gray-900': location.pathname === to,
+          'bg-gray-300 text-blue-400 dark:bg-gray-900': location.pathname.startsWith(to),
         }
       )}>
       <div className="size-6">

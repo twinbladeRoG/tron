@@ -25,3 +25,8 @@ class ConversationController(BaseController[Conversation]):
         self, user: User, data: ConversationBase, *, id: UUID | None = None
     ):
         return self.repository.upsert_conversation(user.id, data, id=id)
+
+    def delete_conversation(self, id: UUID, user: User):
+        conversation = self.get_conversation(id, user)
+        self.repository.delete(conversation)
+        return conversation

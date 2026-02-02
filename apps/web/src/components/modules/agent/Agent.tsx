@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { Icon } from '@iconify/react';
 import {
   ActionIcon,
@@ -22,7 +22,7 @@ import { getToken } from '@/apis/http';
 import { useAgentWorkflow } from '@/apis/queries/agent.queries';
 import { useLlmModels } from '@/apis/queries/llm-models.queries';
 import { cn, getLlmProviderIcon } from '@/lib/utils';
-import type { LlmProvider } from '@/types';
+import type { IConversationMessage, LlmProvider } from '@/types';
 
 import ChatInput from '../chat/ChatInput';
 import Conversations from '../conversations/Conversations';
@@ -35,12 +35,19 @@ import type { IMessage } from './types';
 
 interface AgentProps {
   className?: string;
+  previousMessages?: Array<IConversationMessage>;
+  conversationId?: string;
 }
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const Agent: React.FC<AgentProps> = ({ className }) => {
+const Agent: React.FC<AgentProps> = ({
+  className,
+  previousMessages,
+  conversationId: existingConversationId,
+}) => {
   const models = useLlmModels();
+  const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [tab, setTab] = useState<string | null>('graph');
@@ -51,7 +58,7 @@ const Agent: React.FC<AgentProps> = ({ className }) => {
 
   useEffect(() => {
     if (model === null && searchParams.get('model') !== null) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect, @eslint-react/hooks-extra/no-direct-set-state-in-use-effect
+      // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect, react-hooks/set-state-in-effect
       setModel(searchParams.get('model'));
     } else if (model === null && models.data && models.data.length > 0) {
       // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect
@@ -82,6 +89,31 @@ const Agent: React.FC<AgentProps> = ({ className }) => {
     setVisitedNodes,
   } = useChatMessages();
 
+  useEffect(() => {
+    if (existingConversationId) setConversationId(existingConversationId);
+  }, [existingConversationId, setConversationId]);
+
+  useEffect(() => {
+    if (previousMessages?.length) {
+      setMessages(
+        previousMessages.map(
+          (msg) =>
+            ({
+              id: msg.id,
+              message: msg.content,
+              role: msg.type,
+              reason: msg.reason,
+              tools_calls: msg.tool_calls?.map((call) => ({
+                id: call.id,
+                name: call.name,
+                type: call.type,
+              })),
+            }) satisfies IMessage
+        )
+      );
+    }
+  }, [previousMessages, setMessages]);
+
   const handleSubmit = async (message: string) => {
     if (!model) {
       notifications.show({
@@ -99,12 +131,12 @@ const Agent: React.FC<AgentProps> = ({ className }) => {
       ...prev,
       {
         id: uuid(),
-        role: 'user',
+        role: 'human',
         message,
       } satisfies IMessage,
       {
         id: botMessageId,
-        role: 'bot',
+        role: 'ai',
         message: '',
         isLoading: true,
       } satisfies IMessage,
@@ -153,7 +185,7 @@ const Agent: React.FC<AgentProps> = ({ className }) => {
               id: botMessageId,
               message: err as string,
               isLoading: false,
-              role: 'bot',
+              role: 'ai',
             } satisfies IMessage;
           })
         );
@@ -184,9 +216,10 @@ const Agent: React.FC<AgentProps> = ({ className }) => {
     });
   }, [messages]);
 
-  const handleClearConversation = () => {
+  const handleClearConversation = async () => {
     setMessages([]);
     setConversationId(null);
+    await navigate(model ? `/agent?model=${model}` : '/agent');
   };
 
   return (

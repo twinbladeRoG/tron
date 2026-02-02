@@ -41,10 +41,10 @@ class ModelUsageLog(BaseModelMixin, ModelUsageLogBase, table=True):
     user_id: UUID = Field(foreign_key="user.id", nullable=False)
     user: User = Relationship(back_populates="usage_logs")
 
-    conversation_id: UUID = Field(foreign_key="conversation.id", nullable=False)
+    conversation_id: UUID | None = Field(foreign_key="conversation.id", nullable=True)
     conversation: "Conversation" = Relationship(back_populates="usage_logs")
 
-    message_id: UUID = Field(foreign_key="message.id", nullable=False)
+    message_id: UUID | None = Field(foreign_key="message.id", nullable=True)
     message: "Message" = Relationship(back_populates="usage_logs")
 
 
@@ -54,7 +54,9 @@ class Conversation(BaseModelMixin, ConversationBase, table=True):
 
     usage_logs: list[ModelUsageLog] = Relationship(back_populates="conversation")
 
-    messages: list["Message"] = Relationship(back_populates="conversation")
+    messages: list["Message"] = Relationship(
+        back_populates="conversation", cascade_delete=True
+    )
 
 
 class Message(BaseModelMixin, MessageBase, table=True):
@@ -68,3 +70,11 @@ class Message(BaseModelMixin, MessageBase, table=True):
     model: LlmModel = Relationship(back_populates="messages")
 
     usage_logs: list[ModelUsageLog] = Relationship(back_populates="message")
+
+
+class MessageWithUsageLogs(BaseModelMixin, MessageBase):
+    user_id: UUID
+    conversation_id: UUID
+    model_id: UUID
+
+    usage_logs: list[ModelUsageLog] = []

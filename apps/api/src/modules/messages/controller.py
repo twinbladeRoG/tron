@@ -19,18 +19,33 @@ class MessageController(BaseController[Message]):
         user: User,
         conversation: Conversation,
         model: LlmModel,
+        previous_message: Message | None = None,
     ) -> Message:
-        return self.repository.add_message(
-            CreateMessage(
-                **data.model_dump(),
-                user_id=user.id,
-                conversation_id=conversation.id,
-                model_id=model.id,
-            )
-        )
+        if previous_message is not None:
+            new_message = previous_message
+            new_message.content = previous_message.content + data.content
+            new_message.run_id = data.run_id
 
-    def get_message_of_conversation(self, conversation_id: UUID) -> list[Message]:
-        query = self.repository._query()
-        query.where(self.model_class.conversation_id == conversation_id)
-        result = self.repository.session.exec(query)
-        return list(result)
+            if data.tool_calls is not None and len(data.tool_calls) > 0:
+                new_message.tool_calls = (
+                    new_message.tool_calls or []
+                ) + data.tool_calls
+
+            if data.reason is not None and data.reason.strip() != "":
+                new_message.reason = (
+                    (new_message.reason + "\n\n") if new_message.reason else ""
+                ) + data.reason
+
+            return self.repository.update(previous_message.id, new_message.model_dump())
+        else:
+            return self.repository.add_message(
+                CreateMessage(
+                    **data.model_dump(),
+                    user_id=user.id,
+                    conversation_id=conversation.id,
+                    model_id=model.id,
+                )
+            )
+
+    def get_messages_of_conversation(self, conversation_id: UUID) -> list[Message]:
+        return self.repository.get_messages_of_conversation(conversation_id)
