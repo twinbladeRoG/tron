@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { Icon } from '@iconify/react';
 import { ActionIcon } from '@mantine/core';
 import dayjs from 'dayjs';
@@ -12,6 +12,7 @@ interface ConversationsProps {
 }
 
 const Conversations: React.FC<ConversationsProps> = ({ className }) => {
+  const { conversationId } = useParams<{ conversationId: string }>();
   const conversations = useConversations({
     from_date: dayjs().startOf('month').toDate(),
   });
@@ -23,7 +24,13 @@ const Conversations: React.FC<ConversationsProps> = ({ className }) => {
   };
 
   const handleDelete = (id: string) => {
-    deleteConversation.mutate(id);
+    deleteConversation.mutate(id, {
+      onSuccess: async () => {
+        if (id === conversationId) {
+          await navigate(`/agent`);
+        }
+      },
+    });
   };
 
   return (
