@@ -100,3 +100,7 @@ export interface IConversationMessage extends IBaseEntity {
   conversation_id: string;
   model_id: string;
 }
+
+export interface IConversationMessageWithUsageLogs extends IConversationMessage {
+  usage_logs: Array<IUsageLog>;
+}

@@ -33,7 +33,6 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
     """Callback Handler that tracks LLM info."""
 
     usage_log: ModelUsageLogBase = ModelUsageLogBase()
-    usage_logs: list[dict] = []
 
     raise_error = True
 
@@ -58,6 +57,7 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
         self.conversation_controller = conversation_controller
         self.message_controller = message_controller
         self.llm_message: Message | None = None
+        self.usage_logs: list[dict] = []
 
     def __repr__(self) -> str:
         return (

@@ -22,7 +22,7 @@ import { getToken } from '@/apis/http';
 import { useAgentWorkflow } from '@/apis/queries/agent.queries';
 import { useLlmModels } from '@/apis/queries/llm-models.queries';
 import { cn, getLlmProviderIcon } from '@/lib/utils';
-import type { IConversationMessage, LlmProvider } from '@/types';
+import type { IConversationMessageWithUsageLogs, LlmProvider } from '@/types';
 
 import ChatInput from '../chat/ChatInput';
 import Conversations from '../conversations/Conversations';
@@ -31,11 +31,11 @@ import AgentGraph from './AgentGraph';
 import ChatMessage from './ChatMessage';
 import useChatMessages from './hook';
 import Mermaid from './Mermaid';
-import type { IMessage } from './types';
+import type { IMessage, IUsage } from './types';
 
 interface AgentProps {
   className?: string;
-  previousMessages?: Array<IConversationMessage>;
+  previousMessages?: Array<IConversationMessageWithUsageLogs>;
   conversationId?: string;
 }
 
@@ -108,6 +108,29 @@ const Agent: React.FC<AgentProps> = ({
                 name: call.name,
                 type: call.type,
               })),
+              usage: msg.usage_logs.reduce(
+                (acc, log) =>
+                  ({
+                    completion_tokens: acc.completion_tokens + log.completion_tokens,
+                    prompt_tokens: acc.prompt_tokens + log.prompt_tokens,
+                    prompt_tokens_cached: acc.prompt_tokens_cached + log.prompt_tokens_cached,
+                    reasoning_tokens: acc.reasoning_tokens + log.reasoning_tokens,
+                    successful_requests: acc.successful_requests + log.successful_requests,
+                    time: acc.time + log.time,
+                    total_cost: acc.total_cost + log.total_cost,
+                    total_tokens: acc.total_tokens + log.total_tokens,
+                  }) satisfies IUsage,
+                {
+                  completion_tokens: 0,
+                  prompt_tokens: 0,
+                  prompt_tokens_cached: 0,
+                  reasoning_tokens: 0,
+                  successful_requests: 0,
+                  time: 0,
+                  total_cost: 0,
+                  total_tokens: 0,
+                } satisfies IUsage
+              ),
             }) satisfies IMessage
         )
       );
