@@ -1,14 +1,17 @@
 from functools import lru_cache
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from casbin.enforcer import Enforcer
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from pydantic import ValidationError
 from qdrant_client import QdrantClient
 from sqlmodel import Session
 
+from src.core.exception import ForbiddenException
 from src.models.models import User
+from src.modules.access_control.controller import PolicyController
 from src.modules.agent.controller import AgentController
 from src.modules.auth.controller import AuthController
 from src.modules.auth.schema import TokenPayload
@@ -20,6 +23,8 @@ from src.modules.scrapper.controller import ScrapeController
 from src.modules.usage_log.controller import ModelUsageLogController
 from src.modules.users.controller import UserController
 
+from .access_control.casbin import get_casbin_enforcer
+from .access_control.types import Resource, Subject
 from .config import Settings
 from .db import engine
 from .jwt import JwtHandler
@@ -75,6 +80,21 @@ def get_vector_database():
 
 VectorDatabaseDep = Annotated[QdrantClient, Depends(get_vector_database)]
 
+CasbinEnforcerDeps = Annotated[Enforcer, Depends(get_casbin_enforcer)]
+
+
+def policy_enforcer(req: Request, enforcer: CasbinEnforcerDeps, me: CurrentUser):
+    sub = Subject(id=1, org_id=2)
+    obj = Resource(type="ai_agent", owner_id=1)
+    act = "use"
+
+    if enforcer.enforce(sub, obj, act):
+        return True
+    raise ForbiddenException("Action not allowed")
+
+
+PolicyEnforcerDeps = Annotated[bool, Depends(policy_enforcer)]
+
 # NOTE: Added here to avoid circular dependency
 from .factory import Factory  # noqa: E402
 
@@ -98,4 +118,7 @@ ConversationControllerDeps = Annotated[
 ]
 MessageControllerDeps = Annotated[
     MessageController, Depends(Factory().get_message_controller)
+]
+PolicyControllerDeps = Annotated[
+    PolicyController, Depends(Factory().get_policy_controller)
 ]

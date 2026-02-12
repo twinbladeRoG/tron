@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from src.modules.access_control.router import router as access_control_router
 from src.modules.agent.router import router as agent_router
 from src.modules.auth.router import router as auth_router
 from src.modules.chat.router import router as chat_router
@@ -21,3 +22,4 @@ router.include_router(agent_router)
 router.include_router(usage_log_router)
 router.include_router(conversation_router)
 router.include_router(message_router)
+router.include_router(access_control_router)

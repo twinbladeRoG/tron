@@ -96,6 +96,12 @@ const RootLayout = () => {
           icon="solar:shield-network-bold-duotone"
           isCollapsed={!desktopOpened}
         />
+        <AppNavLink
+          to="/policy"
+          label="Policies"
+          icon="solar:folder-security-bold-duotone"
+          isCollapsed={!desktopOpened}
+        />
 
         {user.isLoading ? (
           <Skeleton h={100} mt="sm" animate={false} />

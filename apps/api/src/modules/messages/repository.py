@@ -1,7 +1,5 @@
 from uuid import UUID
 
-from sqlmodel import Session
-
 from src.core.repository.base import BaseRepository
 from src.models.models import Message
 
@@ -9,9 +7,6 @@ from .schema import CreateMessage
 
 
 class MessageRepository(BaseRepository[Message]):
-    def __init__(self, model: Message, session: Session) -> None:
-        super().__init__(model=Message, session=session)
-
     def add_message(self, data: CreateMessage):
         return self.create(data.model_dump())
 

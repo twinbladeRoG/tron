@@ -8,6 +8,7 @@ import AgentChatPage from './pages/agent-chat';
 import ChatPage from './pages/chat';
 import LlmModelsPage from './pages/llm-models';
 import LoginPage from './pages/login';
+import PolicyPage from './pages/policy';
 import ScrapperPage from './pages/scrapper';
 import UsageLogPage from './pages/usage-logs';
 import Home from './pages';
@@ -28,6 +29,7 @@ const router = createBrowserRouter([
       { path: '/agent', element: <AgentPage /> },
       { path: '/agent/chat/:conversationId', element: <AgentChatPage /> },
       { path: '/usage-logs', element: <UsageLogPage /> },
+      { path: '/policy', element: <PolicyPage /> },
     ],
   },
   {

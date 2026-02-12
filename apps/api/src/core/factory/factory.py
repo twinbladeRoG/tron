@@ -1,7 +1,8 @@
 from functools import partial
 
-from src.core.dependencies import SessionDep
+from src.core.dependencies import CasbinEnforcerDeps, SessionDep
 from src.models.models import Conversation, LlmModel, Message, ModelUsageLog, User
+from src.modules.access_control.controller import PolicyController
 from src.modules.agent.controller import AgentController
 from src.modules.auth.controller import AuthController
 from src.modules.chat.controller import ChatController
@@ -57,3 +58,6 @@ class Factory:
 
     def get_message_controller(self, db_session: SessionDep):
         return MessageController(repository=self.message_repository(session=db_session))
+
+    def get_policy_controller(self, enforcer: CasbinEnforcerDeps):
+        return PolicyController(enforcer=enforcer)
