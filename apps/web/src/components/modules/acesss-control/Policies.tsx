@@ -1,6 +1,8 @@
-import { Badge, Divider, Skeleton, Title } from '@mantine/core';
+import { Divider, Skeleton, Title } from '@mantine/core';
 
 import { usePolicies } from '@/apis/queries/policy.queries';
+
+import Policy from './Policy';
 
 const Policies = () => {
   const policies = usePolicies();
@@ -15,14 +17,8 @@ const Policies = () => {
           <Skeleton h={24} />
         </div>
       ) : (
-        policies.data?.map((policy) => (
-          <div className="flex flex-wrap gap-4" key={policy.join()}>
-            {policy.map((value, index) => (
-              // eslint-disable-next-line @eslint-react/no-array-index-key, react-x/no-array-index-key
-              <Badge key={index}>{value}</Badge>
-            ))}
-          </div>
-        ))
+        // eslint-disable-next-line @eslint-react/no-array-index-key, react-x/no-array-index-key
+        policies.data?.map((policy, i) => <Policy key={i} policy={policy} />)
       )}
     </section>
   );

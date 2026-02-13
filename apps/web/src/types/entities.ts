@@ -104,3 +104,11 @@ export interface IConversationMessage extends IBaseEntity {
 export interface IConversationMessageWithUsageLogs extends IConversationMessage {
   usage_logs: Array<IUsageLog>;
 }
+
+export interface IPolicy {
+  sub_rule: string;
+  obj_rule: string;
+  act: string;
+  eft: string;
+  description?: string | null;
+}

@@ -1,5 +1,9 @@
 from pydantic import BaseModel
 
 
-class PolicyDefinition(BaseModel):
-    params: list[str]
+class Policy(BaseModel):
+    sub_rule: str
+    obj_rule: str
+    act: str
+    eft: str = "allow"
+    description: str | None = None
