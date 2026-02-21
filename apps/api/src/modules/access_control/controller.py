@@ -10,29 +10,31 @@ class PolicyController:
     @staticmethod
     def _policy_object_to_list(policy: Policy):
         params = [
-            policy.sub_rule,
-            policy.obj_rule,
+            policy.sub,
+            policy.obj,
             policy.act,
+            policy.cond,
             policy.eft,
-            policy.description,
+            policy.desc,
         ]
         return params
 
     @staticmethod
     def _policy_list_to_object(policy: list[str]):
         return Policy(
-            sub_rule=policy[0],
-            obj_rule=policy[1],
+            sub=policy[0],
+            obj=policy[1],
             act=policy[2],
-            eft=policy[3],
-            description=policy[4] if len(policy) >= 5 else None,
+            cond=policy[3],
+            eft=policy[4],
+            desc=policy[5],
         )
 
     def add_policy(self, policy: Policy):
         return self.enforcer.add_policy(*self._policy_object_to_list(policy))
 
     def remove_policy(self, policy: Policy):
-        return self.enforcer.remove_policy(*self._policy_object_to_list(policy))
+        return self.enforcer.remove_policy(self._policy_object_to_list(policy))
 
     def get_policy(self):
         policies: list[Policy] = []

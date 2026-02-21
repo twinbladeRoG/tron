@@ -106,9 +106,10 @@ export interface IConversationMessageWithUsageLogs extends IConversationMessage 
 }
 
 export interface IPolicy {
-  sub_rule: string;
-  obj_rule: string;
+  sub: string;
+  obj: string;
   act: string;
+  cond: string;
   eft: string;
-  description?: string | null;
+  desc: string;
 }

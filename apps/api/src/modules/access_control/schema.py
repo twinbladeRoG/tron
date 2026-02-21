@@ -2,8 +2,9 @@ from pydantic import BaseModel
 
 
 class Policy(BaseModel):
-    sub_rule: str
-    obj_rule: str
+    sub: str
+    obj: str
     act: str
+    cond: str
     eft: str = "allow"
-    description: str | None = None
+    desc: str | None = None

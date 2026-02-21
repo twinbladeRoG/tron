@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import type { IPolicy } from '@/types';
+
 import { addPolicy, deletePolicy, getPolicies } from '../requests/policy.requests';
 
 export const usePolicies = () =>
@@ -15,7 +17,7 @@ export const useAddPolicy = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (policy: Array<string>) => {
+    mutationFn: async (policy: IPolicy) => {
       const res = await addPolicy(policy);
       return res;
     },
@@ -29,7 +31,7 @@ export const useDeletePolicy = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (policy: Array<string>) => {
+    mutationFn: async (policy: IPolicy) => {
       const res = await deletePolicy(policy);
       return res;
     },
