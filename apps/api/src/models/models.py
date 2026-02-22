@@ -5,8 +5,11 @@ from sqlmodel import Field, Relationship
 
 from src.core.security import PasswordHandler
 from src.modules.conversation.schema import ConversationBase
+from src.modules.divisions.schema import DivisionBase
 from src.modules.llm_models.schema import LlmModelBase
 from src.modules.messages.schema import MessageBase
+from src.modules.organizations.schema import OrganizationBase
+from src.modules.teams.schema import TeamBase
 from src.modules.usage_log.schema import ModelUsageLogBase
 from src.modules.users.schema import UserBase
 
@@ -78,3 +81,15 @@ class MessageWithUsageLogs(BaseModelMixin, MessageBase):
     model_id: UUID
 
     usage_logs: list[ModelUsageLog] = []
+
+
+class Organization(BaseModelMixin, OrganizationBase, table=True):
+    pass
+
+
+class Division(BaseModelMixin, DivisionBase, table=True):
+    pass
+
+
+class Team(BaseModelMixin, TeamBase, table=True):
+    pass

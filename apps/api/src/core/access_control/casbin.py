@@ -1,8 +1,11 @@
 from casbin.enforcer import Enforcer
 from casbin.util import key_match2
 from casbin_sqlalchemy_adapter import Adapter
+from sqlalchemy import create_engine
 
-from ..db import engine
+from src.core.config import settings
+
+engine = create_engine(settings.CASBIN_DATABASE_URI, echo=settings.SHOW_DB_LOGS)
 
 adapter = Adapter(engine)
 enforcer = Enforcer("src/core/access_control/model.conf", adapter)

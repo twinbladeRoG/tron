@@ -65,7 +65,7 @@ class Settings(BaseSettings):
 
     @computed_field
     @property
-    def CELERY_BACKEND_URI(self) -> str:
+    def CELERY_DATABASE_URI(self) -> str:
         uri = MultiHostUrl.build(
             scheme="db+postgresql",
             username=self.POSTGRES_USER,
@@ -73,6 +73,21 @@ class Settings(BaseSettings):
             host=self.POSTGRES_SERVER,
             port=self.POSTGRES_PORT,
             path=self.CELERY_BACKEND_DB,
+        )
+        return str(uri)
+
+    CASBIN_BACKEND_DB: str = "casbin"
+
+    @computed_field
+    @property
+    def CASBIN_DATABASE_URI(self) -> str:
+        uri = MultiHostUrl.build(
+            scheme="postgresql+psycopg2",
+            username=self.POSTGRES_USER,
+            password=self.POSTGRES_PASSWORD,
+            host=self.POSTGRES_SERVER,
+            port=self.POSTGRES_PORT,
+            path=self.CASBIN_BACKEND_DB,
         )
         return str(uri)
 

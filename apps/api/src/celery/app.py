@@ -8,7 +8,7 @@ logger = get_task_logger(__name__)
 app = Celery(
     __name__,
     broker=settings.REDIS_URL,
-    backend=settings.CELERY_BACKEND_URI,
+    backend=settings.CELERY_DATABASE_URI,
 )
 
 app.conf.task_track_started = True

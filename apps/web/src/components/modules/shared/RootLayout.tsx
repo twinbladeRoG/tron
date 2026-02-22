@@ -97,8 +97,8 @@ const RootLayout = () => {
           isCollapsed={!desktopOpened}
         />
         <AppNavLink
-          to="/policy"
-          label="Policies"
+          to="/admin"
+          label="Admin"
           icon="solar:folder-security-bold-duotone"
           isCollapsed={!desktopOpened}
         />
