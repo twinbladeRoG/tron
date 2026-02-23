@@ -1,7 +1,10 @@
 from math import ceil
-from typing import Generic, TypeVar
+from typing import Generic, List, TypeVar
 
+from pydantic.generics import GenericModel
 from sqlmodel import SQLModel
+
+from .models import Organization
 
 
 class Pagination(SQLModel):
@@ -31,6 +34,10 @@ def get_pagination(page: int, limit: int, count: int) -> Pagination:
 T = TypeVar("T", bound=SQLModel)
 
 
-class ModelPaginated(SQLModel, Generic[T]):
-    data: list[T]
+class ModelPaginated(GenericModel, Generic[T]):
+    data: List[T]
     pagination: Pagination
+
+
+class OrganizationPaginated(ModelPaginated[Organization]):
+    pass

@@ -113,3 +113,8 @@ export interface IPolicy {
   eft: string;
   desc: string;
 }
+
+export interface IOrganization extends IBaseEntity {
+  name: string;
+  slug: string;
+}

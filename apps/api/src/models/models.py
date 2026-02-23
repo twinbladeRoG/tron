@@ -1,7 +1,10 @@
+from datetime import datetime
+from typing import Optional
 from uuid import UUID
 
 from pydantic import field_validator
-from sqlmodel import Field, Relationship
+from sqlalchemy import UniqueConstraint
+from sqlmodel import Field, Relationship, SQLModel
 
 from src.core.security import PasswordHandler
 from src.modules.conversation.schema import ConversationBase
@@ -12,8 +15,16 @@ from src.modules.organizations.schema import OrganizationBase
 from src.modules.teams.schema import TeamBase
 from src.modules.usage_log.schema import ModelUsageLogBase
 from src.modules.users.schema import UserBase
+from src.utils.time import utcnow
 
 from .mixins import BaseModelMixin
+
+
+class UserTeamLink(SQLModel, table=True):
+    user_id: UUID = Field(foreign_key="user.id", primary_key=True)
+    team_id: UUID = Field(foreign_key="team.id", primary_key=True)
+
+    joined_at: datetime = Field(default_factory=utcnow)
 
 
 class User(BaseModelMixin, UserBase, table=True):
@@ -30,6 +41,20 @@ class User(BaseModelMixin, UserBase, table=True):
     usage_logs: list["ModelUsageLog"] = Relationship(back_populates="user")
     conversations: list["Conversation"] = Relationship(back_populates="user")
     messages: list["Message"] = Relationship(back_populates="user")
+
+    organization_id: Optional[UUID] = Field(
+        foreign_key="organization.id", nullable=True, index=True
+    )
+    organization: Optional["Organization"] = Relationship(back_populates="users")
+
+    division_id: Optional[UUID] = Field(
+        foreign_key="division.id", nullable=True, index=True
+    )
+    division: Optional["Division"] = Relationship(back_populates="users")
+
+    teams: list["Team"] = Relationship(
+        back_populates="members", link_model=UserTeamLink
+    )
 
 
 class LlmModel(BaseModelMixin, LlmModelBase, table=True):
@@ -84,12 +109,34 @@ class MessageWithUsageLogs(BaseModelMixin, MessageBase):
 
 
 class Organization(BaseModelMixin, OrganizationBase, table=True):
-    pass
+    divisions: list["Division"] = Relationship(back_populates="organization")
+    users: list[User] = Relationship(back_populates="organization")
 
 
 class Division(BaseModelMixin, DivisionBase, table=True):
-    pass
+    organization_id: UUID = Field(foreign_key="organization.id")
+    organization: Organization = Relationship(back_populates="divisions")
+
+    __table_args__ = (
+        UniqueConstraint(
+            "organization_id", "slug", name="unique_division_organization_slug"
+        ),
+        UniqueConstraint(
+            "organization_id", "name", name="unique_division_organization_name"
+        ),
+    )
+
+    users: list[User] = Relationship(back_populates="division")
+    teams: list["Team"] = Relationship(back_populates="division")
 
 
 class Team(BaseModelMixin, TeamBase, table=True):
-    pass
+    division_id: UUID = Field(foreign_key="division.id", nullable=False, index=True)
+    division: Division = Relationship(back_populates="teams")
+
+    __table_args__ = (
+        UniqueConstraint("division_id", "slug", name="unique_team_division_slug"),
+        UniqueConstraint("division_id", "name", name="unique_team_division_name"),
+    )
+
+    members: list[User] = Relationship(back_populates="teams", link_model=UserTeamLink)

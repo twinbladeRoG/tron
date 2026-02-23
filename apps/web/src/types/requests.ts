@@ -27,3 +27,8 @@ export interface IConversationQueryParams {
   to_date?: Date;
   search?: string;
 }
+
+export interface IOrganizationQueryParams {
+  page: number;
+  limit: number;
+}

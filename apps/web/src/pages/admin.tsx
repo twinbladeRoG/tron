@@ -2,6 +2,7 @@ import { useNavigate, useParams } from 'react-router';
 import { Tabs } from '@mantine/core';
 
 import Policies from '@/components/modules/acesss-control/Policies';
+import Organizations from '@/components/modules/organizations/Organizations';
 
 const AdminPage = () => {
   const { tabValue } = useParams();
@@ -21,6 +22,10 @@ const AdminPage = () => {
 
       <Tabs.Panel value="policies">
         <Policies />
+      </Tabs.Panel>
+
+      <Tabs.Panel value="organizations">
+        <Organizations />
       </Tabs.Panel>
     </Tabs>
   );

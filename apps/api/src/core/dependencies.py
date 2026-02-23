@@ -17,9 +17,12 @@ from src.modules.auth.controller import AuthController
 from src.modules.auth.schema import TokenPayload
 from src.modules.chat.controller import ChatController
 from src.modules.conversation.controller import ConversationController
+from src.modules.divisions.controller import DivisionController
 from src.modules.llm_models.controller import LlmModelController
 from src.modules.messages.controller import MessageController
+from src.modules.organizations.controller import OrganizationController
 from src.modules.scrapper.controller import ScrapeController
+from src.modules.teams.controller import TeamController
 from src.modules.usage_log.controller import ModelUsageLogController
 from src.modules.users.controller import UserController
 
@@ -122,3 +125,10 @@ MessageControllerDeps = Annotated[
 PolicyControllerDeps = Annotated[
     PolicyController, Depends(Factory().get_policy_controller)
 ]
+OrganizationControllerDeps = Annotated[
+    OrganizationController, Depends(Factory().get_organization_controller)
+]
+DivisionControllerDeps = Annotated[
+    DivisionController, Depends(Factory().get_division_controller)
+]
+TeamControllerDeps = Annotated[TeamController, Depends(Factory().get_team_controller)]

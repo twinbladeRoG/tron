@@ -12,3 +12,5 @@ export interface IPagination {
   has_next: boolean;
   has_previous: boolean;
 }
+
+export type WithoutBase<T> = Omit<T, keyof IBaseEntity>;
