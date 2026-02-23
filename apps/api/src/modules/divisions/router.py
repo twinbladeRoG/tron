@@ -26,7 +26,7 @@ def get_divisions(
 
 
 @router.post("/", response_model=Division)
-def add_organization(
+def add_division(
     user: CurrentUser,
     body: CreateDivision,
     controller: DivisionControllerDeps,
@@ -37,7 +37,7 @@ def add_organization(
 
 
 @router.patch("/{division_id}", response_model=Division)
-def update_organization(
+def update_division(
     user: CurrentUser,
     body: CreateDivision,
     controller: DivisionControllerDeps,
@@ -47,7 +47,7 @@ def update_organization(
 
 
 @router.delete("/{division_id}", response_model=Division)
-def remove_organization(
+def remove_division(
     user: CurrentUser,
     controller: DivisionControllerDeps,
     division_id: UUID,

@@ -1,4 +1,10 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 
 import type { IDivision, IDivisionQueryParams, WithoutBase } from '@/types';
 
@@ -41,3 +47,16 @@ export const useRemoveDivision = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['divisions'] }),
   });
 };
+
+export const useDivisionsInfiniteQuery = (search?: string) =>
+  useInfiniteQuery({
+    queryKey: ['divisions-infinite', search],
+    queryFn: async ({ pageParam = 0 }) => getDivisions({ page: pageParam, limit: 6 }),
+    getNextPageParam: (lastPage) => {
+      if (lastPage.pagination.page < lastPage.pagination.total_pages - 1) {
+        return lastPage.pagination.page + 1;
+      }
+      return undefined;
+    },
+    initialPageParam: 0,
+  });

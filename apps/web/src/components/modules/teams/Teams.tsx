@@ -1,10 +1,10 @@
 import { Button, Drawer } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 
-import AddDivision from './AddDivisions';
-import DivisionTable from './DivisionTable';
+import AddTeam from './AddTeam';
+import TeamTable from './TeamTable';
 
-const Divisions = () => {
+const Teams = () => {
   const [opened, handler] = useDisclosure();
 
   return (
@@ -15,13 +15,13 @@ const Divisions = () => {
         </Button>
       </div>
 
-      <DivisionTable />
+      <TeamTable />
 
-      <Drawer position="right" opened={opened} onClose={handler.close} title="Add Division">
-        <AddDivision onSubmit={handler.close} />
+      <Drawer position="right" opened={opened} onClose={handler.close} title="Add Team">
+        <AddTeam onSubmit={handler.close} />
       </Drawer>
     </div>
   );
 };
 
-export default Divisions;
+export default Teams;

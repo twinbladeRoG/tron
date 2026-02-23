@@ -39,3 +39,10 @@ export interface IDivisionQueryParams {
   search?: string;
   organization?: string;
 }
+
+export interface ITeamQueryParams {
+  page: number;
+  limit: number;
+  search?: string;
+  division?: string;
+}

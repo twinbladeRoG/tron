@@ -4,6 +4,7 @@ import { Tabs } from '@mantine/core';
 import Policies from '@/components/modules/acesss-control/Policies';
 import Divisions from '@/components/modules/divisions/Divisions';
 import Organizations from '@/components/modules/organizations/Organizations';
+import Teams from '@/components/modules/teams/Teams';
 
 const AdminPage = () => {
   const { tabValue } = useParams();
@@ -35,7 +36,9 @@ const AdminPage = () => {
         <Divisions />
       </Tabs.Panel>
 
-      <Tabs.Panel value="teams">Teams</Tabs.Panel>
+      <Tabs.Panel value="teams">
+        <Teams />
+      </Tabs.Panel>
     </Tabs>
   );
 };
