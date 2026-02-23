@@ -32,3 +32,10 @@ export interface IOrganizationQueryParams {
   page: number;
   limit: number;
 }
+
+export interface IDivisionQueryParams {
+  page: number;
+  limit: number;
+  search?: string;
+  organization?: string;
+}

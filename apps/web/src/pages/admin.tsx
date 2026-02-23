@@ -2,6 +2,7 @@ import { useNavigate, useParams } from 'react-router';
 import { Tabs } from '@mantine/core';
 
 import Policies from '@/components/modules/acesss-control/Policies';
+import Divisions from '@/components/modules/divisions/Divisions';
 import Organizations from '@/components/modules/organizations/Organizations';
 
 const AdminPage = () => {
@@ -18,6 +19,8 @@ const AdminPage = () => {
       <Tabs.List>
         <Tabs.Tab value="policies">Policies</Tabs.Tab>
         <Tabs.Tab value="organizations">Organizations</Tabs.Tab>
+        <Tabs.Tab value="divisions">Divisions</Tabs.Tab>
+        <Tabs.Tab value="teams">Teams</Tabs.Tab>
       </Tabs.List>
 
       <Tabs.Panel value="policies">
@@ -27,6 +30,12 @@ const AdminPage = () => {
       <Tabs.Panel value="organizations">
         <Organizations />
       </Tabs.Panel>
+
+      <Tabs.Panel value="divisions">
+        <Divisions />
+      </Tabs.Panel>
+
+      <Tabs.Panel value="teams">Teams</Tabs.Panel>
     </Tabs>
   );
 };

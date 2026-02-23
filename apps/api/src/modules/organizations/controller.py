@@ -22,6 +22,9 @@ class OrganizationController(BaseController[Organization]):
     def get_organization_by_id(self, id: UUID):
         return self.get_by_id(id)
 
+    def get_organization_by_slug(self, slug: str):
+        return self.repository.get_by_slug(slug)
+
     def add_organization(self, data: OrganizationBase):
         return self.create(data)
 

@@ -1,4 +1,10 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 
 import type { IOrganization, IOrganizationQueryParams, WithoutBase } from '@/types';
 
@@ -41,3 +47,16 @@ export const useRemoveOrganization = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['organizations'] }),
   });
 };
+
+export const useOrganizationsInfiniteQuery = (search?: string) =>
+  useInfiniteQuery({
+    queryKey: ['organizations-infinite', search],
+    queryFn: async ({ pageParam = 0 }) => getOrganizations({ page: pageParam, limit: 5 }),
+    getNextPageParam: (lastPage) => {
+      if (lastPage.pagination.page < lastPage.pagination.total_pages) {
+        return lastPage.pagination.page + 1;
+      }
+      return undefined;
+    },
+    initialPageParam: 0,
+  });

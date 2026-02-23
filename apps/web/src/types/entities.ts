@@ -118,3 +118,15 @@ export interface IOrganization extends IBaseEntity {
   name: string;
   slug: string;
 }
+
+export interface IDivision extends IBaseEntity {
+  name: string;
+  slug: string;
+  organization_id: string;
+}
+
+export interface ITeam extends IBaseEntity {
+  name: string;
+  slug: string;
+  division_id: string;
+}
