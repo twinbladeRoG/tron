@@ -46,3 +46,10 @@ export interface ITeamQueryParams {
   search?: string;
   division?: string;
 }
+
+export interface IUserQueryParams {
+  page: number;
+  limit: number;
+  search?: string;
+  organization?: string;
+}

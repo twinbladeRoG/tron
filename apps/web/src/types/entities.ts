@@ -125,8 +125,22 @@ export interface IDivision extends IBaseEntity {
   organization_id: string;
 }
 
+export interface IDivisionWithOrganization extends IDivision {
+  organization: IOrganization;
+}
+
 export interface ITeam extends IBaseEntity {
   name: string;
   slug: string;
   division_id: string;
+}
+
+export interface IUserExtended extends IUser {
+  organization_id?: string | null;
+  organization?: IOrganization | null;
+
+  division_id?: string | null;
+  division?: IDivision | null;
+
+  teams?: Array<ITeam>;
 }

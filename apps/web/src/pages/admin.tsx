@@ -5,6 +5,7 @@ import Policies from '@/components/modules/acesss-control/Policies';
 import Divisions from '@/components/modules/divisions/Divisions';
 import Organizations from '@/components/modules/organizations/Organizations';
 import Teams from '@/components/modules/teams/Teams';
+import Users from '@/components/modules/users/Users';
 
 const AdminPage = () => {
   const { tabValue } = useParams();
@@ -22,6 +23,7 @@ const AdminPage = () => {
         <Tabs.Tab value="organizations">Organizations</Tabs.Tab>
         <Tabs.Tab value="divisions">Divisions</Tabs.Tab>
         <Tabs.Tab value="teams">Teams</Tabs.Tab>
+        <Tabs.Tab value="users">Users</Tabs.Tab>
       </Tabs.List>
 
       <Tabs.Panel value="policies">
@@ -38,6 +40,10 @@ const AdminPage = () => {
 
       <Tabs.Panel value="teams">
         <Teams />
+      </Tabs.Panel>
+
+      <Tabs.Panel value="users">
+        <Users />
       </Tabs.Panel>
     </Tabs>
   );

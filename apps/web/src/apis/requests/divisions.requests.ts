@@ -1,4 +1,10 @@
-import type { IDivision, IDivisionQueryParams, IPagination, WithoutBase } from '@/types';
+import type {
+  IDivision,
+  IDivisionQueryParams,
+  IDivisionWithOrganization,
+  IPagination,
+  WithoutBase,
+} from '@/types';
 
 import http from '../http';
 
@@ -8,7 +14,9 @@ export const getDivisions = (params: IDivisionQueryParams) => {
     limit: params.limit.toString(),
   });
 
-  return http.get<{ data: Array<IDivision>; pagination: IPagination }>(`/api/divisions?${query}`);
+  return http.get<{ data: Array<IDivisionWithOrganization>; pagination: IPagination }>(
+    `/api/divisions?${query}`
+  );
 };
 
 export const getDivision = (id: string) => http.get<IDivision>(`/api/divisions/${id}`);

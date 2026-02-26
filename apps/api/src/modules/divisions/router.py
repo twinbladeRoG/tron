@@ -9,20 +9,20 @@ from src.core.dependencies import (
     OrganizationControllerDeps,
 )
 from src.models.models import Division
-from src.models.pagination import DivisionPaginated
+from src.models.pagination import DivisionWithOrganizationPaginated
 
 from .schema import CreateDivision, PaginatedFilterParams
 
 router = APIRouter(prefix="/divisions", tags=["Divisions"])
 
 
-@router.get("/", response_model=DivisionPaginated)
+@router.get("/", response_model=DivisionWithOrganizationPaginated)
 def get_divisions(
     controller: DivisionControllerDeps,
     query: Annotated[PaginatedFilterParams, Query()],
 ):
     divisions, pagination = controller.get_all_divisions(query)
-    return DivisionPaginated(data=divisions, pagination=pagination)
+    return DivisionWithOrganizationPaginated(data=divisions, pagination=pagination)
 
 
 @router.post("/", response_model=Division)

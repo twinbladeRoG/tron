@@ -10,53 +10,68 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 
-import { useDivisions } from '@/apis/queries/divisions.queries';
-import type { IDivisionWithOrganization } from '@/types';
+import { useUsers } from '@/apis/queries/users.queries';
+import type { IUserExtended } from '@/types';
 
-import DivisionTableActions from './DivisionTableActions';
+import AttachDivision from './AttachDivision';
+import AttachOrganization from './AttachOrganization';
 
-interface DivisionTableProps {
+interface UserTableProps {
   className?: string;
 }
 
-const columnHelper = createColumnHelper<IDivisionWithOrganization>();
+const columnHelper = createColumnHelper<IUserExtended>();
 
-const DivisionTable: React.FC<DivisionTableProps> = ({ className }) => {
+const UserTable: React.FC<UserTableProps> = ({ className }) => {
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
   });
 
-  const divisions = useDivisions({
+  const users = useUsers({
     page: pagination.pageIndex,
     limit: pagination.pageSize,
   });
 
   const columns = useMemo(
     () => [
-      columnHelper.accessor('name', { header: 'Name' }),
-      columnHelper.accessor('slug', { header: 'Slug' }),
-      columnHelper.accessor('organization.name', { header: 'Organization' }),
+      columnHelper.accessor('first_name', { header: 'First Name' }),
+      columnHelper.accessor('last_name', { header: 'Last Name' }),
+      columnHelper.accessor('email', { header: 'Email' }),
+      columnHelper.accessor('username', { header: 'Username' }),
+      columnHelper.accessor('organization.name', {
+        header: 'Organization',
+        cell: (info) => (
+          <AttachOrganization
+            userId={info.row.original.id}
+            organization={info.row.original.organization}
+          />
+        ),
+      }),
+      columnHelper.accessor('division.name', {
+        header: 'Division',
+        cell: (info) => (
+          <AttachDivision userId={info.row.original.id} division={info.row.original.division} />
+        ),
+      }),
       columnHelper.display({
         id: 'actions',
         header: () => <p className="text-center">Actions</p>,
-        cell: (info) => <DivisionTableActions division={info.row.original} />,
+        cell: () => null,
       }),
     ],
     []
   );
 
-  const data = useMemo(() => divisions.data?.data ?? [], [divisions.data]);
+  const data = useMemo(() => users.data?.data ?? [], [users.data]);
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data: data,
     columns,
-    rowCount: divisions.data?.pagination.total_count ?? 0,
+    rowCount: users.data?.pagination.total_count ?? 0,
     getCoreRowModel: getCoreRowModel(),
-    state: {
-      pagination,
-    },
+    state: { pagination },
     onPaginationChange: setPagination,
     getRowId: (row) => row.id,
     manualPagination: true,
@@ -80,7 +95,7 @@ const DivisionTable: React.FC<DivisionTableProps> = ({ className }) => {
         </Table.Thead>
 
         <Table.Tbody>
-          {divisions.isLoading ? (
+          {users.isLoading ? (
             <>
               <Table.Tr>
                 <Table.Td colSpan={columns.length}>
@@ -151,4 +166,4 @@ const DivisionTable: React.FC<DivisionTableProps> = ({ className }) => {
   );
 };
 
-export default DivisionTable;
+export default UserTable;

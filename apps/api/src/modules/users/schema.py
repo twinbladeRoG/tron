@@ -1,4 +1,5 @@
 from typing import Optional
+from uuid import UUID
 
 from pydantic import EmailStr
 from sqlmodel import Field, SQLModel
@@ -19,3 +20,18 @@ class UserCreate(UserBase):
 
 class UserPublic(BaseModelMixin, UserBase):
     pass
+
+
+class PaginatedFilterParams(SQLModel):
+    page: int = Field(0, ge=0)
+    limit: int = Field(100, gt=0, le=100)
+    search: Optional[str] = Field(default=None)
+    organization_id: Optional[UUID] = Field(default=None)
+
+
+class UserAttachOrganizationRequest(SQLModel):
+    organization_id: UUID
+
+
+class UserAttachDivisionRequest(SQLModel):
+    division_id: UUID

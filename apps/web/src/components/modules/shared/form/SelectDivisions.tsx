@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Combobox, Loader, TextInput, useCombobox } from '@mantine/core';
+import { Badge, Combobox, Loader, Text, TextInput, useCombobox } from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
 
 import { useDivisionsInfiniteQuery } from '@/apis/queries/divisions.queries';
@@ -64,7 +64,15 @@ const SelectDivision: React.FC<SelectDivisionProps> = ({ value, onChange, error 
           ) : (
             options.map((item) => (
               <Combobox.Option value={item.id} key={item.id}>
-                {item.name}
+                <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <Text size="sm" className="">
+                    {item.name}
+                  </Text>
+                  <Badge size="xs">{item?.slug}</Badge>
+                </div>
+                <Text size="xs" c="dimmed">
+                  {item.organization.name}
+                </Text>
               </Combobox.Option>
             ))
           )}
