@@ -18,6 +18,7 @@ from src.modules.auth.schema import TokenPayload
 from src.modules.chat.controller import ChatController
 from src.modules.conversation.controller import ConversationController
 from src.modules.divisions.controller import DivisionController
+from src.modules.features.controller import FeatureController
 from src.modules.llm_models.controller import LlmModelController
 from src.modules.messages.controller import MessageController
 from src.modules.organizations.controller import OrganizationController
@@ -132,3 +133,6 @@ DivisionControllerDeps = Annotated[
     DivisionController, Depends(Factory().get_division_controller)
 ]
 TeamControllerDeps = Annotated[TeamController, Depends(Factory().get_team_controller)]
+FeatureControllerDeps = Annotated[
+    FeatureController, Depends(Factory().get_feature_controller)
+]

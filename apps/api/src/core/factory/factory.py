@@ -4,6 +4,7 @@ from src.core.dependencies import CasbinEnforcerDeps, SessionDep
 from src.models.models import (
     Conversation,
     Division,
+    Feature,
     LlmModel,
     Message,
     ModelUsageLog,
@@ -19,6 +20,8 @@ from src.modules.conversation.controller import ConversationController
 from src.modules.conversation.repository import ConversationRepository
 from src.modules.divisions.controller import DivisionController
 from src.modules.divisions.repository import DivisionRepository
+from src.modules.features.controller import FeatureController
+from src.modules.features.repository import FeatureRepository
 from src.modules.llm_models.controller import LlmModelController
 from src.modules.llm_models.repository import LlmModelRepository
 from src.modules.messages.controller import MessageController
@@ -43,6 +46,7 @@ class Factory:
     organization_repository = partial(OrganizationRepository, Organization)
     division_repository = partial(DivisionRepository, Division)
     team_repository = partial(TeamRepository, Team)
+    feature_repository = partial(FeatureRepository, Feature)
 
     def get_user_controller(self, db_session: SessionDep):
         return UserController(repository=self.user_repository(session=db_session))
@@ -92,3 +96,6 @@ class Factory:
 
     def get_team_controller(self, db_session: SessionDep):
         return TeamController(repository=self.team_repository(session=db_session))
+
+    def get_feature_controller(self, db_session: SessionDep):
+        return FeatureController(repository=self.feature_repository(session=db_session))

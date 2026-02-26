@@ -144,3 +144,10 @@ export interface IUserExtended extends IUser {
 
   teams?: Array<ITeam>;
 }
+
+export interface IFeature extends IBaseEntity {
+  name: string;
+  slug: string;
+  description?: string | null;
+  is_active: boolean;
+}

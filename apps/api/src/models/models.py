@@ -9,6 +9,7 @@ from sqlmodel import Field, Relationship, SQLModel
 from src.core.security import PasswordHandler
 from src.modules.conversation.schema import ConversationBase
 from src.modules.divisions.schema import DivisionBase
+from src.modules.features.schema import FeatureBase
 from src.modules.llm_models.schema import LlmModelBase
 from src.modules.messages.schema import MessageBase
 from src.modules.organizations.schema import OrganizationBase
@@ -140,3 +141,7 @@ class Team(BaseModelMixin, TeamBase, table=True):
     )
 
     members: list[User] = Relationship(back_populates="teams", link_model=UserTeamLink)
+
+
+class Feature(BaseModelMixin, FeatureBase, table=True):
+    pass
