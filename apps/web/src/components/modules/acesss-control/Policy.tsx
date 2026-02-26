@@ -24,6 +24,7 @@ const Policy: React.FC<PolicyProps> = ({ policy }) => {
         <Code>{policy.obj}</Code>
       </Table.Td>
       <Table.Td>{policy.act}</Table.Td>
+      <Table.Td>{policy.cond}</Table.Td>
       <Table.Td>{policy.eft}</Table.Td>
       <Table.Td>{policy.desc}</Table.Td>
       <Table.Td>

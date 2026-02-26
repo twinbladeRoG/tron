@@ -2,7 +2,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { IPolicy } from '@/types';
 
-import { addPolicy, deletePolicy, getPolicies } from '../requests/policy.requests';
+import {
+  addPolicy,
+  checkFeatureAccess,
+  deletePolicy,
+  getPolicies,
+  getUserFeatures,
+} from '../requests/policy.requests';
 
 export const usePolicies = () =>
   useQuery({
@@ -40,3 +46,17 @@ export const useDeletePolicy = () => {
     },
   });
 };
+
+export const useCheckFeatureAccess = () =>
+  useMutation({
+    mutationFn: async (feature: string) => checkFeatureAccess(feature),
+  });
+
+export const useUserFeatures = () =>
+  useQuery({
+    queryKey: ['user-features'],
+    queryFn: async () => {
+      const res = getUserFeatures();
+      return res;
+    },
+  });

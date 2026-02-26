@@ -7,6 +7,7 @@ from src.core.dependencies import (
     CurrentUser,
     DivisionControllerDeps,
     OrganizationControllerDeps,
+    PolicyControllerDeps,
     UserControllerDeps,
 )
 from src.core.exception import BadRequestException
@@ -48,28 +49,34 @@ def create_user(user_controller: UserControllerDeps, user: UserCreate):
     return response
 
 
-@router.patch("/{id}/organization")
+@router.patch("/{id}/organization", response_model=UserPublic)
 def attach_organization(
-    user: CurrentUser,
+    auth_user: CurrentUser,
     id: UUID,
     controller: UserControllerDeps,
+    policy_controller: PolicyControllerDeps,
     organization_controller: OrganizationControllerDeps,
     body: UserAttachOrganizationRequest,
 ):
     organization = organization_controller.get_organization_by_id(body.organization_id)
-    return controller.attach_organization(id, organization.id)
+    user = controller.attach_organization(id, organization.id)
+    policy_controller.group_user_with_organization(user)
+    return user
 
 
-@router.patch("/{id}/division")
+@router.patch("/{id}/division", response_model=UserPublic)
 def attach_division(
-    user: CurrentUser,
+    auth_user: CurrentUser,
     id: UUID,
     controller: UserControllerDeps,
+    policy_controller: PolicyControllerDeps,
     division_controller: DivisionControllerDeps,
     body: UserAttachDivisionRequest,
 ):
+    user = controller.get_by_id(id)
+
     if user.organization_id is None:
-        BadRequestException("User is not part of any organization yet.")
+        raise BadRequestException("User is not part of any organization yet.")
 
     division = division_controller.get_by_id(body.division_id)
 
@@ -78,4 +85,6 @@ def attach_division(
             f"Division {division.name} is part of Organization {division.organization.name}, but user is not part of this organization"
         )
 
-    return controller.attach_division(id, division.id)
+    user = controller.attach_division(id, division.id)
+    policy_controller.group_user_with_division(user)
+    return user

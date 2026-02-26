@@ -1,6 +1,10 @@
 from casbin.enforcer import Enforcer
 
-from .schema import Policy
+from src.core.access_control.utils import build_user_context
+from src.core.exception import BadRequestException, ForbiddenException
+from src.models.models import User
+
+from .schema import Policy, PolicyEnforceResult
 
 
 class PolicyController:
@@ -43,3 +47,55 @@ class PolicyController:
             policies.append(self._policy_list_to_object(policy))
 
         return policies
+
+    def check_if_user_has_access(self, obj: str, action: str, *, user: User):
+        context = build_user_context(user)
+
+        is_allowed, policy = self.enforcer.enforce_ex(
+            f"user:{user.username}", obj, action, context
+        )
+
+        if is_allowed:
+            return PolicyEnforceResult(
+                is_allowed=is_allowed, policy_enforced=policy[-1]
+            )
+
+        raise ForbiddenException(f"User does not have access")
+
+    def group_user_with_organization(self, user: User):
+        if user.organization is None:
+            raise BadRequestException("User is not part of any organization")
+        self.remove_user_from_all_organizations(user)
+        self.enforcer.add_grouping_policy(
+            f"user:{user.username}", f"organization:{user.organization.slug}"
+        )
+
+    def get_user_organizations(self, user: User) -> list[str]:
+        roles = self.enforcer.get_roles_for_user(f"user:{user.username}")
+        orgs = [r for r in roles if r.startswith("organization:")]
+        return orgs
+
+    def remove_user_from_all_organizations(self, user: User) -> None:
+        organizations = self.get_user_organizations(user)
+
+        for organization in organizations:
+            self.enforcer.delete_role_for_user(f"user:{user.username}", organization)
+
+    def group_user_with_division(self, user: User):
+        if user.division is None:
+            raise BadRequestException("User is not part of any division")
+        self.remove_user_from_all_divisions(user)
+        self.enforcer.add_grouping_policy(
+            f"user:{user.username}", f"division:{user.division.slug}"
+        )
+
+    def get_user_divisions(self, user: User) -> list[str]:
+        roles = self.enforcer.get_roles_for_user(f"user:{user.username}")
+        divisions = [r for r in roles if r.startswith("division:")]
+        return divisions
+
+    def remove_user_from_all_divisions(self, user: User) -> None:
+        divisions = self.get_user_divisions(user)
+
+        for division in divisions:
+            self.enforcer.delete_role_for_user(f"user:{user.username}", division)

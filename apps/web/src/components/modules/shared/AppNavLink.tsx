@@ -10,9 +10,17 @@ interface AppNavLinkProps {
   label: string;
   isCollapsed?: boolean;
   className?: string;
+  disabled?: boolean;
 }
 
-const AppNavLink: React.FC<AppNavLinkProps> = ({ to, icon, label, className, isCollapsed }) => {
+const AppNavLink: React.FC<AppNavLinkProps> = ({
+  to,
+  icon,
+  label,
+  className,
+  isCollapsed,
+  disabled,
+}) => {
   const location = useLocation();
 
   return (
@@ -24,6 +32,9 @@ const AppNavLink: React.FC<AppNavLinkProps> = ({ to, icon, label, className, isC
         'hover:bg-gray-200 dark:hover:bg-gray-800',
         {
           'bg-gray-300 text-blue-400 dark:bg-gray-900': location.pathname.startsWith(to),
+        },
+        {
+          'opacity-40': disabled,
         }
       )}>
       <div className="size-6">

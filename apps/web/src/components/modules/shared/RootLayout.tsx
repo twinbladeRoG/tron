@@ -7,12 +7,14 @@ import { useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 
 import { useActiveUser } from '@/apis/queries/auth.queries';
+import { useUserFeatures } from '@/apis/queries/policy.queries';
 import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler';
 import { cn } from '@/lib/utils';
 
 import AppNavLink from './AppNavLink';
 
 const RootLayout = () => {
+  const features = useUserFeatures();
   const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(true);
 
   const user = useActiveUser();
@@ -37,6 +39,18 @@ const RootLayout = () => {
         await navigate('/');
       },
     });
+  };
+
+  const checkForAccess = (featureFlag: string) => {
+    const feature = features.data?.find((f) => f.slug === featureFlag);
+
+    if (!feature) return false;
+
+    if (!feature.is_active) return false;
+
+    if (!feature.is_allowed) return false;
+
+    return true;
   };
 
   return (
@@ -76,6 +90,7 @@ const RootLayout = () => {
           label="Chat"
           icon="solar:chat-square-bold-duotone"
           isCollapsed={!desktopOpened}
+          disabled={!checkForAccess('chat')}
         />
         <AppNavLink
           to="/agent"
@@ -89,12 +104,14 @@ const RootLayout = () => {
           label="Model Usage"
           icon="solar:graph-bold-duotone"
           isCollapsed={!desktopOpened}
+          disabled={!checkForAccess('model-usage')}
         />
         <AppNavLink
           to="/scrapper"
           label="Scrapper"
           icon="solar:shield-network-bold-duotone"
           isCollapsed={!desktopOpened}
+          disabled={!checkForAccess('scrapper')}
         />
         <AppNavLink
           to="/admin"

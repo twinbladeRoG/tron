@@ -1,5 +1,5 @@
 from casbin.enforcer import Enforcer
-from casbin.util import key_match2
+from casbin.util import key_match
 from casbin_sqlalchemy_adapter import Adapter
 from sqlalchemy import create_engine
 
@@ -11,7 +11,7 @@ adapter = Adapter(engine)
 enforcer = Enforcer("src/core/access_control/model.conf", adapter)
 enforcer.load_policy()
 enforcer.enable_auto_save(True)
-enforcer.add_function("keyMatch2", key_match2)
+enforcer.add_function("keyMatch", key_match)
 
 
 def get_casbin_enforcer() -> Enforcer:

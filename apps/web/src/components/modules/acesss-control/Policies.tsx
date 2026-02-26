@@ -34,6 +34,7 @@ const Policies = () => {
                 <Table.Th>Subject</Table.Th>
                 <Table.Th>Object</Table.Th>
                 <Table.Th>Action</Table.Th>
+                <Table.Th>Condition</Table.Th>
                 <Table.Th>Effect</Table.Th>
                 <Table.Th>Description</Table.Th>
                 <Table.Th>Actions</Table.Th>

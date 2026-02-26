@@ -151,3 +151,8 @@ export interface IFeature extends IBaseEntity {
   description?: string | null;
   is_active: boolean;
 }
+
+export interface IFeatureAccess extends IFeature {
+  is_allowed: boolean;
+  policy_enforced?: string | null;
+}

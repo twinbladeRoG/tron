@@ -12,6 +12,8 @@ import {
 import { useFeatures } from '@/apis/queries/features.queries';
 import type { IFeature } from '@/types';
 
+import FeatureActions from './FeatureActions';
+
 interface FeatureTableProps {
   className?: string;
 }
@@ -30,7 +32,7 @@ const FeatureTable: React.FC<FeatureTableProps> = ({ className }) => {
       columnHelper.display({
         id: 'actions',
         header: () => <p className="text-center">Actions</p>,
-        cell: () => null,
+        cell: (info) => <FeatureActions feature={info.row.original} />,
       }),
     ],
     []
