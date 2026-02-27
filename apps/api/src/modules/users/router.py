@@ -62,6 +62,13 @@ def attach_organization(
     body: UserAttachOrganizationRequest,
 ):
     organization = organization_controller.get_organization_by_id(body.organization_id)
+    user = controller.get_by_id(id)
+
+    if user.division and user.division.organization_id != organization.id:
+        raise BadRequestException(
+            f"User is already part of division {user.division.name} which belongs to organization {user.division.organization.name}. To change organization you need unassign division."
+        )
+
     user = controller.attach_organization(id, organization.id)
     policy_controller.group_user_with_organization(user)
     return user
@@ -80,6 +87,12 @@ def attach_division(
 
     if user.organization_id is None:
         raise BadRequestException("User is not part of any organization yet.")
+
+    for team in user.teams:
+        if team.division_id != body.division_id:
+            raise BadRequestException(
+                f"User is part of team {team.name} which is part of division {team.division.name}. Unassign the user from this team to change division."
+            )
 
     division = division_controller.get_by_id(body.division_id)
 
