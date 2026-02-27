@@ -135,6 +135,10 @@ export interface ITeam extends IBaseEntity {
   division_id: string;
 }
 
+export interface ITeamExtended extends ITeam {
+  division: IDivisionWithOrganization;
+}
+
 export interface IUserExtended extends IUser {
   organization_id?: string | null;
   organization?: IOrganization | null;

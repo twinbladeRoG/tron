@@ -2,36 +2,36 @@ import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Icon } from '@iconify/react';
-import { ActionIcon } from '@mantine/core';
+import { ActionIcon, Badge } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import * as yup from 'yup';
 
-import { useAttachOrganizationToUser } from '@/apis/queries/users.queries';
-import type { IOrganization } from '@/types';
+import { useAttachTeamsToUser } from '@/apis/queries/users.queries';
+import type { ITeam } from '@/types';
 
-import SelectOrganization from '../shared/form/SelectOrganization';
+import SelectTeams from '../shared/form/SelectTeams';
 
-interface AttachOrganizationProps {
-  organization?: IOrganization | null;
+interface AttachTeamsProps {
+  teams?: Array<ITeam> | null;
   userId: string;
 }
 
 const schema = yup.object({
-  organization_id: yup.string().required('Required'),
+  team_ids: yup.array().of(yup.string().required()),
 });
 
-const AttachOrganization: React.FC<AttachOrganizationProps> = ({ organization, userId }) => {
+const AttachTeams: React.FC<AttachTeamsProps> = ({ teams, userId }) => {
   const [isEditable, setIsEditable] = useState(false);
 
-  const attachOrganization = useAttachOrganizationToUser();
+  const attachTeams = useAttachTeamsToUser();
   const form = useForm({
     resolver: yupResolver(schema),
-    defaultValues: { organization_id: undefined },
+    defaultValues: { team_ids: teams?.map((t) => t.id) ?? [] },
   });
 
   const handleSubmit = form.handleSubmit((data) => {
-    attachOrganization.mutate(
-      { userId, organizationId: data.organization_id },
+    attachTeams.mutate(
+      { userId, teamIds: data.team_ids ?? [] },
       {
         onSuccess: () => {
           setIsEditable(false);
@@ -49,7 +49,17 @@ const AttachOrganization: React.FC<AttachOrganizationProps> = ({ organization, u
   if (!isEditable)
     return (
       <div className="flex items-center">
-        {organization ? <p className="">{organization.name}</p> : 'Not part of any organization'}
+        {teams?.length ? (
+          <div className="flex flex-wrap gap-2">
+            {teams.map((t) => (
+              <Badge variant="light" key={t.id}>
+                {t.name}
+              </Badge>
+            ))}
+          </div>
+        ) : (
+          <p className="opacity-50">Not part of any team</p>
+        )}
         <ActionIcon variant="subtle" onClick={() => setIsEditable(true)}>
           <Icon icon="solar:pen-new-round-bold-duotone" />
         </ActionIcon>
@@ -60,9 +70,9 @@ const AttachOrganization: React.FC<AttachOrganizationProps> = ({ organization, u
     <form onSubmit={handleSubmit} className="flex items-start gap-2">
       <Controller
         control={form.control}
-        name="organization_id"
+        name="team_ids"
         render={({ field, fieldState }) => (
-          <SelectOrganization
+          <SelectTeams
             value={field.value}
             onChange={field.onChange}
             error={fieldState.error?.message}
@@ -70,21 +80,11 @@ const AttachOrganization: React.FC<AttachOrganizationProps> = ({ organization, u
         )}
       />
 
-      <ActionIcon type="submit" size={38} className="mt-5" loading={attachOrganization.isPending}>
+      <ActionIcon type="submit" size={38} className="mt-5" loading={attachTeams.isPending}>
         <Icon icon="solar:diskette-bold-duotone" />
-      </ActionIcon>
-      <ActionIcon
-        type="button"
-        size={38}
-        color="red"
-        variant="light"
-        className="mt-5"
-        disabled={attachOrganization.isPending}
-        onClick={() => setIsEditable(false)}>
-        <Icon icon="solar:close-circle-bold-duotone" />
       </ActionIcon>
     </form>
   );
 };
 
-export default AttachOrganization;
+export default AttachTeams;

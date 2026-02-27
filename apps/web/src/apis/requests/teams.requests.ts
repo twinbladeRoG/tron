@@ -1,4 +1,4 @@
-import type { IPagination, ITeam, ITeamQueryParams, WithoutBase } from '@/types';
+import type { IPagination, ITeam, ITeamExtended, ITeamQueryParams, WithoutBase } from '@/types';
 
 import http from '../http';
 
@@ -8,7 +8,7 @@ export const getTeams = (params: ITeamQueryParams) => {
     limit: params.limit.toString(),
   });
 
-  return http.get<{ data: Array<ITeam>; pagination: IPagination }>(`/api/teams?${query}`);
+  return http.get<{ data: Array<ITeamExtended>; pagination: IPagination }>(`/api/teams?${query}`);
 };
 
 export const getTeam = (id: string) => http.get<ITeam>(`/api/teams/${id}`);

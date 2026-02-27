@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlmodel import func, or_, select
 
 from src.core.controller.base import BaseController
-from src.models.models import User
+from src.models.models import Team, User
 from src.models.pagination import get_pagination
 
 from .repository import UserRepository
@@ -62,4 +62,9 @@ class UserController(BaseController[User]):
     def attach_division(self, user_id: UUID, division_id: UUID):
         user = self.get_by_id(user_id)
         user = self.repository.update(user_id, {"division_id": division_id})
+        return user
+
+    def attach_teams(self, user_id: UUID, teams: list[Team]):
+        user = self.get_by_id(user_id)
+        user = self.repository.update_user_teams(user, teams)
         return user

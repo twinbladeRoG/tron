@@ -99,3 +99,22 @@ class PolicyController:
 
         for division in divisions:
             self.enforcer.delete_role_for_user(f"user:{user.username}", division)
+
+    def group_user_with_teams(self, user: User):
+        self.remove_user_from_all_teams(user)
+
+        for team in user.teams:
+            self.enforcer.add_grouping_policy(
+                f"user:{user.username}", f"team:{team.slug}"
+            )
+
+    def get_user_teams(self, user: User) -> list[str]:
+        roles = self.enforcer.get_roles_for_user(f"user:{user.username}")
+        teams = [r for r in roles if r.startswith("team:")]
+        return teams
+
+    def remove_user_from_all_teams(self, user: User) -> None:
+        teams = self.get_user_teams(user)
+
+        for team in teams:
+            self.enforcer.delete_role_for_user(f"user:{user.username}", team)

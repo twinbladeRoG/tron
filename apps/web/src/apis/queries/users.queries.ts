@@ -5,6 +5,7 @@ import type { IUserQueryParams } from '@/types';
 import {
   attachDivisionToUser,
   attachOrganizationToUser,
+  attachTeamsToUser,
   getUsers,
 } from '../requests/users.requests';
 
@@ -23,6 +24,8 @@ export const useAttachOrganizationToUser = () => {
       attachOrganizationToUser(userId, organizationId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['users'] });
+      await queryClient.invalidateQueries({ queryKey: ['feature-access'] });
+      await queryClient.invalidateQueries({ queryKey: ['user-features'] });
     },
   });
 };
@@ -35,6 +38,22 @@ export const useAttachDivisionToUser = () => {
       attachDivisionToUser(userId, divisionId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['users'] });
+      await queryClient.invalidateQueries({ queryKey: ['feature-access'] });
+      await queryClient.invalidateQueries({ queryKey: ['user-features'] });
+    },
+  });
+};
+
+export const useAttachTeamsToUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ userId, teamIds }: { userId: string; teamIds: string[] }) =>
+      attachTeamsToUser(userId, teamIds),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['users'] });
+      await queryClient.invalidateQueries({ queryKey: ['feature-access'] });
+      await queryClient.invalidateQueries({ queryKey: ['user-features'] });
     },
   });
 };

@@ -16,3 +16,6 @@ export const attachOrganizationToUser = (userId: string, organizationId: string)
 
 export const attachDivisionToUser = (userId: string, divisionId: string) =>
   http.patch<IUser>(`/api/users/${userId}/division`, { division_id: divisionId });
+
+export const attachTeamsToUser = (userId: string, teamIds: string[]) =>
+  http.patch<IUser>(`/api/users/${userId}/teams`, { team_ids: teamIds });

@@ -35,3 +35,7 @@ class UserAttachOrganizationRequest(SQLModel):
 
 class UserAttachDivisionRequest(SQLModel):
     division_id: UUID
+
+
+class UserAttachTeamsRequest(SQLModel):
+    team_ids: list[UUID]

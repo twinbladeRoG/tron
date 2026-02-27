@@ -8,15 +8,18 @@ from src.core.dependencies import (
     DivisionControllerDeps,
     OrganizationControllerDeps,
     PolicyControllerDeps,
+    TeamControllerDeps,
     UserControllerDeps,
 )
 from src.core.exception import BadRequestException
+from src.models.models import Team
 from src.models.pagination import UserPublicExtendedPaginated
 
 from .schema import (
     PaginatedFilterParams,
     UserAttachDivisionRequest,
     UserAttachOrganizationRequest,
+    UserAttachTeamsRequest,
     UserCreate,
     UserPublic,
 )
@@ -87,4 +90,37 @@ def attach_division(
 
     user = controller.attach_division(id, division.id)
     policy_controller.group_user_with_division(user)
+    return user
+
+
+@router.patch("/{id}/teams", response_model=UserPublic)
+def attach_teams(
+    auth_user: CurrentUser,
+    id: UUID,
+    controller: UserControllerDeps,
+    policy_controller: PolicyControllerDeps,
+    team_controller: TeamControllerDeps,
+    body: UserAttachTeamsRequest,
+):
+    user = controller.get_by_id(id)
+
+    if user.organization_id is None:
+        raise BadRequestException("User is not part of any organization yet.")
+
+    if user.division is None:
+        raise BadRequestException("User is not part of any division yet.")
+
+    teams: list[Team] = []
+    for team_id in body.team_ids:
+        team = team_controller.get_team_by_id(team_id)
+
+        if team.division_id != user.division_id:
+            raise BadRequestException(
+                f"Team {team.name} is part of division {user.division.name}, but user is not part of this division"
+            )
+
+        teams.append(team)
+
+    user = controller.attach_teams(id, teams)
+    policy_controller.group_user_with_teams(user)
     return user

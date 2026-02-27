@@ -4,8 +4,8 @@ from typing import Generic, List, TypeVar
 from pydantic.generics import GenericModel
 from sqlmodel import SQLModel
 
-from .models import Organization, Team
-from .response import DivisionWithOrganization, UserPublicExtended
+from .models import Organization
+from .response import DivisionWithOrganization, TeamExtended, UserPublicExtended
 
 
 class Pagination(SQLModel):
@@ -48,7 +48,7 @@ class DivisionWithOrganizationPaginated(ModelPaginated[DivisionWithOrganization]
     pass
 
 
-class TeamPaginated(ModelPaginated[Team]):
+class TeamExtendedPaginated(ModelPaginated[TeamExtended]):
     pass
 
 

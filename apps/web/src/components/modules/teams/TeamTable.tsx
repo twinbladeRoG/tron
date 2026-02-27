@@ -11,7 +11,7 @@ import {
 } from '@tanstack/react-table';
 
 import { useTeams } from '@/apis/queries/teams.queries';
-import type { ITeam } from '@/types';
+import type { ITeamExtended } from '@/types';
 
 import TeamTableActions from './TeamTableActions';
 
@@ -19,7 +19,7 @@ interface TeamTableProps {
   className?: string;
 }
 
-const columnHelper = createColumnHelper<ITeam>();
+const columnHelper = createColumnHelper<ITeamExtended>();
 
 const TeamTable: React.FC<TeamTableProps> = ({ className }) => {
   const [pagination, setPagination] = useState<PaginationState>({
@@ -36,6 +36,8 @@ const TeamTable: React.FC<TeamTableProps> = ({ className }) => {
     () => [
       columnHelper.accessor('name', { header: 'Name' }),
       columnHelper.accessor('slug', { header: 'Slug' }),
+      columnHelper.accessor('division.name', { header: 'Division' }),
+      columnHelper.accessor('division.organization.name', { header: 'Organization' }),
       columnHelper.display({
         id: 'actions',
         header: () => <p className="text-center">Actions</p>,

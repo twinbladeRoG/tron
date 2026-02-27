@@ -9,20 +9,20 @@ from src.core.dependencies import (
     TeamControllerDeps,
 )
 from src.models.models import Team
-from src.models.pagination import TeamPaginated
+from src.models.pagination import TeamExtendedPaginated
 
 from .schema import CreateTeam, PaginatedFilterParams
 
 router = APIRouter(prefix="/teams", tags=["Teams"])
 
 
-@router.get("/", response_model=TeamPaginated)
+@router.get("/", response_model=TeamExtendedPaginated)
 def get_teams(
     controller: TeamControllerDeps,
     query: Annotated[PaginatedFilterParams, Query()],
 ):
     teams, pagination = controller.get_all_teams(query)
-    return TeamPaginated(data=teams, pagination=pagination)
+    return TeamExtendedPaginated(data=teams, pagination=pagination)
 
 
 @router.post("/", response_model=Team)
