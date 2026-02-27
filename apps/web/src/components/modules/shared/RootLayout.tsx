@@ -98,7 +98,13 @@ const RootLayout = () => {
           icon="ph:robot-duotone"
           isCollapsed={!desktopOpened}
         />
-        <AppNavLink to="/models" label="Models" icon="si:ai-duotone" isCollapsed={!desktopOpened} />
+        <AppNavLink
+          to="/models"
+          label="Models"
+          icon="si:ai-duotone"
+          isCollapsed={!desktopOpened}
+          disabled={!checkForAccess('models')}
+        />
         <AppNavLink
           to="/usage-logs"
           label="Model Usage"

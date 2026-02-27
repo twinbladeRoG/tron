@@ -9,9 +9,9 @@ export const getPolicies = () => http.get<Array<IPolicy>>('/api/access-control')
 export const deletePolicy = (policy: IPolicy) =>
   http.delete<IPolicy>('/api/access-control', policy);
 
-export const checkFeatureAccess = (feature: string) =>
+export const checkFeatureAccess = (feature: string, action: string = 'access') =>
   http.get<{ is_allowed: boolean; policy_enforced: string }>(
-    `/api/access-control/features/${feature}`
+    `/api/access-control/features/${feature}/action/${action}`
   );
 
 export const getUserFeatures = () =>

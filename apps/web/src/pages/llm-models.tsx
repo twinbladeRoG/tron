@@ -3,6 +3,7 @@ import { useDisclosure } from '@mantine/hooks';
 
 import AddLlmModel from '@/components/modules/llm-models/AddLlmModel';
 import LlmModelList from '@/components/modules/llm-models/LlmModelList';
+import FeatureGate from '@/components/modules/shared/FeatureGate';
 
 const LlmModelsPage = () => {
   const [opened, { toggle }] = useDisclosure();
@@ -12,7 +13,9 @@ const LlmModelsPage = () => {
       <div className="flex items-center justify-between">
         <Title>AI Models</Title>
 
-        <Button onClick={toggle}>Add</Button>
+        <FeatureGate feature="scrapper" action="add">
+          <Button onClick={toggle}>Add</Button>
+        </FeatureGate>
       </div>
       <Divider my="md" />
 

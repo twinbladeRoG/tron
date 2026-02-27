@@ -27,14 +27,17 @@ def delete_policy(controller: PolicyControllerDeps, body: Policy, user: CurrentU
     return controller.remove_policy(body)
 
 
-@router.get("/features/{feature_slug}", response_model=PolicyEnforceResult)
+@router.get(
+    "/features/{feature_slug}/action/{action}", response_model=PolicyEnforceResult
+)
 def check_feature_access(
     user: CurrentUser,
     feature_slug: str,
+    action: str,
     controller: PolicyControllerDeps,
 ):
     return controller.check_if_user_has_access(
-        f"feature:{feature_slug}", "access", user=user
+        f"feature:{feature_slug}", action, user=user
     )
 
 
