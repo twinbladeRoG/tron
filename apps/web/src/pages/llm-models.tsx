@@ -13,7 +13,7 @@ const LlmModelsPage = () => {
       <div className="flex items-center justify-between">
         <Title>AI Models</Title>
 
-        <FeatureGate feature="scrapper" action="add">
+        <FeatureGate feature="models" action="access">
           <Button onClick={toggle}>Add</Button>
         </FeatureGate>
       </div>

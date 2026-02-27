@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import queryClient from '@/lib/query-client';
 import type { IPolicy } from '@/types';
 
 import {
@@ -53,15 +54,21 @@ export const useCheckFeatureAccess = () =>
       checkFeatureAccess(feature, action),
   });
 
-export const useFeatureAccess = (feature: string, action: string = 'access') =>
-  useQuery({
-    queryKey: ['feature-access', feature, action],
-    queryFn: async () => checkFeatureAccess(feature, action),
-    staleTime: 5 * 60 * 1000, // cached for 5 mins
-  });
+const featureAccessQuery = (feature: string, action: string = 'access') => ({
+  queryKey: ['feature-access', feature, action],
+  queryFn: async () => checkFeatureAccess(feature, action),
+  staleTime: 5 * 60 * 1000, // cached for 5 mins
+});
 
-export const useUserFeatures = () =>
-  useQuery({
-    queryKey: ['user-features'],
-    queryFn: async () => getUserFeatures(),
-  });
+export const useFeatureAccess = (feature: string, action: string = 'access') =>
+  useQuery(featureAccessQuery(feature, action));
+
+const fetchUserFeaturesQuery = {
+  queryKey: ['user-features'],
+  queryFn: async () => getUserFeatures(),
+  staleTime: 5 * 60 * 1000, // cached for 5 mins
+};
+
+export const fetchUserFeatures = () => queryClient.fetchQuery(fetchUserFeaturesQuery);
+
+export const useUserFeatures = () => useQuery(fetchUserFeaturesQuery);
