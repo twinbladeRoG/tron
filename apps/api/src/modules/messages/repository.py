@@ -18,3 +18,6 @@ class MessageRepository(BaseRepository[Message]):
         )
         result = self.session.exec(query)
         return list(result)
+
+    def get_message_by_run_id(self, run_id: UUID):
+        return self.get_by("run_id", run_id, unique=True)

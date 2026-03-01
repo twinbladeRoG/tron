@@ -1,6 +1,16 @@
 import React, { useMemo } from 'react';
 import { Icon } from '@iconify/react/dist/iconify.js';
-import { ActionIcon, Button, Collapse, Popover, Skeleton, Text } from '@mantine/core';
+import {
+  ActionIcon,
+  Anchor,
+  Button,
+  Card,
+  Collapse,
+  Popover,
+  ScrollArea,
+  Skeleton,
+  Text,
+} from '@mantine/core';
 import { useClipboard, useDisclosure } from '@mantine/hooks';
 import Markdown from 'marked-react';
 import { motion } from 'motion/react';
@@ -10,7 +20,7 @@ import { cn, formatDuration } from '@/lib/utils';
 
 import renderer from '../../markdown';
 
-import type { IMessage } from './types';
+import type { IMessage, IWebSearchToolResult } from './types';
 
 interface SplitMessage {
   content: string | null;
@@ -158,6 +168,34 @@ const ChatMessage: React.FC<IMessage> = ({
           </div>
         ) : null}
       </div>
+
+      {tools_calls &&
+        tools_calls.length > 0 &&
+        tools_calls.map((tool_call) => {
+          switch (tool_call.name) {
+            case 'search_web': {
+              const results = tool_call.content as Array<IWebSearchToolResult>;
+
+              return (
+                <ScrollArea key={tool_call.id} offsetScrollbars overscrollBehavior="contain">
+                  <div className="flex gap-2">
+                    {results?.map((item, i) => (
+                      // eslint-disable-next-line @eslint-react/no-array-index-key, react-x/no-array-index-key
+                      <Card key={i} className="w-[380px]" shadow="sm">
+                        <Anchor lineClamp={2} href={item.link} target="_blank" size="sm" mb="sm">
+                          {item.title}
+                        </Anchor>
+                        <Text size="xs" lineClamp={2}>
+                          {item.snippet}
+                        </Text>
+                      </Card>
+                    ))}
+                  </div>
+                </ScrollArea>
+              );
+            }
+          }
+        })}
 
       <div
         className={cn('flex w-full items-center gap-3', {

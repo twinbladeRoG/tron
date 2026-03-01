@@ -116,15 +116,27 @@ const useChatMessages = () => {
           break;
         }
 
-        case 'tool_call': {
+        case 'tool_call':
+        case 'tool_message': {
           const data = JSON.parse(message.data) as IToolCall;
           setMessages((prev) =>
             prev.map((message) => {
               if (message.id !== botMessageId) return message;
 
+              let toolCalls = message.tools_calls ?? [];
+
+              if (toolCalls.find((tool) => tool.id === data.id)) {
+                toolCalls = toolCalls.map((tool) => {
+                  if (tool.id !== data.id) return tool;
+                  return { ...tool, ...data };
+                });
+              } else {
+                toolCalls = [...toolCalls, data];
+              }
+
               return {
                 ...message,
-                tools_calls: [...(message.tools_calls ?? []), data],
+                tools_calls: toolCalls,
               } satisfies IMessage;
             })
           );

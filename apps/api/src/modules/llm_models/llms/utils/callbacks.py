@@ -15,7 +15,7 @@ from langchain_community.callbacks.openai_info import (
     standardize_model_name,
 )
 from langchain_core.callbacks import BaseCallbackHandler
-from langchain_core.messages import AIMessage
+from langchain_core.messages import AIMessage, ToolMessage
 from langchain_core.outputs import ChatGeneration, LLMResult
 from langchain_core.tracers.context import register_configure_hook
 from sqlmodel import Session
@@ -26,6 +26,7 @@ from src.modules.messages.controller import MessageController
 from src.modules.messages.schema import MessageBase
 from src.modules.usage_log.controller import ModelUsageLogController
 from src.modules.usage_log.schema import ModelUsageLogBase
+from src.utils.parse import json_to_dict
 from src.utils.time import utcnow
 
 
@@ -105,6 +106,41 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
             self.usage_log = ModelUsageLogBase()
             self.usage_log.start_time = utcnow()
 
+        self.llm_message = self.message_controller.upsert_message(
+            data=MessageBase(
+                type="ai",
+                content="",
+                run_id=run_id,
+            ),
+            user=self.user,
+            conversation=self.conversation,
+            model=self.model,
+            previous_message=self.llm_message,
+        )
+
+    def on_tool_end(
+        self,
+        output: Any,
+        *,
+        run_id: UUID,
+        parent_run_id: UUID | None = None,
+        **kwargs: Any,
+    ) -> Any:
+        if isinstance(output, ToolMessage):
+            output.content = json_to_dict(output.content)
+            self.llm_message = self.message_controller.upsert_message(
+                data=MessageBase(
+                    type="ai",
+                    content="",
+                    run_id=run_id,
+                    tool_calls=[output.model_dump()],
+                ),
+                user=self.user,
+                conversation=self.conversation,
+                model=self.model,
+                previous_message=self.llm_message,
+            )
+
     def on_llm_end(
         self,
         response: LLMResult,
@@ -121,6 +157,7 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
         if isinstance(generation, ChatGeneration):
             try:
                 message = generation.message
+
                 if isinstance(message, AIMessage):
                     usage_metadata = message.usage_metadata
                     response_metadata = message.response_metadata
@@ -142,26 +179,26 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
                             previous_message=self.llm_message,
                         )
 
-                    # For Agent toll call message
-                    elif (
-                        message.response_metadata.get("finish_reason", None)
-                        == "tool_calls"
-                    ):
-                        self.llm_message = self.message_controller.upsert_message(
-                            data=MessageBase(
-                                type="ai",
-                                content=str(message.content),
-                                reason=message.additional_kwargs.get(
-                                    "reasoning_content", None
-                                ),
-                                run_id=run_id,
-                                tool_calls=message.tool_calls,  # type: ignore
-                            ),
-                            user=self.user,
-                            conversation=self.conversation,
-                            model=self.model,
-                            previous_message=self.llm_message,
-                        )
+                    # # For Agent tool call message
+                    # elif (
+                    #     message.response_metadata.get("finish_reason", None)
+                    #     == "tool_calls"
+                    # ):
+                    #     self.llm_message = self.message_controller.upsert_message(
+                    #         data=MessageBase(
+                    #             type="ai",
+                    #             content=str(message.content),
+                    #             reason=message.additional_kwargs.get(
+                    #                 "reasoning_content", None
+                    #             ),
+                    #             run_id=run_id,
+                    #             tool_calls=message.tool_calls,  # type: ignore
+                    #         ),
+                    #         user=self.user,
+                    #         conversation=self.conversation,
+                    #         model=self.model,
+                    #         previous_message=self.llm_message,
+                    #     )
 
                 else:
                     usage_metadata = None

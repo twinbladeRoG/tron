@@ -1,5 +1,7 @@
 from uuid import UUID
 
+from langchain_core.messages import ToolMessage
+
 from src.core.controller.base import BaseController
 from src.models.models import Conversation, LlmModel, Message, User
 
@@ -46,6 +48,17 @@ class MessageController(BaseController[Message]):
                     model_id=model.id,
                 )
             )
+
+    def append_tool_message(self, tool_message: ToolMessage, run_id: UUID) -> Message:
+        message = self.repository.get_message_by_run_id(run_id)
+
+        return self.repository.update(
+            message.id,
+            {
+                "tool_calls": (message.tool_calls or [])
+                + [tool_message.model_dump_json()]
+            },
+        )
 
     def get_messages_of_conversation(self, conversation_id: UUID) -> list[Message]:
         return self.repository.get_messages_of_conversation(conversation_id)

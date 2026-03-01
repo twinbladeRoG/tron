@@ -94,6 +94,7 @@ export interface IConversationMessage extends IBaseEntity {
     name: string;
     type: 'tool_call';
     args?: Record<string, string>;
+    content?: unknown;
   }>;
 
   user_id: string;

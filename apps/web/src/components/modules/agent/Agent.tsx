@@ -107,6 +107,7 @@ const Agent: React.FC<AgentProps> = ({
                 id: call.id,
                 name: call.name,
                 type: call.type,
+                content: call.content,
               })),
               usage: msg.usage_logs.reduce(
                 (acc, log) =>

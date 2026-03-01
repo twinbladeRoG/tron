@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from langchain.agents import create_agent
-from langchain.messages import AIMessageChunk, HumanMessage
+from langchain.messages import AIMessageChunk, HumanMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.memory import InMemorySaver
 from sqlmodel import Session
@@ -17,9 +17,10 @@ from src.modules.llm_models.llms.utils.callbacks import get_llm_callback
 from src.modules.messages.controller import MessageController
 from src.modules.messages.schema import MessageBase
 from src.modules.usage_log.controller import ModelUsageLogController
+from src.utils.parse import json_to_dict
 
 from .schema import ChatPayload
-from .tools import get_current_time, get_webpage_content
+from .tools import get_current_time, get_webpage_content, search_web
 
 checkpointer = InMemorySaver()
 
@@ -41,10 +42,11 @@ class AgentController:
 
         agent = create_agent(
             chat_model,
-            tools=[get_current_time, get_webpage_content],
+            tools=[get_current_time, get_webpage_content, search_web],
             checkpointer=checkpointer,
             system_prompt="You are a helpful assistant",
             context_schema=Context,
+            name="ai-agent",
         )
 
         return agent, llm_model
@@ -52,17 +54,7 @@ class AgentController:
     def get_agent_workflow(
         self, model: str, *, llm_model_controller: LlmModelController
     ):
-        llm_model = llm_model_controller.get_llm_model_by_name(model)
-        chat_model = llm_model_controller.get_chat_model(llm_model)
-
-        agent = create_agent(
-            chat_model,
-            tools=[get_current_time, get_webpage_content],
-            checkpointer=checkpointer,
-            system_prompt="You are a helpful assistant",
-            context_schema=Context,
-            name="ai-agent",
-        )
+        agent, _ = self.get_agent(model, llm_model_controller=llm_model_controller)
 
         mermaid = agent.get_graph(xray=True).draw_mermaid()
         state = agent.get_graph(xray=True).to_json()
@@ -140,6 +132,16 @@ class AgentController:
 
                     if mode == "messages":
                         message = event[0]
+
+                        if isinstance(message, ToolMessage):
+                            tools_details = {
+                                "name": message.name,
+                                "id": message.id,
+                                "type": message.type,
+                                "content": json_to_dict(message.content),
+                            }
+                            yield f"event: tool_message\ndata: {json.dumps(tools_details)}\n\n"
+
                         if isinstance(message, AIMessageChunk):
                             if len(message.tool_calls) > 0:
                                 for tool_call in message.tool_calls:

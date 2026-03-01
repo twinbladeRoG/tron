@@ -35,4 +35,11 @@ export interface IToolCall {
   name: string;
   id: string;
   type: string;
+  content?: unknown;
+}
+
+export interface IWebSearchToolResult {
+  snippet: string;
+  title: string;
+  link: string;
 }
