@@ -14,6 +14,7 @@ router = APIRouter(prefix="/organizations", tags=["Organizations"])
 
 @router.get("/", response_model=OrganizationPaginated)
 def get_organizations(
+    user: CurrentUser,
     controller: OrganizationControllerDeps,
     query: Annotated[PaginatedFilterParams, Query()],
 ):

@@ -4,7 +4,7 @@ from typing import Generic, List, TypeVar
 from pydantic.generics import GenericModel
 from sqlmodel import SQLModel
 
-from .models import Organization
+from .models import File, Organization
 from .response import DivisionWithOrganization, TeamExtended, UserPublicExtended
 
 
@@ -54,3 +54,7 @@ class TeamExtendedPaginated(ModelPaginated[TeamExtended]):
 
 class UserPublicExtendedPaginated(ModelPaginated[UserPublicExtended]):
     pass
+
+
+class FilePaginated(ModelPaginated[File]):
+    data: list[File]

@@ -18,6 +18,7 @@ router = APIRouter(prefix="/teams", tags=["Teams"])
 
 @router.get("/", response_model=TeamExtendedPaginated)
 def get_teams(
+    user: CurrentUser,
     controller: TeamControllerDeps,
     query: Annotated[PaginatedFilterParams, Query()],
 ):

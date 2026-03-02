@@ -10,6 +10,7 @@ dependencies = [
     "casbin-sqlalchemy-adapter>=1.4.0",
     "celery[redis,sqlalchemy]>=5.5.3",
     "crawl4ai>=0.7.8",
+    "cuid2>=2.0.1",
     "ddgs>=9.10.0",
     "duckduckgo-search>=8.1.1",
     "fastapi[standard]>=0.121.3",

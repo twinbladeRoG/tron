@@ -18,6 +18,7 @@ router = APIRouter(prefix="/divisions", tags=["Divisions"])
 
 @router.get("/", response_model=DivisionWithOrganizationPaginated)
 def get_divisions(
+    user: CurrentUser,
     controller: DivisionControllerDeps,
     query: Annotated[PaginatedFilterParams, Query()],
 ):
