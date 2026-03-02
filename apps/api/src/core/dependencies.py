@@ -1,6 +1,7 @@
 from functools import lru_cache
 from typing import Annotated
 
+from aiokafka import AIOKafkaProducer
 from casbin.enforcer import Enforcer
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
@@ -10,6 +11,7 @@ from qdrant_client import QdrantClient
 from sqlmodel import Session
 
 from src.core.exception import ForbiddenException
+from src.core.kafka.dependencies import get_kafka_producer
 from src.models.models import User
 from src.modules.access_control.controller import PolicyController
 from src.modules.agent.controller import AgentController
@@ -99,6 +101,8 @@ def policy_enforcer(req: Request, enforcer: CasbinEnforcerDeps, me: CurrentUser)
 
 
 PolicyEnforcerDeps = Annotated[bool, Depends(policy_enforcer)]
+
+KafkaProducerDep = Annotated[AIOKafkaProducer, Depends(get_kafka_producer)]
 
 # NOTE: Added here to avoid circular dependency
 from .factory import Factory  # noqa: E402

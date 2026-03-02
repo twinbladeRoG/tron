@@ -5,6 +5,7 @@ description = "TRON - API"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "aiokafka>=0.13.0",
     "alembic>=1.17.2",
     "casbin>=1.43.0",
     "casbin-sqlalchemy-adapter>=1.4.0",

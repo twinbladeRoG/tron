@@ -111,6 +111,13 @@ class Settings(BaseSettings):
     LOG_LEVEL: Literal["INFO", "DEBUG", "ERROR", "WARNING", "CRITICAL"] = "INFO"
     SHOW_DB_LOGS: bool = True
 
+    KAFKA_BOOTSTRAP_SERVER: str = ""
+
+    @computed_field
+    @property
+    def KAFKA_BROKERS(self) -> list[str]:
+        return self.KAFKA_BOOTSTRAP_SERVER.split(",")
+
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "change_this":
             message = (
