@@ -43,6 +43,7 @@ export interface IFile extends IBaseEntity {
   content_type: string;
   content_length: number;
   original_filename: string;
+  is_private: boolean;
   owner_id: string;
 }
 

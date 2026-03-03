@@ -51,6 +51,21 @@ export const getFileIcon = (type: string) => {
   }
 };
 
+export const getFileIconColor = (type: string) => {
+  switch (type) {
+    case MIME_TYPES.pdf:
+      return 'text-red-400';
+    case MIME_TYPES.docx:
+      return 'text-blue-500';
+    case MIME_TYPES.csv:
+      return 'text-teal-500';
+    case MIME_TYPES.xlsx:
+      return 'text-green-500';
+    default:
+      return 'text-cyan-500';
+  }
+};
+
 export const getExtractionStatusColor = (status?: ExtractionStatus | null): DefaultMantineColor => {
   switch (status) {
     case EXTRACTION_STATUS.FAILURE:

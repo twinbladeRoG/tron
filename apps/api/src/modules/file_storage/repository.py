@@ -1,6 +1,25 @@
+from uuid import UUID
+
 from src.core.repository.base import BaseRepository
 from src.models.models import File
 
 
 class FileRepository(BaseRepository[File]):
-    pass
+    def get_user_file_by_id(self, id: UUID, user_id: UUID):
+        base_statement = self._query().where(File.id == id, File.owner_id == user_id)
+        return self.session.exec(base_statement).one_or_none()
+
+    def get_file_by_id(self, id: UUID):
+        return self.get_by("id", id, unique=True)
+
+    def get_file_by_filename(self, filename: str):
+        base_statement = self._query().where(File.filename == filename)
+        return self.session.exec(base_statement).one_or_none()
+
+    def mark_file_as_private(self, file_id: UUID):
+        file = self.get_file_by_id(file_id)
+        return self.update(file.id, {"is_private": True})
+
+    def mark_file_as_public(self, file_id: UUID):
+        file = self.get_file_by_id(file_id)
+        return self.update(file.id, {"is_private": False})

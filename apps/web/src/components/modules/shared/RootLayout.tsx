@@ -1,5 +1,6 @@
+import { useMemo } from 'react';
 import { Navigate, Outlet, useNavigate } from 'react-router';
-import { Icon } from '@iconify/react';
+import { Icon, type IconifyIcon } from '@iconify/react';
 import { ActionIcon, Avatar, Menu, Skeleton, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { modals } from '@mantine/modals';
@@ -12,6 +13,13 @@ import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler';
 import { cn } from '@/lib/utils';
 
 import AppNavLink from './AppNavLink';
+
+interface NavItem {
+  to: string;
+  label: string;
+  icon: IconifyIcon | string;
+  featureSlug?: string;
+}
 
 const RootLayout = () => {
   const features = useUserFeatures();
@@ -53,6 +61,55 @@ const RootLayout = () => {
     return true;
   };
 
+  const navItems = useMemo(
+    () =>
+      [
+        {
+          to: '/chat',
+          label: 'Chat',
+          icon: 'solar:chat-square-bold-duotone',
+          featureSlug: 'chat',
+        },
+        {
+          to: '/agent',
+          label: 'Agent',
+          icon: 'ph:robot-duotone',
+          featureSlug: 'chat',
+        },
+        {
+          to: '/models',
+          label: 'Models',
+          icon: 'si:ai-duotone',
+          featureSlug: 'models',
+        },
+        {
+          to: '/model-usage',
+          label: 'Model Usage',
+          icon: 'solar:graph-bold-duotone',
+          featureSlug: 'model-usage',
+        },
+        {
+          to: '/files',
+          label: 'Files',
+          icon: 'solar:file-bold-duotone',
+          // featureSlug: 'model-usage',
+        },
+        {
+          to: '/scrapper',
+          label: 'Scrapper',
+          icon: 'solar:shield-network-bold-duotone',
+          featureSlug: 'scrapper',
+        },
+        {
+          to: '/admin',
+          label: 'Admin',
+          icon: 'solar:folder-security-bold-duotone',
+          // featureSlug: 'model-usage',
+        },
+      ] as Array<NavItem>,
+    []
+  );
+
   return (
     <main
       className={cn(
@@ -85,46 +142,16 @@ const RootLayout = () => {
       </header>
 
       <nav className="flex flex-col px-2 sm:px-4">
-        <AppNavLink
-          to="/chat"
-          label="Chat"
-          icon="solar:chat-square-bold-duotone"
-          isCollapsed={!desktopOpened}
-          disabled={!checkForAccess('chat')}
-        />
-        <AppNavLink
-          to="/agent"
-          label="Agent"
-          icon="ph:robot-duotone"
-          isCollapsed={!desktopOpened}
-        />
-        <AppNavLink
-          to="/models"
-          label="Models"
-          icon="si:ai-duotone"
-          isCollapsed={!desktopOpened}
-          disabled={!checkForAccess('models')}
-        />
-        <AppNavLink
-          to="/usage-logs"
-          label="Model Usage"
-          icon="solar:graph-bold-duotone"
-          isCollapsed={!desktopOpened}
-          disabled={!checkForAccess('model-usage')}
-        />
-        <AppNavLink
-          to="/scrapper"
-          label="Scrapper"
-          icon="solar:shield-network-bold-duotone"
-          isCollapsed={!desktopOpened}
-          disabled={!checkForAccess('scrapper')}
-        />
-        <AppNavLink
-          to="/admin"
-          label="Admin"
-          icon="solar:folder-security-bold-duotone"
-          isCollapsed={!desktopOpened}
-        />
+        {navItems.map((item) => (
+          <AppNavLink
+            key={item.label}
+            to={item.to}
+            label={item.label}
+            icon={item.icon}
+            isCollapsed={!desktopOpened}
+            disabled={item.featureSlug ? !checkForAccess(item.featureSlug) : false}
+          />
+        ))}
 
         {user.isLoading ? (
           <Skeleton h={100} mt="sm" animate={false} />

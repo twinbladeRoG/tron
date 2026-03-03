@@ -1,7 +1,16 @@
 import type { FileWithPath } from '@mantine/dropzone';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { getFile, removeFile, uploadFile } from '../requests/files-storage.requests';
+import type { IFileQueryParams } from '@/types';
+
+import {
+  getFile,
+  getUsersFiles,
+  markFileAsPrivate,
+  markFileAsPublic,
+  removeFile,
+  uploadFile,
+} from '../requests/files-storage.requests';
 
 export const useUploadFile = () => {
   const queryClient = useQueryClient();
@@ -16,6 +25,16 @@ export const useUploadFile = () => {
     },
   });
 };
+
+export const useUserFiles = (filter: IFileQueryParams) =>
+  useQuery({
+    queryKey: ['user-files', filter],
+    queryFn: async () => {
+      const res = await getUsersFiles(filter);
+      return res;
+    },
+    placeholderData: keepPreviousData,
+  });
 
 export const useRemoveFile = () => {
   const queryClient = useQueryClient();
@@ -39,3 +58,27 @@ export const useFile = (fileId: string) =>
       return res;
     },
   });
+
+export const useMarkFileAsPrivate = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (fileId: string) => markFileAsPrivate(fileId),
+    onSuccess: async (file) => {
+      await queryClient.invalidateQueries({ queryKey: ['user-files'] });
+      await queryClient.invalidateQueries({ queryKey: ['file', file.id] });
+    },
+  });
+};
+
+export const useMarkFileAsPublic = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (fileId: string) => markFileAsPublic(fileId),
+    onSuccess: async (file) => {
+      await queryClient.invalidateQueries({ queryKey: ['user-files'] });
+      await queryClient.invalidateQueries({ queryKey: ['file', file.id] });
+    },
+  });
+};

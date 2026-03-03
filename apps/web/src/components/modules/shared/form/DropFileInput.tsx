@@ -52,13 +52,13 @@ const DropFileInput: React.FC<DropFileInputProps> = ({
         {...props}>
         <Group justify="center" gap="xl" mih={220} style={{ pointerEvents: 'none' }}>
           <Dropzone.Accept>
-            <Icon icon="mdi:cloud-upload" />
+            <Icon icon="mdi:cloud-upload" className="text-3xl text-green-500" />
           </Dropzone.Accept>
           <Dropzone.Reject>
-            <Icon icon="mdi:close-circle" />
+            <Icon icon="mdi:close-circle" className="text-3xl text-red-600" />
           </Dropzone.Reject>
           <Dropzone.Idle>
-            <Icon icon="mdi:file-document-multiple" />
+            <Icon icon="mdi:file-document-multiple" className="text-3xl" />
           </Dropzone.Idle>
 
           {children}
@@ -79,7 +79,7 @@ const DropFileInput: React.FC<DropFileInputProps> = ({
 
       <div className="grid grid-cols-4 gap-4">
         {value?.map((file) => (
-          <Card key={file.name} shadow="lg" bg={'gray'} className="!relative">
+          <Card key={file.name} shadow="lg" bg={'gray'} className="relative!">
             <div className="flex items-center justify-center gap-7">
               {file.type === MIME_TYPES.pdf && (
                 <Icon icon="mdi:file-pdf" className="text-2xl text-red-400" />

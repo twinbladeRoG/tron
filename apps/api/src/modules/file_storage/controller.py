@@ -6,6 +6,7 @@ from uuid import UUID
 import aiofiles
 from cuid2 import cuid_wrapper
 from fastapi import UploadFile
+from sqlalchemy import or_
 from sqlmodel import col, func, select
 
 from src.core.controller.base import BaseController
@@ -14,7 +15,7 @@ from src.models.models import File
 from src.models.pagination import get_pagination
 
 from .repository import FileRepository
-from .schema import FileCreate
+from .schema import FileCreate, PaginatedFilterParams
 
 cuid_generator: Callable[[], str] = cuid_wrapper()
 
@@ -24,6 +25,7 @@ class FileController(BaseController[File]):
 
     def __init__(self, repository: FileRepository) -> None:
         super().__init__(model=File, repository=repository)
+        self.repository = repository
 
     @staticmethod
     def _get_local_file_path(file_name: str):
@@ -34,12 +36,28 @@ class FileController(BaseController[File]):
 
         return file_path
 
-    def get_users_files(self, user_id: UUID, page: int = 0, limit: int = 10):
+    def get_users_files(self, user_id: UUID, query: PaginatedFilterParams):
         base_statement = self.repository._query().where(
             self.model_class.owner_id == user_id
         )
+
+        if query.search:
+            search_term = f"%{query.search.strip()}%"
+            base_statement = base_statement.where(
+                or_(
+                    self.model_class.filename.ilike(search_term),  # type: ignore
+                    self.model_class.original_filename.ilike(search_term),  # type: ignore
+                )
+            )
+
+        if query.file_types and len(query.file_types) > 0:
+            base_statement = base_statement.where(
+                self.model_class.content_type.in_(query.file_types)  # type: ignore
+            )
+
         base_statement = base_statement.order_by(File.created_at.desc(), File.id.desc())  # type: ignore
-        statement = base_statement.offset(page * limit).limit(limit)
+
+        statement = base_statement.offset(query.page * query.limit).limit(query.limit)
         results = self.repository.session.exec(statement).all()
 
         count_statement = (
@@ -47,13 +65,28 @@ class FileController(BaseController[File]):
             .select_from(self.model_class)
             .where(self.model_class.owner_id == user_id)
         )
+
+        if query.search:
+            search_term = f"%{query.search.strip()}%"
+            count_statement = count_statement.where(
+                or_(
+                    self.model_class.filename.ilike(search_term),  # type: ignore
+                    self.model_class.original_filename.ilike(search_term),  # type: ignore
+                )
+            )
+
+        if query.file_types:
+            count_statement = count_statement.where(
+                self.model_class.content_type.in_(query.file_types)  # type: ignore
+            )
+
         count = self.repository.session.exec(count_statement).one()
 
-        pagination = get_pagination(page, limit, count)
+        pagination = get_pagination(query.page, query.limit, count)
 
         return results, pagination
 
-    def get_file_by_id(self, id: UUID, user_id: UUID) -> File:
+    def get_user_file_by_id(self, id: UUID, user_id: UUID) -> File:
         base_statement = self.repository._query().where(
             File.id == id, File.owner_id == user_id
         )
@@ -64,13 +97,21 @@ class FileController(BaseController[File]):
 
         return result
 
-    def get_files_by_ids(self, ids: list[UUID], user_id: UUID) -> list[File]:
+    def get_user_files_by_ids(self, ids: list[UUID], user_id: UUID) -> list[File]:
         base_statement = self.repository._query().where(
             col(File.id).in_(ids), File.owner_id == user_id
         )
         result = self.repository.session.exec(base_statement).all()
 
         return list(result)
+
+    def get_file_by_filename(self, filename: str):
+        file = self.repository.get_file_by_filename(filename)
+
+        if file is None:
+            raise NotFoundException("No file found")
+
+        return file
 
     async def upload(self, user_id: UUID, file: UploadFile):
         if file.filename is None:
@@ -103,6 +144,7 @@ class FileController(BaseController[File]):
                 content_type=file.content_type,
                 content_length=len(content),
                 owner_id=user_id,
+                is_private=False,
             )
 
             document = File.model_validate(document)
@@ -110,7 +152,7 @@ class FileController(BaseController[File]):
             return super().create(document)
 
     def remove_file(self, id: UUID, user_id: UUID):
-        document = self.get_file_by_id(id, user_id)
+        document = self.get_user_file_by_id(id, user_id)
         file_path = self._get_local_file_path(document.filename)
 
         self.repository.delete(document)
@@ -121,3 +163,11 @@ class FileController(BaseController[File]):
         os.remove(file_path)
 
         return document
+
+    def mark_file_as_private(self, id: UUID, user_id: UUID):
+        file = self.get_user_file_by_id(id, user_id)
+        return self.repository.mark_file_as_private(file.id)
+
+    def mark_file_as_public(self, id: UUID, user_id: UUID):
+        file = self.get_user_file_by_id(id, user_id)
+        return self.repository.mark_file_as_public(file.id)

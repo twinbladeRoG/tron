@@ -53,3 +53,10 @@ export interface IUserQueryParams {
   search?: string;
   organization?: string;
 }
+
+export interface IFileQueryParams {
+  page: number;
+  limit: number;
+  search?: string;
+  file_types?: string[];
+}

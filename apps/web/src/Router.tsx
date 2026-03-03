@@ -8,6 +8,7 @@ import AdminPage from './pages/admin';
 import AgentPage from './pages/agent';
 import AgentChatPage from './pages/agent-chat';
 import ChatPage from './pages/chat';
+import FilesPage from './pages/files';
 import LlmModelsPage from './pages/llm-models';
 import LoginPage from './pages/login';
 import ScrapperPage from './pages/scrapper';
@@ -26,15 +27,15 @@ const router = createBrowserRouter([
     errorElement: <div>Not Found</div>,
     children: [
       { path: '/chat', element: <ChatPage />, loader: protectedLoader('chat') },
-      { path: '/models', element: <LlmModelsPage />, loader: protectedLoader('models') },
-      { path: '/scrapper', element: <ScrapperPage />, loader: protectedLoader('scrapper') },
       { path: '/agent', element: <AgentPage />, loader: protectedLoader('chat') },
       {
         path: '/agent/chat/:conversationId',
         element: <AgentChatPage />,
         loader: protectedLoader('chat'),
       },
-      { path: '/usage-logs', element: <UsageLogPage /> },
+      { path: '/models', element: <LlmModelsPage />, loader: protectedLoader('models') },
+      { path: '/model-usage', element: <UsageLogPage />, loader: protectedLoader('model-usage') },
+      { path: '/files', element: <FilesPage /> },
       {
         path: '/admin',
         element: <AdminPage />,
@@ -45,7 +46,9 @@ const router = createBrowserRouter([
           },
         ],
       },
+      { path: '/scrapper', element: <ScrapperPage />, loader: protectedLoader('scrapper') },
       { path: '/unauthorized', Component: UnauthorizedPage },
+      { path: '*', element: <NotFound /> },
     ],
   },
   {
