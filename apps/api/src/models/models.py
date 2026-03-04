@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from pydantic import field_validator
 from sqlalchemy import UniqueConstraint
@@ -11,6 +11,7 @@ from src.modules.conversation.schema import ConversationBase
 from src.modules.divisions.schema import DivisionBase
 from src.modules.features.schema import FeatureBase
 from src.modules.file_storage.schema import FileBase
+from src.modules.knowledge_base.schema import KnowledgeBaseBase
 from src.modules.llm_models.schema import LlmModelBase
 from src.modules.messages.schema import MessageBase
 from src.modules.organizations.schema import OrganizationBase
@@ -44,6 +45,7 @@ class User(BaseModelMixin, UserBase, table=True):
     conversations: list["Conversation"] = Relationship(back_populates="user")
     messages: list["Message"] = Relationship(back_populates="user")
     files: list["File"] = Relationship(back_populates="owner")
+    knowledge_bases: list["KnowledgeBase"] = Relationship(back_populates="owner")
 
     organization_id: Optional[UUID] = Field(
         foreign_key="organization.id", nullable=True, index=True
@@ -149,6 +151,22 @@ class Feature(BaseModelMixin, FeatureBase, table=True):
     pass
 
 
+class FileKnowledgeBaseLink(SQLModel, table=True):
+    file_id: UUID = Field(
+        default_factory=uuid4, foreign_key="file.id", primary_key=True
+    )
+    knowledge_base_id: UUID = Field(
+        default_factory=uuid4, foreign_key="knowledgebase.id", primary_key=True
+    )
+
+
 class File(BaseModelMixin, FileBase, table=True):
     owner_id: UUID = Field(foreign_key="user.id")
     owner: User = Relationship(back_populates="files")
+
+
+class KnowledgeBase(BaseModelMixin, KnowledgeBaseBase, table=True):
+    owner_id: UUID = Field(foreign_key="user.id")
+    owner: User = Relationship(back_populates="knowledge_bases")
+
+    files: list[File] = Relationship(back_populates="knowledge_bases")

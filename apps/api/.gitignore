@@ -6,3 +6,4 @@ __pycache__/
 data/
 uploads/*
 !uploads/.gitkeep
+.fastembed

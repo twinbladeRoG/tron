@@ -51,6 +51,7 @@
       "Casbin",
       "checkpointer",
       "cuid",
+      "fastembed",
       "iconify",
       "Qdrant"
     ]

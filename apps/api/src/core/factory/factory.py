@@ -1,6 +1,6 @@
 from functools import partial
 
-from src.core.dependencies import CasbinEnforcerDeps, SessionDep
+from src.core.dependencies import CasbinEnforcerDeps, SessionDep, VectorDatabaseDep
 from src.models.models import (
     Conversation,
     Division,
@@ -25,6 +25,7 @@ from src.modules.features.controller import FeatureController
 from src.modules.features.repository import FeatureRepository
 from src.modules.file_storage.controller import FileController
 from src.modules.file_storage.repository import FileRepository
+from src.modules.knowledge_base.controller import KnowledgeBaseController
 from src.modules.llm_models.controller import LlmModelController
 from src.modules.llm_models.repository import LlmModelRepository
 from src.modules.messages.controller import MessageController
@@ -106,3 +107,6 @@ class Factory:
 
     def get_file_controller(self, db_session: SessionDep):
         return FileController(repository=self.file_repository(session=db_session))
+
+    def get_knowledge_base_controller(self, vector_db: VectorDatabaseDep):
+        return KnowledgeBaseController(vector_db=vector_db)
