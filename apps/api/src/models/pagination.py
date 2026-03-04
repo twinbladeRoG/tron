@@ -4,7 +4,7 @@ from typing import Generic, List, TypeVar
 from pydantic.generics import GenericModel
 from sqlmodel import SQLModel
 
-from .models import File, Organization
+from .models import File, KnowledgeBase, Organization
 from .response import DivisionWithOrganization, TeamExtended, UserPublicExtended
 
 
@@ -58,3 +58,7 @@ class UserPublicExtendedPaginated(ModelPaginated[UserPublicExtended]):
 
 class FilePaginated(ModelPaginated[File]):
     data: list[File]
+
+
+class KnowledgeBasePaginated(ModelPaginated[KnowledgeBase]):
+    data: list[KnowledgeBase]

@@ -6,6 +6,7 @@ from src.models.models import (
     Division,
     Feature,
     File,
+    KnowledgeBase,
     LlmModel,
     Message,
     ModelUsageLog,
@@ -26,6 +27,7 @@ from src.modules.features.repository import FeatureRepository
 from src.modules.file_storage.controller import FileController
 from src.modules.file_storage.repository import FileRepository
 from src.modules.knowledge_base.controller import KnowledgeBaseController
+from src.modules.knowledge_base.repository import KnowledgeBaseRepository
 from src.modules.llm_models.controller import LlmModelController
 from src.modules.llm_models.repository import LlmModelRepository
 from src.modules.messages.controller import MessageController
@@ -52,6 +54,7 @@ class Factory:
     team_repository = partial(TeamRepository, Team)
     feature_repository = partial(FeatureRepository, Feature)
     file_repository = partial(FileRepository, File)
+    knowledge_base_repository = partial(KnowledgeBaseRepository, KnowledgeBase)
 
     def get_user_controller(self, db_session: SessionDep):
         return UserController(repository=self.user_repository(session=db_session))
@@ -108,5 +111,10 @@ class Factory:
     def get_file_controller(self, db_session: SessionDep):
         return FileController(repository=self.file_repository(session=db_session))
 
-    def get_knowledge_base_controller(self, vector_db: VectorDatabaseDep):
-        return KnowledgeBaseController(vector_db=vector_db)
+    def get_knowledge_base_controller(
+        self, db_session: SessionDep, vector_db: VectorDatabaseDep
+    ):
+        return KnowledgeBaseController(
+            repository=self.knowledge_base_repository(session=db_session),
+            vector_db=vector_db,
+        )

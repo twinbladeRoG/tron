@@ -60,3 +60,14 @@ export interface IFileQueryParams {
   search?: string;
   file_types?: string[];
 }
+
+export interface IKnowledgeBaseQueryParams {
+  page: number;
+  limit: number;
+  search?: string;
+}
+
+export interface IKnowledgeBaseCreateRequest {
+  name: string;
+  description?: string | null;
+}

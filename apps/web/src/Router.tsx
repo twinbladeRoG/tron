@@ -9,6 +9,7 @@ import AgentPage from './pages/agent';
 import AgentChatPage from './pages/agent-chat';
 import ChatPage from './pages/chat';
 import FilesPage from './pages/files';
+import KnowledgeBasePage from './pages/knowledge-bases';
 import LlmModelsPage from './pages/llm-models';
 import LoginPage from './pages/login';
 import ScrapperPage from './pages/scrapper';
@@ -36,6 +37,8 @@ const router = createBrowserRouter([
       { path: '/models', element: <LlmModelsPage />, loader: protectedLoader('models') },
       { path: '/model-usage', element: <UsageLogPage />, loader: protectedLoader('model-usage') },
       { path: '/files', element: <FilesPage /> },
+      { path: '/knowledge-bases', element: <KnowledgeBasePage /> },
+      { path: '/knowledge-bases/:slug', element: <KnowledgeBasePage /> },
       {
         path: '/admin',
         element: <AdminPage />,

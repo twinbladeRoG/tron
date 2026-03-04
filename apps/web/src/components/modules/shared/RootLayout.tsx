@@ -95,6 +95,12 @@ const RootLayout = () => {
           // featureSlug: 'model-usage',
         },
         {
+          to: '/knowledge-bases',
+          label: 'Knowledge Base',
+          icon: 'solar:book-bookmark-minimalistic-bold-duotone',
+          // featureSlug: 'model-usage',
+        },
+        {
           to: '/scrapper',
           label: 'Scrapper',
           icon: 'solar:shield-network-bold-duotone',

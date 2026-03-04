@@ -162,3 +162,12 @@ export interface IFeatureAccess extends IFeature {
   is_allowed: boolean;
   policy_enforced?: string | null;
 }
+
+export interface IKnowledgeBase extends IBaseEntity {
+  name: string;
+  slug: string;
+  description?: string | null;
+  vector_store_name: string;
+
+  owner_id: string;
+}

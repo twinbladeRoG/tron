@@ -164,9 +164,15 @@ class File(BaseModelMixin, FileBase, table=True):
     owner_id: UUID = Field(foreign_key="user.id")
     owner: User = Relationship(back_populates="files")
 
+    knowledge_bases: list["KnowledgeBase"] = Relationship(
+        back_populates="files", link_model=FileKnowledgeBaseLink
+    )
+
 
 class KnowledgeBase(BaseModelMixin, KnowledgeBaseBase, table=True):
     owner_id: UUID = Field(foreign_key="user.id")
     owner: User = Relationship(back_populates="knowledge_bases")
 
-    files: list[File] = Relationship(back_populates="knowledge_bases")
+    files: list[File] = Relationship(
+        back_populates="knowledge_bases", link_model=FileKnowledgeBaseLink
+    )
