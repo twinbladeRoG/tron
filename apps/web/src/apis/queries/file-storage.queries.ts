@@ -89,10 +89,17 @@ export const useMarkFileAsPublic = () => {
   });
 };
 
-export const useUserFilesInfiniteQuery = (search?: string) =>
+export const useUserFilesInfiniteQuery = ({
+  search,
+  excludeIds,
+}: {
+  search?: string;
+  excludeIds?: string[];
+}) =>
   useInfiniteQuery({
-    queryKey: ['team-infinite', search],
-    queryFn: async ({ pageParam = 0 }) => getUsersFiles({ page: pageParam, limit: 6 }),
+    queryKey: ['team-infinite', search, excludeIds],
+    queryFn: async ({ pageParam = 0 }) =>
+      getUsersFiles({ page: pageParam, limit: 6, search, exclude_ids: excludeIds }),
     getNextPageParam: (lastPage) => {
       if (lastPage.pagination.page < lastPage.pagination.total_pages - 1) {
         return lastPage.pagination.page + 1;

@@ -59,6 +59,7 @@ export interface IFileQueryParams {
   limit: number;
   search?: string;
   file_types?: string[];
+  exclude_ids?: string[];
 }
 
 export interface IKnowledgeBaseQueryParams {

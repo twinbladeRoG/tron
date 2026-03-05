@@ -16,6 +16,11 @@ export const getUsersFiles = async (query: IFileQueryParams) => {
       params.append('file_types', item);
     });
   }
+  if (query?.exclude_ids) {
+    query.exclude_ids.forEach((item) => {
+      params.append('exclude_ids', item);
+    });
+  }
 
   return http.get<{ data: Array<IFile>; pagination: IPagination }>(
     `/api/file-storage/?${params.toString()}`

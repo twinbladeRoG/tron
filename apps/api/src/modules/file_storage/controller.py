@@ -55,6 +55,11 @@ class FileController(BaseController[File]):
                 self.model_class.content_type.in_(query.file_types)  # type: ignore
             )
 
+        if query.exclude_ids and len(query.exclude_ids) > 0:
+            base_statement = base_statement.where(
+                self.model_class.id.notin_(query.exclude_ids)  # type: ignore
+            )
+
         base_statement = base_statement.order_by(File.created_at.desc(), File.id.desc())  # type: ignore
 
         statement = base_statement.offset(query.page * query.limit).limit(query.limit)
@@ -78,6 +83,11 @@ class FileController(BaseController[File]):
         if query.file_types:
             count_statement = count_statement.where(
                 self.model_class.content_type.in_(query.file_types)  # type: ignore
+            )
+
+        if query.exclude_ids and len(query.exclude_ids) > 0:
+            count_statement = count_statement.where(
+                self.model_class.id.notin_(query.exclude_ids)  # type: ignore
             )
 
         count = self.repository.session.exec(count_statement).one()

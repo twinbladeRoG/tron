@@ -29,7 +29,11 @@ const KnowledgeBasePage = () => {
         <p className="mb-4">{knowledgeBase.data?.description}</p>
       ) : null}
 
-      <AddFiles className="mb-4" knowledgeBaseId={knowledgeBase.data.id} />
+      <AddFiles
+        className="mb-4"
+        knowledgeBaseId={knowledgeBase.data.id}
+        excludeIds={knowledgeBase.data.files.map((f) => f.id)}
+      />
 
       <Table>
         <Table.Thead>

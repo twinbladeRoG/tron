@@ -13,6 +13,7 @@ import SelectFiles from '../shared/form/SelectFiles';
 interface AddFilesProps {
   className?: string;
   knowledgeBaseId: string;
+  excludeIds?: string[];
 }
 
 const schema = yup.object({
@@ -23,7 +24,7 @@ const schema = yup.object({
     .required('Required'),
 });
 
-const AddFiles: React.FC<AddFilesProps> = ({ knowledgeBaseId, className }) => {
+const AddFiles: React.FC<AddFilesProps> = ({ knowledgeBaseId, className, excludeIds }) => {
   const form = useForm({ resolver: yupResolver(schema), defaultValues: { file_ids: [] } });
   const addFiles = useAddFileToKnowledgeBase();
 
@@ -54,6 +55,7 @@ const AddFiles: React.FC<AddFilesProps> = ({ knowledgeBaseId, className }) => {
             value={field.value}
             onChange={field.onChange}
             error={fieldState.error?.message}
+            excludeIds={excludeIds}
           />
         )}
       />

@@ -25,3 +25,4 @@ class PaginatedFilterParams(SQLModel):
     limit: int = Field(100, gt=0, le=100)
     search: Optional[str] = Field(default=None)
     file_types: Optional[list[str]] = Field(default=None)
+    exclude_ids: Optional[list[UUID]] = Field(default=None)

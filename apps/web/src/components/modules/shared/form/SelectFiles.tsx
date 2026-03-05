@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Icon } from '@iconify/react';
-import { Combobox, Loader, Pill, PillsInput, TextInput, useCombobox } from '@mantine/core';
+import { Combobox, Loader, Pill, PillsInput, useCombobox } from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
 
 import { useUserFilesInfiniteQuery } from '@/apis/queries/file-storage.queries';
@@ -12,6 +12,7 @@ interface SelectFilesProps {
   error?: string;
   label?: string;
   className?: string;
+  excludeIds?: string[];
 }
 
 const SelectFiles: React.FC<SelectFilesProps> = ({
@@ -20,6 +21,7 @@ const SelectFiles: React.FC<SelectFilesProps> = ({
   error,
   label,
   className,
+  excludeIds,
 }) => {
   const combobox = useCombobox({
     onDropdownClose: () => combobox.resetSelectedOption(),
@@ -29,7 +31,7 @@ const SelectFiles: React.FC<SelectFilesProps> = ({
   const [debouncedSearch] = useDebouncedValue(search, 400);
 
   const { data, fetchNextPage, hasNextPage, isFetching, isFetchingNextPage } =
-    useUserFilesInfiniteQuery(debouncedSearch);
+    useUserFilesInfiniteQuery({ search: debouncedSearch, excludeIds });
 
   const options = useMemo(() => {
     return data?.pages.flatMap((page) => page.data) ?? [];
@@ -66,6 +68,7 @@ const SelectFiles: React.FC<SelectFilesProps> = ({
           label={label}
           error={error}
           onClick={() => combobox.openDropdown()}
+          rightSection={isFetching ? <Loader size="xs" /> : null}
           className={className}>
           <Pill.Group>
             {selectedFiles.map((file) => (
@@ -80,19 +83,14 @@ const SelectFiles: React.FC<SelectFilesProps> = ({
               </Pill>
             ))}
 
-            <Combobox.EventsTarget>
-              <TextInput
-                variant="unstyled"
-                placeholder="Search files..."
-                value={search}
-                onChange={(event) => {
-                  setSearch(event.currentTarget.value);
-                  combobox.openDropdown();
-                }}
-                onFocus={() => combobox.openDropdown()}
-                rightSection={isFetching ? <Loader size="xs" /> : null}
-              />
-            </Combobox.EventsTarget>
+            <PillsInput.Field
+              variant="unstyled"
+              placeholder="Search files..."
+              value={search}
+              onChange={(event) => {
+                setSearch(event.currentTarget.value);
+              }}
+            />
           </Pill.Group>
         </PillsInput>
       </Combobox.Target>
