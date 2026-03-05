@@ -4,7 +4,7 @@ import { useDisclosure } from '@mantine/hooks';
 import CreateKnowledgeBase from '@/components/modules/knowledge-bases/CreateKnowledgeBase';
 import KnowledgeBaseTable from '@/components/modules/knowledge-bases/KnowledgeBaseTable';
 
-const KnowledgeBasePage = () => {
+const KnowledgeBasesPage = () => {
   const [opened, handler] = useDisclosure();
 
   return (
@@ -30,4 +30,4 @@ const KnowledgeBasePage = () => {
   );
 };
 
-export default KnowledgeBasePage;
+export default KnowledgeBasesPage;

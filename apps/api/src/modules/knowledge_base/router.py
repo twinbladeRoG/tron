@@ -3,12 +3,17 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query
 
-from src.core.dependencies import CurrentUser, KnowledgeBaseControllerDeps
-from src.models.models import KnowledgeBase
+from src.core.dependencies import (
+    CurrentUser,
+    FileControllerDeps,
+    KnowledgeBaseControllerDeps,
+)
+from src.models.models import File, KnowledgeBase
 from src.models.pagination import KnowledgeBasePaginated
+from src.models.response import KnowledgeBaseExtended
 from src.modules.vector_db.embeddings import EmbeddingModel
 
-from .schema import CreateKnowledgeBaseRequest, PaginatedFilterParams
+from .schema import AddFilesRequest, CreateKnowledgeBaseRequest, PaginatedFilterParams
 
 router = APIRouter(prefix="/knowledge-base", tags=["Knowledge Base"])
 
@@ -37,7 +42,7 @@ def create_knowledge_base(
     return controller.create_knowledge_base(body, user=user)
 
 
-@router.get("/{identifier}", response_model=KnowledgeBase)
+@router.get("/{identifier}", response_model=KnowledgeBaseExtended)
 def get_knowledge_base(
     user: CurrentUser, controller: KnowledgeBaseControllerDeps, identifier: UUID | str
 ):
@@ -49,3 +54,31 @@ def delete_knowledge_base(
     user: CurrentUser, controller: KnowledgeBaseControllerDeps, id: UUID
 ):
     return controller.remove_knowledge_base(id, user)
+
+
+@router.patch("/{id}/file", response_model=KnowledgeBase)
+def add_file_to_knowledge_base(
+    user: CurrentUser,
+    controller: KnowledgeBaseControllerDeps,
+    id: UUID,
+    body: AddFilesRequest,
+    file_controller: FileControllerDeps,
+):
+    files: list[File] = []
+    for file_id in body.file_ids:
+        file = file_controller.get_user_file_by_id(file_id, user.id)
+        files.append(file)
+
+    return controller.attach_file_to_knowledge_base(id, user, files)
+
+
+@router.delete("/{id}/file/{file_id}", response_model=KnowledgeBase)
+def remove_file_from_knowledge_base(
+    user: CurrentUser,
+    controller: KnowledgeBaseControllerDeps,
+    id: UUID,
+    file_id: UUID,
+    file_controller: FileControllerDeps,
+):
+    file = file_controller.get_user_file_by_id(file_id, user.id)
+    return controller.detach_file_from_knowledge_base(id, user, file)

@@ -171,3 +171,8 @@ export interface IKnowledgeBase extends IBaseEntity {
 
   owner_id: string;
 }
+
+export interface IKnowledgeBaseExtended extends IKnowledgeBase {
+  owner: IUser;
+  files: Array<IFile>;
+}

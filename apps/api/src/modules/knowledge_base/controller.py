@@ -6,7 +6,7 @@ from sqlmodel import func, select
 
 from src.core.controller.base import BaseController
 from src.core.exception import BadRequestException, UnauthorizedException
-from src.models.models import KnowledgeBase, User
+from src.models.models import File, KnowledgeBase, User
 from src.models.pagination import get_pagination
 from src.modules.vector_db.embeddings import EmbeddingService
 from src.modules.vector_db.service import VectorDatabaseService
@@ -104,3 +104,29 @@ class KnowledgeBaseController(BaseController[KnowledgeBase]):
         pagination = get_pagination(query.page, query.limit, count)
 
         return results, pagination
+
+    def attach_file_to_knowledge_base(self, id: UUID, user: User, files: list[File]):
+        knowledge_base = self.get_knowledge_base(id, user)
+        file_ids = [file.id for file in files]
+
+        for file in knowledge_base.files:
+            if file.id in file_ids:
+                raise BadRequestException(
+                    f"File {file.original_filename} is already present in knowledge base."
+                )
+
+        for file in files:
+            knowledge_base.files.append(file)
+            self.repository.session.add(knowledge_base)
+            self.repository.session.commit()
+
+        return self.get_knowledge_base(id, user)
+
+    def detach_file_from_knowledge_base(self, id: UUID, user: User, file: File):
+        knowledge_base = self.get_knowledge_base(id, user)
+        knowledge_base.files = list(
+            filter(lambda f: f.id != file.id, knowledge_base.files)
+        )
+        self.repository.session.add(knowledge_base)
+        self.repository.session.commit()
+        return self.get_knowledge_base(id, user)

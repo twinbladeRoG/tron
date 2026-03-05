@@ -1,6 +1,7 @@
 import type {
   IKnowledgeBase,
   IKnowledgeBaseCreateRequest,
+  IKnowledgeBaseExtended,
   IKnowledgeBaseQueryParams,
   IPagination,
 } from '@/types';
@@ -24,7 +25,13 @@ export const removeKnowledgeBase = (id: string) =>
   http.delete<IKnowledgeBase>(`/api/knowledge-base/${id}`);
 
 export const getKnowledgeBase = (id: string) =>
-  http.get<IKnowledgeBase>(`/api/knowledge-base/${id}`);
+  http.get<IKnowledgeBaseExtended>(`/api/knowledge-base/${id}`);
 
 export const createKnowledgeBase = (payload: IKnowledgeBaseCreateRequest) =>
   http.post<IKnowledgeBase>(`/api/knowledge-base`, payload);
+
+export const addFileToKnowledgeBase = (id: string, fileIds: string[]) =>
+  http.patch<IKnowledgeBase>(`/api/knowledge-base/${id}/file`, { file_ids: fileIds });
+
+export const removeFileFromKnowledgeBase = (id: string, fileId: string) =>
+  http.delete<IKnowledgeBase>(`/api/knowledge-base/${id}/file/${fileId}`);
