@@ -35,6 +35,7 @@ import PrivacySwitch from './PrivacySwitch';
 import UserFileAction from './UserFileAction';
 
 const columnHelper = createColumnHelper<IFile>();
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 interface UserFilesProps {

@@ -59,7 +59,7 @@ const AddFiles: React.FC<AddFilesProps> = ({ knowledgeBaseId, className, exclude
           />
         )}
       />
-      <Button type="submit" size="lg" loading={addFiles.isPending}>
+      <Button type="submit" size="sm" loading={addFiles.isPending}>
         Add
       </Button>
     </form>
