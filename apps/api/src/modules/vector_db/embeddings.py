@@ -1,9 +1,12 @@
 from functools import lru_cache
-from typing import Literal, Optional
+from typing import Iterable, Literal, Optional
 
+import numpy as np
 from fastembed import LateInteractionTextEmbedding, SparseTextEmbedding, TextEmbedding
 from openai import AzureOpenAI, OpenAI
 from openai.types import CreateEmbeddingResponse
+from openai.types.create_embedding_response import CreateEmbeddingResponse, Usage
+from openai.types.embedding import Embedding
 from pydantic import BaseModel
 
 from src.core.config import settings
@@ -119,7 +122,7 @@ class EmbeddingService:
         )
 
     def _validate_model_name(self, provider: str, model_name: str) -> None:
-        if provider not in self.EMBEDDING_PROVIDERS:
+        if provider not in list(self.EMBEDDING_PROVIDERS.keys()):
             raise ValueError(
                 f"Unsupported embedding provider '{provider}'. "
                 f"Available: {list(self.EMBEDDING_PROVIDERS.keys())}"
@@ -134,6 +137,28 @@ class EmbeddingService:
                 f"Model '{model_name}' is not supported for provider '{provider}'. "
                 f"Allowed models: {allowed_models}"
             )
+
+    def _fastembed_to_openai_response(
+        self, vectors: Iterable[np.ndarray], model_name: str
+    ):
+        embeddings = [
+            Embedding(
+                embedding=vec.tolist(),
+                index=i,
+                object="embedding",
+            )
+            for i, vec in enumerate(vectors)
+        ]
+
+        return CreateEmbeddingResponse(
+            data=embeddings,
+            model=model_name,
+            object="list",
+            usage=Usage(
+                prompt_tokens=0,
+                total_tokens=0,
+            ),
+        )
 
     def create_embedding(
         self,
@@ -164,6 +189,11 @@ class EmbeddingService:
                     model=model_name,
                     encoding_format="float",
                 )
+
+            case "fastembed":
+                model = get_text_embedding_model(model_name)
+                vectors = list(model.embed(input))
+                return self._fastembed_to_openai_response(vectors, model_name)
 
             case _:
                 raise ValueError(f"Unsupported embedding provider '{provider}'")

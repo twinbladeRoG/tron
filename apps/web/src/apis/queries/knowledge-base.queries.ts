@@ -6,9 +6,12 @@ import {
   addFileToKnowledgeBase,
   createKnowledgeBase,
   getKnowledgeBase,
+  getKnowledgeBaseFileLink,
+  getKnowledgeBaseFiles,
   getKnowledgeBases,
   removeFileFromKnowledgeBase,
   removeKnowledgeBase,
+  trainKnowledgeBase,
 } from '../requests/knowledge-base.requests';
 
 export const useKnowledgeBases = (filter: IKnowledgeBaseQueryParams) =>
@@ -58,6 +61,7 @@ export const useAddFileToKnowledgeBase = () => {
     onSuccess: async (res) => {
       await queryClient.invalidateQueries({ queryKey: ['knowledge-base', res.id] });
       await queryClient.invalidateQueries({ queryKey: ['knowledge-base', res.slug] });
+      await queryClient.invalidateQueries({ queryKey: ['knowledge-base-files', res.id] });
     },
   });
 };
@@ -71,6 +75,26 @@ export const useRemoveFileFromKnowledgeBase = () => {
     onSuccess: async (res) => {
       await queryClient.invalidateQueries({ queryKey: ['knowledge-base', res.id] });
       await queryClient.invalidateQueries({ queryKey: ['knowledge-base', res.slug] });
+      await queryClient.invalidateQueries({ queryKey: ['knowledge-base-files', res.id] });
     },
   });
 };
+
+export const useTrainKnowledgeBase = () => {
+  return useMutation({
+    mutationFn: async (id: string) => trainKnowledgeBase(id),
+    onSuccess: () => {},
+  });
+};
+
+export const useKnowledgeBaseFileLink = (id: string, fileId: string) =>
+  useQuery({
+    queryKey: ['knowledge-base-file-link', id, fileId],
+    queryFn: async () => getKnowledgeBaseFileLink(id, fileId),
+  });
+
+export const useKnowledgeBaseFiles = (id: string) =>
+  useQuery({
+    queryKey: ['knowledge-base-files', id],
+    queryFn: async () => getKnowledgeBaseFiles(id),
+  });

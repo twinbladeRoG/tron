@@ -1,6 +1,6 @@
 import React, { type Dispatch, type SetStateAction, useMemo } from 'react';
 import { Icon } from '@iconify/react';
-import { Anchor, Badge, Checkbox, Table } from '@mantine/core';
+import { Anchor, Badge, Checkbox, Skeleton, Table } from '@mantine/core';
 import {
   createColumnHelper,
   flexRender,
@@ -10,30 +10,37 @@ import {
 } from '@tanstack/react-table';
 import dayjs from 'dayjs';
 
-import { bytesToSize, cn, getFileIcon, getFileIconColor } from '@/lib/utils';
-import type { IFile } from '@/types';
+import { useKnowledgeBaseFiles } from '@/apis/queries/knowledge-base.queries';
+import {
+  bytesToSize,
+  cn,
+  getFileIcon,
+  getFileIconColor,
+  getFileProcessingStatusColor,
+} from '@/lib/utils';
+import type { IKnowledgeBaseFileWithLink } from '@/types';
 
 import FileAction from './FileAction';
 
 interface KnowledgeBaseFilesProps {
   className?: string;
-  files: Array<IFile>;
   knowledgeBaseId: string;
   rowSelection: RowSelectionState;
   setRowSelection: Dispatch<SetStateAction<RowSelectionState>>;
 }
 
-const columnHelper = createColumnHelper<IFile>();
+const columnHelper = createColumnHelper<IKnowledgeBaseFileWithLink>();
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 const KnowledgeBaseFiles: React.FC<KnowledgeBaseFilesProps> = ({
   className,
-  files,
   knowledgeBaseId,
   rowSelection,
   setRowSelection,
 }) => {
+  const files = useKnowledgeBaseFiles(knowledgeBaseId);
+
   const columns = useMemo(
     () => [
       columnHelper.accessor('id', {
@@ -82,6 +89,12 @@ const KnowledgeBaseFiles: React.FC<KnowledgeBaseFilesProps> = ({
         cell: (info) =>
           info.getValue() ? <Badge color="red">Private</Badge> : <Badge>Public</Badge>,
       }),
+      columnHelper.accessor('link.status', {
+        header: 'Status',
+        cell: (info) => (
+          <Badge color={getFileProcessingStatusColor(info.getValue())}>{info.getValue()}</Badge>
+        ),
+      }),
       columnHelper.display({
         id: 'actions',
         header: () => <p className="text-center">Actions</p>,
@@ -95,7 +108,7 @@ const KnowledgeBaseFiles: React.FC<KnowledgeBaseFilesProps> = ({
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
-    data: files,
+    data: files.data ?? [],
     columns,
     getCoreRowModel: getCoreRowModel(),
     onRowSelectionChange: setRowSelection,
@@ -138,6 +151,26 @@ const KnowledgeBaseFiles: React.FC<KnowledgeBaseFilesProps> = ({
               No documents uploaded yet
             </Table.Td>
           </Table.Tr>
+        ) : null}
+
+        {files.isLoading || files.isFetching ? (
+          <>
+            <Table.Tr>
+              <Table.Td colSpan={columns.length}>
+                <Skeleton height={30} radius="sm" />
+              </Table.Td>
+            </Table.Tr>
+            <Table.Tr>
+              <Table.Td colSpan={columns.length}>
+                <Skeleton height={30} radius="sm" />
+              </Table.Td>
+            </Table.Tr>
+            <Table.Tr>
+              <Table.Td colSpan={columns.length}>
+                <Skeleton height={30} radius="sm" />
+              </Table.Td>
+            </Table.Tr>
+          </>
         ) : null}
       </Table.Tbody>
     </Table>

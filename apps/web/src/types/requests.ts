@@ -72,3 +72,9 @@ export interface IKnowledgeBaseCreateRequest {
   name: string;
   description?: string | null;
 }
+
+export interface IExtractionStatus {
+  status: 'pending' | 'extracting' | 'extracted' | 'embedding' | 'embedded' | 'completed';
+  file_id: string;
+  knowledge_base_id: string;
+}

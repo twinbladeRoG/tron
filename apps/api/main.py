@@ -20,9 +20,7 @@ async def lifespan(app: FastAPI):
     Lifespan context manager for the FastAPI application.
     """
     loop = asyncio.get_event_loop()
-    consumer = create_kafka_consumer(
-        [str(KafkaTopic.EXTRACT_DOCUMENT.value)], loop=loop
-    )
+    consumer = create_kafka_consumer(KafkaTopic.EXTRACT_DOCUMENT.value, loop=loop)
     task = asyncio.create_task(consume(consumer))
     try:
         yield
@@ -36,7 +34,7 @@ async def lifespan(app: FastAPI):
         task.cancel()
 
 
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 if settings.all_cors_origins:
     app.add_middleware(

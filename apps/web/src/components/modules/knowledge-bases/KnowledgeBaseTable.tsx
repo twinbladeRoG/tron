@@ -49,6 +49,7 @@ const KnowledgeBaseTable: React.FC<KnowledgeBaseTableProps> = ({ className }) =>
       }),
       columnHelper.accessor('description', { header: 'Description' }),
       columnHelper.accessor('slug', { header: 'Slug' }),
+      columnHelper.accessor('status', { header: 'Status' }),
       columnHelper.display({
         id: 'actions',
         header: () => <p className="text-center">Actions</p>,

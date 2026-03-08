@@ -1,5 +1,5 @@
 import type { IBaseEntity } from './common';
-import type { LlmProvider } from './enums';
+import type { FileProcessingStatus, KnowledgeBaseStatus, LlmProvider } from './enums';
 
 export interface IAgentWorkflowEdge {
   source: string;
@@ -168,6 +168,7 @@ export interface IKnowledgeBase extends IBaseEntity {
   slug: string;
   description?: string | null;
   vector_store_name: string;
+  status: KnowledgeBaseStatus;
 
   owner_id: string;
 }
@@ -175,4 +176,13 @@ export interface IKnowledgeBase extends IBaseEntity {
 export interface IKnowledgeBaseExtended extends IKnowledgeBase {
   owner: IUser;
   files: Array<IFile>;
+}
+
+export interface IKnowledgeBaseFileLink extends Omit<IBaseEntity, 'id'> {
+  status: FileProcessingStatus;
+  error_message?: string | null;
+}
+
+export interface IKnowledgeBaseFileWithLink extends IFile {
+  link: IKnowledgeBaseFileLink;
 }

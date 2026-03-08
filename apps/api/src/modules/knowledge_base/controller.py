@@ -1,13 +1,18 @@
+from typing import Optional
 from uuid import UUID
 
+from aiokafka import AIOKafkaProducer
 from qdrant_client import QdrantClient
 from sqlalchemy import or_
 from sqlmodel import func, select
 
 from src.core.controller.base import BaseController
 from src.core.exception import BadRequestException, UnauthorizedException
+from src.core.kafka.enums import KafkaTopic
+from src.models.enums import FileProcessingStatus, KnowledgeBaseStatus
 from src.models.models import File, KnowledgeBase, User
 from src.models.pagination import get_pagination
+from src.models.response import KnowledgeBaseFileAndLink
 from src.modules.vector_db.embeddings import EmbeddingService
 from src.modules.vector_db.service import VectorDatabaseService
 
@@ -15,17 +20,23 @@ from .repository import KnowledgeBaseRepository
 from .schema import (
     CreateKnowledgeBase,
     CreateKnowledgeBaseRequest,
+    ExtractionStatus,
+    ExtractPayload,
     PaginatedFilterParams,
 )
 
 
 class KnowledgeBaseController(BaseController[KnowledgeBase]):
     def __init__(
-        self, repository: KnowledgeBaseRepository, vector_db: QdrantClient
+        self,
+        repository: KnowledgeBaseRepository,
+        vector_db: QdrantClient,
+        kafka_producer: AIOKafkaProducer,
     ) -> None:
         super().__init__(model=KnowledgeBase, repository=repository)
         self.repository = repository
         self.vector_service = VectorDatabaseService(vector_db, EmbeddingService())
+        self.kafka_producer = kafka_producer
 
     def get_embedding_models(self):
         return self.vector_service.embedding_service.EMBEDDING_PROVIDERS
@@ -60,6 +71,7 @@ class KnowledgeBaseController(BaseController[KnowledgeBase]):
     def remove_knowledge_base(self, id: UUID, user: User):
         knowledge_base = self.get_knowledge_base(id, user)
         self.repository.delete(knowledge_base)
+        self.vector_service.remove_vector_collection(knowledge_base.vector_store_name)
         return knowledge_base
 
     def get_users_knowledge_bases(self, user_id: UUID, query: PaginatedFilterParams):
@@ -118,7 +130,14 @@ class KnowledgeBaseController(BaseController[KnowledgeBase]):
         for file in files:
             knowledge_base.files.append(file)
             self.repository.session.add(knowledge_base)
-            self.repository.session.commit()
+
+        if (
+            knowledge_base.status != KnowledgeBaseStatus.PENDING.value
+            and knowledge_base.status != KnowledgeBaseStatus.PARTIALLY_PROCESSED.value
+        ):
+            knowledge_base.status = KnowledgeBaseStatus.PARTIALLY_PROCESSED.value
+
+        self.repository.session.commit()
 
         return self.get_knowledge_base(id, user)
 
@@ -129,4 +148,62 @@ class KnowledgeBaseController(BaseController[KnowledgeBase]):
         )
         self.repository.session.add(knowledge_base)
         self.repository.session.commit()
+        self.vector_service.remove_file_from_vector_store(
+            knowledge_base.vector_store_name, "file_id", file.id.hex
+        )
         return self.get_knowledge_base(id, user)
+
+    def change_status(self, id: UUID, status: KnowledgeBaseStatus):
+        knowledge_base = self.get_by_id(id)
+        self.repository.update(knowledge_base.id, {"status": status.value})
+        return self.get_by_id(id)
+
+    async def enqueue_knowledge_base_for_extraction(self, id: UUID, user: User):
+        knowledge_base = self.get_knowledge_base(id, user)
+
+        for file in knowledge_base.files:
+            await self.change_knowledge_base_file_status(
+                id, file.id, FileProcessingStatus.PENDING
+            )
+
+        payload = ExtractPayload(
+            knowledge_base_id=knowledge_base.id,
+            file_ids=[file.id for file in knowledge_base.files],
+        )
+        await self.kafka_producer.send_and_wait(
+            KafkaTopic.EXTRACT_DOCUMENT.value, value=payload.model_dump(mode="json")
+        )
+        self.change_status(id, KnowledgeBaseStatus.PROCESSING)
+
+    async def change_knowledge_base_file_status(
+        self,
+        knowledge_base_id: UUID,
+        file_id: UUID,
+        status: FileProcessingStatus,
+        *,
+        error: Optional[str] = None,
+    ):
+        self.repository.change_knowledge_base_file_status(
+            knowledge_base_id, file_id, status, error=error
+        )
+        await self.kafka_producer.send_and_wait(
+            KafkaTopic.EXTRACT_DOCUMENT_STATUS.value,
+            ExtractionStatus(
+                status=status, file_id=file_id, knowledge_base_id=knowledge_base_id
+            ).model_dump(mode="json"),
+        )
+        self.sync_knowledge_base_status(knowledge_base_id)
+
+    def get_knowledge_base_file_link(self, knowledge_base_id: UUID, file_id: UUID):
+        return self.repository.get_knowledge_base_file_link(knowledge_base_id, file_id)
+
+    def sync_knowledge_base_status(self, id: UUID):
+        return self.repository.sync_knowledge_base_status(id)
+
+    def get_knowledge_base_files_with_links(self, id: UUID):
+        rows = self.repository.get_files_with_link(id)
+        result = [
+            KnowledgeBaseFileAndLink(**file.model_dump(), link=link)
+            for file, link in rows
+        ]
+        return result

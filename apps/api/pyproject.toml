@@ -28,6 +28,7 @@ dependencies = [
     "psycopg2-binary>=2.9.11",
     "pydantic-settings>=2.12.0",
     "pyjwt>=2.10.1",
+    "pymupdf>=1.27.1",
     "qdrant-client>=1.16.0",
     "sqlalchemy-adapter>=1.9.0",
     "sqlmodel>=0.0.27",

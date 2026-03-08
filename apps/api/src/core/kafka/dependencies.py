@@ -12,3 +12,9 @@ async def get_kafka_producer():
     finally:
         logger.debug("Stopping Kafka producer...")
         await producer.stop()
+
+
+async def initialize_kafka_producer():
+    producer = create_kafka_producer()
+    await producer.start()
+    return producer

@@ -4,8 +4,16 @@ from uuid import UUID
 from sqlmodel import Field
 
 from src.models.mixins import BaseModelMixin
-from src.models.models import Division, File, Organization, Team, User
+from src.models.models import (
+    Division,
+    File,
+    FileKnowledgeBaseLink,
+    Organization,
+    Team,
+    User,
+)
 from src.modules.divisions.schema import DivisionBase
+from src.modules.file_storage.schema import FileBase
 from src.modules.knowledge_base.schema import KnowledgeBaseBase
 from src.modules.teams.schema import TeamBase
 from src.modules.users.schema import UserPublic
@@ -33,3 +41,7 @@ class KnowledgeBaseExtended(BaseModelMixin, KnowledgeBaseBase):
     owner_id: UUID = Field(default=None)
     owner: User = Field(default=None)
     files: list[File] = Field(default_factory=list)
+
+
+class KnowledgeBaseFileAndLink(BaseModelMixin, FileBase):
+    link: FileKnowledgeBaseLink

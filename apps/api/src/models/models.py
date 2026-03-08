@@ -1,10 +1,10 @@
 from datetime import datetime
 from typing import Optional
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from pydantic import field_validator
 from sqlalchemy import UniqueConstraint
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Column, Field, Relationship, SQLModel, String
 
 from src.core.security import PasswordHandler
 from src.modules.conversation.schema import ConversationBase
@@ -20,7 +20,8 @@ from src.modules.usage_log.schema import ModelUsageLogBase
 from src.modules.users.schema import UserBase
 from src.utils.time import utcnow
 
-from .mixins import BaseModelMixin
+from .enums import FileProcessingStatus
+from .mixins import BaseModelMixin, TimeStampMixin
 
 
 class UserTeamLink(SQLModel, table=True):
@@ -151,13 +152,18 @@ class Feature(BaseModelMixin, FeatureBase, table=True):
     pass
 
 
-class FileKnowledgeBaseLink(SQLModel, table=True):
-    file_id: UUID = Field(
-        default_factory=uuid4, foreign_key="file.id", primary_key=True
+class FileKnowledgeBaseLink(TimeStampMixin, SQLModel, table=True):
+    file_id: UUID = Field(foreign_key="file.id", primary_key=True)
+    knowledge_base_id: UUID = Field(foreign_key="knowledgebase.id", primary_key=True)
+
+    status: str = Field(
+        sa_column=Column(
+            String, nullable=True, server_default=FileProcessingStatus.PENDING.value
+        ),
+        default=FileProcessingStatus.PENDING.value,
     )
-    knowledge_base_id: UUID = Field(
-        default_factory=uuid4, foreign_key="knowledgebase.id", primary_key=True
-    )
+
+    error_message: Optional[str] = Field(default=None, nullable=True)
 
 
 class File(BaseModelMixin, FileBase, table=True):

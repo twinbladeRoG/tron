@@ -1,3 +1,4 @@
+import { ReadyState } from 'react-use-websocket';
 import type { DefaultMantineColor } from '@mantine/core';
 import { MIME_TYPES } from '@mantine/dropzone';
 import { type ClassValue, clsx } from 'clsx';
@@ -5,7 +6,15 @@ import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import { twMerge } from 'tailwind-merge';
 
-import { EXTRACTION_STATUS, type ExtractionStatus, type LlmProvider } from '@/types';
+import {
+  EXTRACTION_STATUS,
+  type ExtractionStatus,
+  FILE_PROCESSING_STATUS,
+  type FileProcessingStatus,
+  KNOWLEDGE_BASE_STATUS,
+  type KnowledgeBaseStatus,
+  type LlmProvider,
+} from '@/types';
 
 dayjs.extend(duration);
 
@@ -128,6 +137,68 @@ export function formatDuration(seconds: number): string {
   if (m > 0) parts.push(`${m}m`);
   if (s > 0) parts.push(`${s}s`);
   if (s <= 0) parts.push(`${ms}ms`);
-
   return parts.join(' ');
 }
+
+export function safeParseJsonString<T = unknown>(value: unknown): T | null {
+  if (typeof value !== 'string') return null;
+
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return null;
+  }
+}
+
+export const webSocketStatusColor = (readyState: ReadyState): DefaultMantineColor => {
+  switch (readyState) {
+    case ReadyState.UNINSTANTIATED:
+      return 'gray';
+    case ReadyState.CONNECTING:
+      return 'blue';
+    case ReadyState.CLOSING:
+      return 'yellow';
+    case ReadyState.CLOSED:
+      return 'red';
+    case ReadyState.OPEN:
+      return 'green';
+    default:
+      return 'gray';
+  }
+};
+
+export const getFileProcessingStatusColor = (
+  status?: FileProcessingStatus
+): DefaultMantineColor => {
+  switch (status) {
+    case FILE_PROCESSING_STATUS.PENDING:
+      return 'yellow';
+    case FILE_PROCESSING_STATUS.EXTRACTING:
+      return 'lime';
+    case FILE_PROCESSING_STATUS.EXTRACTED:
+      return 'orange';
+    case FILE_PROCESSING_STATUS.EMBEDDING:
+      return 'grape';
+    case FILE_PROCESSING_STATUS.COMPLETED:
+      return 'green';
+    default:
+      return 'gray';
+  }
+};
+
+export const getKnowledgeBaseStatusColor = (status?: KnowledgeBaseStatus): DefaultMantineColor => {
+  switch (status) {
+    case KNOWLEDGE_BASE_STATUS.PENDING:
+      return 'yellow';
+    case KNOWLEDGE_BASE_STATUS.PARTIALLY_PROCESSED:
+      return 'orange';
+    case KNOWLEDGE_BASE_STATUS.PROCESSING:
+      return 'blue';
+    case KNOWLEDGE_BASE_STATUS.READY:
+      return 'green';
+    case KNOWLEDGE_BASE_STATUS.FAILED:
+      return 'red';
+    default:
+      return 'gray';
+  }
+};

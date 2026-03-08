@@ -1,9 +1,11 @@
-import type {
-  IKnowledgeBase,
-  IKnowledgeBaseCreateRequest,
-  IKnowledgeBaseExtended,
-  IKnowledgeBaseQueryParams,
-  IPagination,
+import {
+  type IKnowledgeBase,
+  type IKnowledgeBaseCreateRequest,
+  type IKnowledgeBaseExtended,
+  type IKnowledgeBaseFileLink,
+  type IKnowledgeBaseFileWithLink,
+  type IKnowledgeBaseQueryParams,
+  type IPagination,
 } from '@/types';
 
 import http from '../http';
@@ -35,3 +37,11 @@ export const addFileToKnowledgeBase = (id: string, fileIds: string[]) =>
 
 export const removeFileFromKnowledgeBase = (id: string, fileId: string) =>
   http.delete<IKnowledgeBase>(`/api/knowledge-base/${id}/file/${fileId}`);
+
+export const trainKnowledgeBase = (id: string) => http.post(`/api/knowledge-base/${id}/train`, {});
+
+export const getKnowledgeBaseFileLink = (id: string, fileId: string) =>
+  http.get<IKnowledgeBaseFileLink>(`/api/knowledge-base/${id}/file/${fileId}`);
+
+export const getKnowledgeBaseFiles = (id: string) =>
+  http.get<Array<IKnowledgeBaseFileWithLink>>(`/api/knowledge-base/${id}/files`);

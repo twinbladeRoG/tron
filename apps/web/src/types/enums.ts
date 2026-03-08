@@ -21,3 +21,24 @@ export const LLM_MODEL_PROVIDERS = {
 } as const;
 
 export type LlmProvider = ObjectValues<typeof LLM_MODEL_PROVIDERS>;
+
+export const KNOWLEDGE_BASE_STATUS = {
+  PENDING: 'pending',
+  PROCESSING: 'processing',
+  READY: 'ready',
+  FAILED: 'failed',
+  PARTIALLY_PROCESSED: 'partially-processed',
+} as const;
+
+export type KnowledgeBaseStatus = ObjectValues<typeof KNOWLEDGE_BASE_STATUS>;
+
+export const FILE_PROCESSING_STATUS = {
+  PENDING: 'pending',
+  EXTRACTING: 'extracting',
+  EXTRACTED: 'extracted',
+  EMBEDDING: 'embedding',
+  COMPLETED: 'completed',
+  FAILED: 'failed',
+} as const;
+
+export type FileProcessingStatus = ObjectValues<typeof FILE_PROCESSING_STATUS>;

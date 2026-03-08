@@ -1,6 +1,16 @@
+from typing import Any
+from uuid import uuid4
+
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams
+from qdrant_client.models import (
+    Distance,
+    FieldCondition,
+    Filter,
+    MatchValue,
+    PointStruct,
+    VectorParams,
+)
 
 from src.core.exception import NotFoundException
 from src.core.logger import logger
@@ -23,7 +33,7 @@ class VectorDatabaseService:
             chunk_size=chunk_size, chunk_overlap=chunk_overlap
         )
         texts = text_splitter.split_text(content)
-        logger.debug(f"Text is splitted into f{len(texts)} segments")
+        logger.debug(f"Text is splitted into {len(texts)} segments")
         return texts
 
     def initialize_vector_collection(
@@ -49,3 +59,86 @@ class VectorDatabaseService:
                 collection_name=collection_name,
                 vectors_config=VectorParams(size=vector_size, distance=Distance.COSINE),
             )
+
+    def get_count_of_points_from_collection(
+        self, collection_name: str, key: str, value: str
+    ):
+        collection_exists = self.vector_db.collection_exists(
+            collection_name=collection_name
+        )
+        if collection_exists == False:
+            return 0
+
+        results = self.vector_db.count(
+            collection_name=collection_name,
+            count_filter=Filter(
+                must=[FieldCondition(key=key, match=MatchValue(value=value))]
+            ),
+        )
+
+        logger.debug(
+            f'Found {results} points for collection: "{collection_name}" for key: {key}'
+        )
+
+        return results.count
+
+    def remove_file_from_vector_store(self, collection_name: str, key: str, value: str):
+        count = self.get_count_of_points_from_collection(collection_name, key, value)
+
+        if count == 0:
+            return None
+
+        result = self.vector_db.delete(
+            collection_name=collection_name,
+            points_selector=Filter(
+                must=[FieldCondition(key=key, match=MatchValue(value=value))]
+            ),
+        )
+
+        logger.debug(
+            f'Removed points for collection: "{collection_name}" for key: {key}, with status: "{result.status}"'
+        )
+
+        return result.status
+
+    def ingest_document(
+        self, content: str, collection_name: str, *, metadata: dict[str, Any]
+    ):
+        chunk_size = self.embedding_service.get_embedding_size(
+            provider="fastembed", model_name="BAAI/bge-small-en"
+        )
+
+        self.initialize_vector_collection(collection_name, vector_size=chunk_size)
+
+        chunks = self.split_content(content, chunk_size=chunk_size)
+        embedding = self.embedding_service.create_embedding(
+            chunks, provider="fastembed", model_name="BAAI/bge-small-en"
+        )
+
+        for _, (chunk, embedding) in enumerate(zip(chunks, embedding.data)):
+            self.vector_db.upload_points(
+                collection_name=collection_name,
+                points=[
+                    PointStruct(
+                        id=uuid4().hex,
+                        vector=embedding.embedding,
+                        payload={"chunk": chunk, **metadata},
+                    )
+                ],
+            )
+
+    def remove_vector_collection(self, collection_name: str):
+        collection_exists = self.vector_db.collection_exists(
+            collection_name=collection_name
+        )
+
+        if collection_exists is False:
+            logger.debug(f"Collection {collection_name} is not found")
+            return None
+
+        result = self.vector_db.delete_collection(collection_name)
+
+        if result is False:
+            logger.debug(f"Collection {collection_name} is removed successfully")
+
+        return result

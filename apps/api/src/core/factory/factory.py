@@ -1,6 +1,11 @@
 from functools import partial
 
-from src.core.dependencies import CasbinEnforcerDeps, SessionDep, VectorDatabaseDep
+from src.core.dependencies import (
+    CasbinEnforcerDeps,
+    KafkaProducerDep,
+    SessionDep,
+    VectorDatabaseDep,
+)
 from src.models.models import (
     Conversation,
     Division,
@@ -112,9 +117,13 @@ class Factory:
         return FileController(repository=self.file_repository(session=db_session))
 
     def get_knowledge_base_controller(
-        self, db_session: SessionDep, vector_db: VectorDatabaseDep
+        self,
+        db_session: SessionDep,
+        vector_db: VectorDatabaseDep,
+        kafka_producer: KafkaProducerDep,
     ):
         return KnowledgeBaseController(
             repository=self.knowledge_base_repository(session=db_session),
             vector_db=vector_db,
+            kafka_producer=kafka_producer,
         )
