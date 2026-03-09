@@ -1,6 +1,6 @@
 import React, { type Dispatch, type SetStateAction, useMemo } from 'react';
 import { Icon } from '@iconify/react';
-import { Anchor, Badge, Checkbox, Skeleton, Table } from '@mantine/core';
+import { Anchor, Badge, Checkbox, Skeleton, Table, Tooltip } from '@mantine/core';
 import {
   createColumnHelper,
   flexRender,
@@ -92,7 +92,15 @@ const KnowledgeBaseFiles: React.FC<KnowledgeBaseFilesProps> = ({
       columnHelper.accessor('link.status', {
         header: 'Status',
         cell: (info) => (
-          <Badge color={getFileProcessingStatusColor(info.getValue())}>{info.getValue()}</Badge>
+          <div className="flex items-center gap-2">
+            <Badge color={getFileProcessingStatusColor(info.getValue())}>{info.getValue()}</Badge>
+
+            {info.getValue() === 'failed' && info.row.original.link.error_message ? (
+              <Tooltip label={info.row.original.link.error_message} position="bottom-end">
+                <Icon icon="solar:danger-bold-duotone" className="text-xl text-red-400" />
+              </Tooltip>
+            ) : null}
+          </div>
         ),
       }),
       columnHelper.display({

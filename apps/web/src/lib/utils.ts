@@ -181,6 +181,8 @@ export const getFileProcessingStatusColor = (
       return 'grape';
     case FILE_PROCESSING_STATUS.COMPLETED:
       return 'green';
+    case FILE_PROCESSING_STATUS.FAILED:
+      return 'red';
     default:
       return 'gray';
   }

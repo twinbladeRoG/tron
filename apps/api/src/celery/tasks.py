@@ -4,7 +4,9 @@ from uuid import UUID
 import pymupdf
 from celery.signals import worker_process_init
 
+from celery import Task
 from src.core.dependencies import get_database_session
+from src.core.logger import logger
 from src.models.enums import FileProcessingStatus
 
 from .app import app
@@ -31,7 +33,46 @@ def init_worker(**kwargs):
     ctx.initialize()
 
 
-@app.task(name="parse_document")
+class BaseTask(Task):
+    def on_failure(self, exc: Exception, task_id, args, kwargs, einfo):
+        try:
+            if self.name == "parse_document":
+                file_id, knowledge_base_id = args
+            elif self.name == "store_embeddings":
+                _, file_id, knowledge_base_id = args
+            else:
+                return
+
+            if ctx.loop is None:
+                raise Exception(f"Event loop not initialized.")
+
+            if ctx.kafka_producer is None:
+                raise Exception(f"Kafka Producer not initialized.")
+
+            if ctx.vector_db is None:
+                raise Exception(f"Vector DB not initialized.")
+
+            with db_session() as session:
+                knowledge_base_controller = ctx.factory.get_knowledge_base_controller(
+                    db_session=session,
+                    vector_db=ctx.vector_db,
+                    kafka_producer=ctx.kafka_producer,
+                )
+                ctx.loop.run_until_complete(
+                    knowledge_base_controller.change_knowledge_base_file_status(
+                        knowledge_base_id=knowledge_base_id,
+                        file_id=file_id,
+                        status=FileProcessingStatus.FAILED,
+                        error=str(exc),
+                    )
+                )
+
+        except Exception as hook_error:
+            # Prevent Celery worker crash if hook fails
+            logger.error(f"Failure hook error: {hook_error}")
+
+
+@app.task(name="parse_document", base=BaseTask)
 def parse_document(file_id: UUID, knowledge_base_id: UUID):
     if ctx.loop is None:
         raise Exception(f"Event loop not initialized.")
@@ -77,7 +118,7 @@ def parse_document(file_id: UUID, knowledge_base_id: UUID):
         return result
 
 
-@app.task(name="store_embeddings")
+@app.task(name="store_embeddings", base=BaseTask)
 def store_embeddings(content: str, file_id: UUID, knowledge_base_id: UUID):
     if ctx.loop is None:
         raise Exception(f"Event loop not initialized.")
