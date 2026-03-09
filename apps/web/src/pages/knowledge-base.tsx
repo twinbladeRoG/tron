@@ -114,6 +114,7 @@ const KnowledgeBasePage = () => {
           type="button"
           color="red"
           onClick={handleDeleteAll}
+          loading={removeFile.isPending}
           disabled={Object.keys(rowSelection).length === 0}>
           Remove
         </Button>

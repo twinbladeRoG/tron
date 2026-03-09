@@ -1,7 +1,9 @@
 from uuid import UUID
 
+from sqlmodel import select
+
 from src.core.repository.base import BaseRepository
-from src.models.models import File
+from src.models.models import File, FileKnowledgeBaseLink
 
 
 class FileRepository(BaseRepository[File]):
@@ -23,3 +25,13 @@ class FileRepository(BaseRepository[File]):
     def mark_file_as_public(self, file_id: UUID):
         file = self.get_file_by_id(file_id)
         return self.update(file.id, {"is_private": False})
+
+    def check_if_file_linked_to_knowledge_base(self, file_id: UUID):
+        statement = select(FileKnowledgeBaseLink).where(
+            FileKnowledgeBaseLink.file_id == file_id
+        )
+        result = self.session.exec(statement).first()
+
+        if result == None:
+            return False
+        return True

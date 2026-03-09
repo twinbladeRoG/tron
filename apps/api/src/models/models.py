@@ -153,8 +153,12 @@ class Feature(BaseModelMixin, FeatureBase, table=True):
 
 
 class FileKnowledgeBaseLink(TimeStampMixin, SQLModel, table=True):
-    file_id: UUID = Field(foreign_key="file.id", primary_key=True)
-    knowledge_base_id: UUID = Field(foreign_key="knowledgebase.id", primary_key=True)
+    file_id: UUID = Field(foreign_key="file.id", primary_key=True, ondelete="RESTRICT")
+    knowledge_base_id: UUID = Field(
+        foreign_key="knowledgebase.id",
+        primary_key=True,
+        ondelete="CASCADE",
+    )
 
     status: str = Field(
         sa_column=Column(
@@ -171,7 +175,9 @@ class File(BaseModelMixin, FileBase, table=True):
     owner: User = Relationship(back_populates="files")
 
     knowledge_bases: list["KnowledgeBase"] = Relationship(
-        back_populates="files", link_model=FileKnowledgeBaseLink
+        back_populates="files",
+        link_model=FileKnowledgeBaseLink,
+        sa_relationship_kwargs={"passive_deletes": True},
     )
 
 
@@ -180,5 +186,7 @@ class KnowledgeBase(BaseModelMixin, KnowledgeBaseBase, table=True):
     owner: User = Relationship(back_populates="knowledge_bases")
 
     files: list[File] = Relationship(
-        back_populates="knowledge_bases", link_model=FileKnowledgeBaseLink
+        back_populates="knowledge_bases",
+        link_model=FileKnowledgeBaseLink,
+        sa_relationship_kwargs={"passive_deletes": True},
     )

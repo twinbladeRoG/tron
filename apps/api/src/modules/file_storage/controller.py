@@ -165,6 +165,11 @@ class FileController(BaseController[File]):
         document = self.get_user_file_by_id(id, user_id)
         file_path = self._get_local_file_path(document.filename)
 
+        if self.repository.check_if_file_linked_to_knowledge_base(id):
+            raise BadRequestException(
+                "Cannot remove file as it is being used in a Knowledge Base"
+            )
+
         self.repository.delete(document)
 
         if not file_path.exists():
