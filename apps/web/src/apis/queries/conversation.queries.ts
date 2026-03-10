@@ -4,6 +4,7 @@ import type { IConversationQueryParams } from '@/types';
 
 import {
   deleteConversation,
+  getConversation,
   getConversationMessages,
   getUserConversations,
 } from '../requests/conversation.requests';
@@ -16,6 +17,13 @@ export const useConversations = (filter?: IConversationQueryParams) =>
       return res;
     },
     enabled: !!filter,
+  });
+
+export const useConversation = (id: string) =>
+  useQuery({
+    queryKey: ['conversation', id],
+    queryFn: async () => getConversation(id),
+    enabled: !!id,
   });
 
 export const useConversationMessages = (id: string) =>

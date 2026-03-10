@@ -1,7 +1,8 @@
 from typing import Any
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from pydantic import BaseModel
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
     Distance,
@@ -16,6 +17,12 @@ from src.core.exception import NotFoundException
 from src.core.logger import logger
 
 from .embeddings import EmbeddingService
+
+
+class Chunk(BaseModel):
+    file_id: UUID
+    chunk: str
+    score: float
 
 
 class VectorDatabaseService:
@@ -142,3 +149,32 @@ class VectorDatabaseService:
             logger.debug(f"Collection {collection_name} is removed successfully")
 
         return result
+
+    def search(self, query: str, *, collection_name: str):
+        chunk_size = self.embedding_service.get_embedding_size(
+            provider="fastembed", model_name="BAAI/bge-small-en"
+        )
+        chunks = self.split_content(query, chunk_size=chunk_size)
+        embedding = self.embedding_service.create_embedding(
+            chunks, provider="fastembed", model_name="BAAI/bge-small-en"
+        )
+        query_embedding = self.embedding_service.create_embedding(
+            chunks, provider="fastembed", model_name="BAAI/bge-small-en"
+        )
+        results = self.vector_db.query_points(
+            collection_name=collection_name,
+            query=query_embedding.data[0].embedding,
+            limit=5,
+        ).points
+
+        retrieved_chunks: list[Chunk] = []
+        for i, hit in enumerate(results):
+            retrieved_chunks.append(
+                Chunk(
+                    chunk=hit.payload.get("chunk", ""),  # type: ignore
+                    file_id=UUID(hit.payload.get("file_id", None)),  # type: ignore
+                    score=hit.score,
+                )
+            )
+
+        return retrieved_chunks

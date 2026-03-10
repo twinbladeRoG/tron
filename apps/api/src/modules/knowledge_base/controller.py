@@ -15,6 +15,7 @@ from src.models.pagination import get_pagination
 from src.models.response import KnowledgeBaseFileAndLink
 from src.modules.vector_db.embeddings import EmbeddingService
 from src.modules.vector_db.service import VectorDatabaseService
+from src.utils.parse import is_valid_uuid
 
 from .repository import KnowledgeBaseRepository
 from .schema import (
@@ -53,11 +54,17 @@ class KnowledgeBaseController(BaseController[KnowledgeBase]):
             )
         )
 
-    def get_knowledge_base(self, identifier: UUID | str, user: User):
+    def get_knowledge_base(self, identifier: str | UUID, user: User):
         if isinstance(identifier, UUID):
             knowledge_base = self.repository.get_knowledge_base_by_id(identifier)
         elif isinstance(identifier, str):
-            knowledge_base = self.repository.get_knowledge_base_by_slug(identifier)
+            id = is_valid_uuid(identifier)
+            if isinstance(id, UUID):
+                knowledge_base = self.repository.get_knowledge_base_by_id(id)
+            elif isinstance(id, str):
+                knowledge_base = self.repository.get_knowledge_base_by_slug(id)
+            else:
+                raise BadRequestException("Invalid knowledge base")
         else:
             raise BadRequestException("Invalid knowledge base")
 

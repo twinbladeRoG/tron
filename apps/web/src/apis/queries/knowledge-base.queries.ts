@@ -1,4 +1,10 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 
 import type { IKnowledgeBaseCreateRequest, IKnowledgeBaseQueryParams } from '@/types';
 
@@ -21,10 +27,23 @@ export const useKnowledgeBases = (filter: IKnowledgeBaseQueryParams) =>
     placeholderData: keepPreviousData,
   });
 
-export const useKnowledgeBase = (identifier: string) =>
+export const useKnowledgeBasesInfiniteQuery = (search?: string) =>
+  useInfiniteQuery({
+    queryKey: ['knowledge-bases-infinite', search],
+    queryFn: async ({ pageParam = 0 }) => getKnowledgeBases({ page: pageParam, limit: 5, search }),
+    getNextPageParam: (lastPage) => {
+      if (lastPage.pagination.page < lastPage.pagination.total_pages) {
+        return lastPage.pagination.page + 1;
+      }
+      return undefined;
+    },
+    initialPageParam: 0,
+  });
+
+export const useKnowledgeBase = (identifier?: string | null) =>
   useQuery({
     queryKey: ['knowledge-base', identifier],
-    queryFn: async () => getKnowledgeBase(identifier),
+    queryFn: async () => getKnowledgeBase(String(identifier)),
     enabled: !!identifier,
   });
 

@@ -24,6 +24,13 @@ def get_conversations(
     return controller.get_users_conversations(user)
 
 
+@router.get("/{id}", response_model=Conversation)
+def get_conversation(
+    id: UUID, user: CurrentUser, controller: ConversationControllerDeps
+):
+    return controller.get_conversation(id, user)
+
+
 @router.get("/{id}/messages", response_model=list[MessageWithUsageLogs])
 def get_conversation_messages(
     id: UUID,

@@ -1,0 +1,183 @@
+import json
+
+from langchain.agents import create_agent
+from langchain.messages import AIMessageChunk, HumanMessage, ToolMessage
+from langchain_core.runnables import RunnableConfig
+from langgraph.checkpoint.memory import InMemorySaver
+from sqlmodel import Session
+
+from src.core.logger import logger
+from src.models.models import User
+from src.modules.conversation.controller import ConversationController
+from src.modules.conversation.schema import ConversationBase
+from src.modules.file_storage.controller import FileController
+from src.modules.knowledge_base.controller import KnowledgeBaseController
+from src.modules.llm_models.controller import LlmModelController
+from src.modules.llm_models.llms.utils.callbacks import get_llm_callback
+from src.modules.messages.controller import MessageController
+from src.modules.messages.schema import MessageBase
+from src.modules.usage_log.controller import ModelUsageLogController
+from src.utils.parse import json_to_dict
+
+from .context import Context
+from .schema import RagChatPayload
+from .tools import retrieve_context
+
+checkpointer = InMemorySaver()
+
+
+class RagAgentController:
+    def __init__(self) -> None:
+        pass
+
+    def get_agent(self, model: str, *, llm_model_controller: LlmModelController):
+        llm_model = llm_model_controller.get_llm_model_by_name(model)
+        chat_model = llm_model_controller.get_chat_model(llm_model)
+
+        prompt = (
+            "You have access to a tool that retrieves context from documents. "
+            "Use the tool to help answer user queries."
+        )
+
+        agent = create_agent(
+            chat_model,
+            tools=[retrieve_context],
+            checkpointer=checkpointer,
+            system_prompt=prompt,
+            context_schema=Context,
+            name="ai-agent",
+        )
+
+        return agent, llm_model
+
+    def get_agent_workflow(
+        self, model: str, *, llm_model_controller: LlmModelController
+    ):
+        agent, _ = self.get_agent(model, llm_model_controller=llm_model_controller)
+
+        mermaid = agent.get_graph(xray=True).draw_mermaid()
+        state = agent.get_graph(xray=True).to_json()
+
+        return state, mermaid
+
+    async def chat(
+        self,
+        data: RagChatPayload,
+        *,
+        user: User,
+        session: Session,
+        llm_model_controller: LlmModelController,
+        model_usage_log_controller: ModelUsageLogController,
+        conversation_controller: ConversationController,
+        message_controller: MessageController,
+        knowledge_base_controller: KnowledgeBaseController,
+        file_controller: FileController,
+    ):
+        if data.conversation_id:
+            conversation = conversation_controller.get_conversation(
+                data.conversation_id, user
+            )
+        else:
+            conversation = conversation_controller.create_conversation(
+                user,
+                ConversationBase(
+                    title=data.message[:25],
+                    feature="rag",
+                    parameters={"knowledge_base_id": str(data.knowledge_base_id)},
+                ),
+            )
+
+        yield f"event: conversationId\ndata: {conversation.id.hex}\n\n"
+
+        try:
+            agent, llm_model = self.get_agent(
+                data.model, llm_model_controller=llm_model_controller
+            )
+
+            with get_llm_callback(
+                user,
+                session,
+                llm_model,
+                conversation,
+                model_usage_log_controller=model_usage_log_controller,
+                conversation_controller=conversation_controller,
+                message_controller=message_controller,
+            ) as callback:
+                human_message = HumanMessage(content=data.message)
+                message_controller.upsert_message(
+                    MessageBase(content=data.message, type="human", reason=None),
+                    conversation=conversation,
+                    user=user,
+                    model=llm_model,
+                )
+
+                async for mode, event in agent.astream(
+                    input={"messages": [human_message]},
+                    stream_mode=["messages", "updates"],
+                    context=Context(
+                        user_id=user.id,
+                        knowledge_base_id=data.knowledge_base_id,
+                        knowledge_base_controller=knowledge_base_controller,
+                        file_controller=file_controller,
+                    ),
+                    config=RunnableConfig(
+                        configurable={"thread_id": conversation.id.hex}
+                    ),
+                ):
+                    state = agent.get_state(
+                        config=RunnableConfig(
+                            configurable={"thread_id": conversation.id.hex}
+                        )
+                    )
+
+                    if len(state.next) != 0:
+                        for node in state.next:
+                            yield f"event: node\ndata: {node}\n\n"
+
+                    if mode == "updates":
+                        if isinstance(event, dict):
+                            nodes = list(event.keys())
+                            if len(nodes) > 0:
+                                node = nodes[0]
+                                yield f"event: node\ndata: {node}\n\n"
+
+                    if mode == "messages":
+                        message = event[0]
+
+                        if isinstance(message, ToolMessage):
+                            tools_details = {
+                                "name": message.name,
+                                "id": message.id,
+                                "type": message.type,
+                                "content": json_to_dict(message.content),
+                                "artifact": message.artifact,
+                            }
+                            yield f"event: tool_message\ndata: {json.dumps(tools_details)}\n\n"
+
+                        if isinstance(message, AIMessageChunk):
+                            if len(message.tool_calls) > 0:
+                                for tool_call in message.tool_calls:
+                                    tool_name = tool_call.get("name")
+                                    if tool_name:
+                                        tools_details = {
+                                            "name": tool_name,
+                                            "id": tool_call.get("id"),
+                                            "type": tool_call.get("type"),
+                                        }
+                                        yield f"event: tool_call\ndata: {json.dumps(tools_details)}\n\n"
+
+                            reason = message.additional_kwargs.get("reasoning_content")
+                            if reason:
+                                yield f"event: reason\ndata: {json.dumps({'text': reason})}\n\n"
+
+                            content = message.content
+                            if content:
+                                yield f"event: message\ndata: {json.dumps({'text': content})}\n\n"
+
+                yield f"event: usage\ndata: {callback.get_cumulative_usage().model_dump_json()}\n\n"
+
+        except Exception as e:
+            logger.error(e)
+            yield f"event: error\ndata: {e}\n\n"
+        finally:
+            yield "event: done\ndata: end\n\n"

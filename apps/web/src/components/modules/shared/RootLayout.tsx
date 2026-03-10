@@ -77,6 +77,12 @@ const RootLayout = () => {
           featureSlug: 'chat',
         },
         {
+          to: '/rag-agent',
+          label: 'RAG Agent',
+          icon: 'ph:robot-duotone',
+          featureSlug: 'rag',
+        },
+        {
           to: '/models',
           label: 'Models',
           icon: 'si:ai-duotone',

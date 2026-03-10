@@ -15,6 +15,7 @@ from src.core.kafka.dependencies import get_kafka_producer
 from src.models.models import User
 from src.modules.access_control.controller import PolicyController
 from src.modules.agent.controller import AgentController
+from src.modules.agent.rag.controller import RagAgentController
 from src.modules.auth.controller import AuthController
 from src.modules.auth.schema import TokenPayload
 from src.modules.chat.controller import ChatController
@@ -145,4 +146,7 @@ FeatureControllerDeps = Annotated[
 FileControllerDeps = Annotated[FileController, Depends(Factory().get_file_controller)]
 KnowledgeBaseControllerDeps = Annotated[
     KnowledgeBaseController, Depends(Factory().get_knowledge_base_controller)
+]
+RagAgentControllerDeps = Annotated[
+    RagAgentController, Depends(Factory().get_rag_agent_controller)
 ]

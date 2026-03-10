@@ -15,6 +15,9 @@ export const getUserConversations = (filter: IConversationQueryParams) => {
   return http.get<Array<IConversation>>(`/api/conversations?${query}`);
 };
 
+export const getConversation = (conversationId: string) =>
+  http.get<IConversation>(`/api/conversations/${conversationId}`);
+
 export const getConversationMessages = (conversationId: string) =>
   http.get<Array<IConversationMessageWithUsageLogs>>(
     `/api/conversations/${conversationId}/messages`

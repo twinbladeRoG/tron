@@ -21,6 +21,7 @@ from src.models.models import (
 )
 from src.modules.access_control.controller import PolicyController
 from src.modules.agent.controller import AgentController
+from src.modules.agent.rag.controller import RagAgentController
 from src.modules.auth.controller import AuthController
 from src.modules.chat.controller import ChatController
 from src.modules.conversation.controller import ConversationController
@@ -127,3 +128,6 @@ class Factory:
             vector_db=vector_db,
             kafka_producer=kafka_producer,
         )
+
+    def get_rag_agent_controller(self, db_session: SessionDep):
+        return RagAgentController()

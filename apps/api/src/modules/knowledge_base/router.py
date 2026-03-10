@@ -58,7 +58,7 @@ def create_knowledge_base(
 
 @router.get("/{identifier}", response_model=KnowledgeBaseExtended)
 def get_knowledge_base(
-    user: CurrentUser, controller: KnowledgeBaseControllerDeps, identifier: UUID | str
+    user: CurrentUser, controller: KnowledgeBaseControllerDeps, identifier: str
 ):
     return controller.get_knowledge_base(identifier, user)
 

@@ -81,7 +81,8 @@ export interface IUsageLog extends IBaseEntity {
 
 export interface IConversation extends IBaseEntity {
   title: string;
-
+  feature: 'chat' | 'rag';
+  parameters?: Record<string, unknown> | null;
   user_id: string;
 }
 
@@ -96,6 +97,7 @@ export interface IConversationMessage extends IBaseEntity {
     type: 'tool_call';
     args?: Record<string, string>;
     content?: unknown;
+    artifact?: unknown;
   }>;
 
   user_id: string;

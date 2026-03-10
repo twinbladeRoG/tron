@@ -16,17 +16,19 @@ import Markdown from 'marked-react';
 import { motion } from 'motion/react';
 
 import { TextAnimate } from '@/components/ui/text-animate';
-import { cn, formatDuration } from '@/lib/utils';
+import { cn, formatDuration, getFileIcon, getFileIconColor } from '@/lib/utils';
 
 import renderer from '../../markdown';
 
-import type { IMessage, IWebSearchToolResult } from './types';
+import type { IMessage, IRagArtifact, IWebSearchToolResult } from './types';
 
 interface SplitMessage {
   content: string | null;
   thought?: string;
   isThinking?: boolean;
 }
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 const ChatMessage: React.FC<IMessage> = ({
   message,
@@ -187,6 +189,41 @@ const ChatMessage: React.FC<IMessage> = ({
                         </Anchor>
                         <Text size="xs" lineClamp={2}>
                           {item.snippet}
+                        </Text>
+                      </Card>
+                    ))}
+                  </div>
+                </ScrollArea>
+              );
+            }
+            case 'retrieve_context': {
+              const results = tool_call.artifact as Array<IRagArtifact>;
+
+              return (
+                <ScrollArea key={tool_call.id} offsetScrollbars overscrollBehavior="contain">
+                  <div className="flex gap-2">
+                    {results?.map((item, i) => (
+                      // eslint-disable-next-line @eslint-react/no-array-index-key, react-x/no-array-index-key
+                      <Card key={i} className="w-[380px]" shadow="sm">
+                        <Anchor
+                          lineClamp={2}
+                          href={`${API_URL}/api/file-storage/view/${item.file.filename}`}
+                          target="_blank"
+                          size="sm"
+                          mb="sm">
+                          <div className="flex items-center gap-2">
+                            <Icon
+                              icon={getFileIcon(item.file.content_type)}
+                              className={cn('text-xl', getFileIconColor(item.file.content_type))}
+                            />
+                            {item.file.original_filename}
+                          </div>
+                        </Anchor>
+                        <Text size="xs" lineClamp={2} mb="xs">
+                          {item.text}
+                        </Text>
+                        <Text size="xs" c="muted">
+                          Score: <strong>{item.score.toFixed(2)}</strong>
                         </Text>
                       </Card>
                     ))}

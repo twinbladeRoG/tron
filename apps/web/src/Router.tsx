@@ -13,6 +13,8 @@ import KnowledgeBasePage from './pages/knowledge-base';
 import KnowledgeBasesPage from './pages/knowledge-bases';
 import LlmModelsPage from './pages/llm-models';
 import LoginPage from './pages/login';
+import RagAgentPage from './pages/rag-agent';
+import RagAgentChatPage from './pages/rag-agent-chat';
 import ScrapperPage from './pages/scrapper';
 import UnauthorizedPage from './pages/unauthorized';
 import UsageLogPage from './pages/usage-logs';
@@ -34,6 +36,12 @@ const router = createBrowserRouter([
         path: '/agent/chat/:conversationId',
         element: <AgentChatPage />,
         loader: protectedLoader('chat'),
+      },
+      { path: '/rag-agent', element: <RagAgentPage />, loader: protectedLoader('rag') },
+      {
+        path: '/rag-agent/chat/:conversationId',
+        element: <RagAgentChatPage />,
+        loader: protectedLoader('rag'),
       },
       { path: '/models', element: <LlmModelsPage />, loader: protectedLoader('models') },
       { path: '/model-usage', element: <UsageLogPage />, loader: protectedLoader('model-usage') },

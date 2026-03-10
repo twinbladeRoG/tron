@@ -19,13 +19,15 @@ import { AnimatePresence, motion } from 'motion/react';
 import { v4 as uuid } from 'uuid';
 
 import { getToken } from '@/apis/http';
-import { useAgentWorkflow } from '@/apis/queries/agent.queries';
+import { useRagAgentWorkflow } from '@/apis/queries/agent.queries';
+import { useKnowledgeBase } from '@/apis/queries/knowledge-base.queries';
 import { useLlmModels } from '@/apis/queries/llm-models.queries';
 import { cn, getLlmProviderIcon } from '@/lib/utils';
-import type { IConversationMessageWithUsageLogs, LlmProvider } from '@/types';
+import type { IConversation, IConversationMessageWithUsageLogs, LlmProvider } from '@/types';
 
 import ChatInput from '../chat/ChatInput';
 import Conversations from '../conversations/Conversations';
+import SelectKnowledgeBase from '../shared/form/SelectKnowledgeBase';
 
 import AgentGraph from './AgentGraph';
 import ChatMessage from './ChatMessage';
@@ -33,18 +35,18 @@ import useChatMessages from './hook';
 import Mermaid from './Mermaid';
 import type { IMessage, IUsage } from './types';
 
-interface AgentProps {
+interface RagAgentProps {
   className?: string;
   previousMessages?: Array<IConversationMessageWithUsageLogs>;
-  conversationId?: string;
+  conversation?: IConversation;
 }
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const Agent: React.FC<AgentProps> = ({
+const RagAgent: React.FC<RagAgentProps> = ({
   className,
   previousMessages,
-  conversationId: existingConversationId,
+  conversation: existingConversation,
 }) => {
   const models = useLlmModels();
   const navigate = useNavigate();
@@ -53,8 +55,22 @@ const Agent: React.FC<AgentProps> = ({
   const [tab, setTab] = useState<string | null>('conversations');
   const [showPanel, panelHandler] = useDisclosure(true);
   const [model, setModel] = useState<string | null>(null);
-  const workflow = useAgentWorkflow(model);
+  const workflow = useRagAgentWorkflow(model);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [knowledgeBaseId, setKnowledgeBaseId] = useState<string | null | undefined>(null);
+
+  const knowledgeBase = useKnowledgeBase(knowledgeBaseId);
+
+  useEffect(() => {
+    if (existingConversation?.parameters) {
+      if (Object.hasOwn(existingConversation.parameters, 'knowledge_base_id')) {
+        if (typeof existingConversation.parameters.knowledge_base_id === 'string') {
+          // eslint-disable-next-line react-hooks/set-state-in-effect, @eslint-react/hooks-extra/no-direct-set-state-in-use-effect
+          setKnowledgeBaseId(existingConversation.parameters.knowledge_base_id);
+        }
+      }
+    }
+  }, [existingConversation]);
 
   useEffect(() => {
     if (model === null && searchParams.get('model') !== null) {
@@ -65,6 +81,19 @@ const Agent: React.FC<AgentProps> = ({
       setModel(models.data[0].name);
     }
   }, [searchParams, model, models.data]);
+
+  useEffect(() => {
+    if (knowledgeBase.data) {
+      setSearchParams((params) => {
+        params.set('knowledge-base', knowledgeBase.data.slug);
+        return params;
+      });
+    }
+  }, [knowledgeBase.data, setSearchParams]);
+
+  const handleSelectKnowledgeBase = (value: string) => {
+    setKnowledgeBaseId(value);
+  };
 
   const renderSelectOption: SelectProps['renderOption'] = ({ option, checked }) => (
     <Group flex="1" gap="xs">
@@ -90,8 +119,8 @@ const Agent: React.FC<AgentProps> = ({
   } = useChatMessages();
 
   useEffect(() => {
-    if (existingConversationId) setConversationId(existingConversationId);
-  }, [existingConversationId, setConversationId]);
+    if (existingConversation) setConversationId(existingConversation.id);
+  }, [existingConversation, setConversationId]);
 
   useEffect(() => {
     if (previousMessages?.length) {
@@ -108,6 +137,7 @@ const Agent: React.FC<AgentProps> = ({
                 name: call.name,
                 type: call.type,
                 content: call.content,
+                artifact: call.artifact,
               })),
               usage: msg.usage_logs.reduce(
                 (acc, log) =>
@@ -147,6 +177,14 @@ const Agent: React.FC<AgentProps> = ({
       return;
     }
 
+    if (!knowledgeBaseId) {
+      notifications.show({
+        message: 'Please select a Knowledge Base',
+        color: 'yellow',
+      });
+      return;
+    }
+
     const botMessageId = uuid();
     setIsStreaming(true);
     setVisitedNodes([]);
@@ -168,7 +206,7 @@ const Agent: React.FC<AgentProps> = ({
 
     const ctrl = new AbortController();
 
-    await fetchEventSource(`${API_URL}/api/agent`, {
+    await fetchEventSource(`${API_URL}/api/rag`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -178,6 +216,7 @@ const Agent: React.FC<AgentProps> = ({
         message: message,
         model: model,
         conversation_id: conversationId,
+        knowledge_base_id: knowledgeBaseId,
       }),
       signal: ctrl.signal,
       // eslint-disable-next-line @typescript-eslint/require-await
@@ -243,7 +282,7 @@ const Agent: React.FC<AgentProps> = ({
   const handleClearConversation = async () => {
     setMessages([]);
     setConversationId(null);
-    await navigate(model ? `/agent?model=${model}` : '/agent');
+    await navigate(model ? `/rag-agent?model=${model}` : '/rag-agent');
   };
 
   return (
@@ -259,7 +298,7 @@ const Agent: React.FC<AgentProps> = ({
       <div className="flex w-full flex-col overflow-y-auto">
         <div className="flex w-full items-center gap-4">
           <div className="flex items-center gap-4">
-            <h1 className="font-bold">Agent Chat</h1>
+            <h1 className="font-bold">RAG Agent Chat</h1>
           </div>
 
           <Tooltip label="New Conversation">
@@ -301,7 +340,11 @@ const Agent: React.FC<AgentProps> = ({
             value={model}
             onChange={(value) => {
               setModel(value);
-              if (value) setSearchParams({ model: value });
+              if (value)
+                setSearchParams((params) => {
+                  params.set('model', value);
+                  return params;
+                });
             }}
             leftSection={
               <Icon
@@ -312,6 +355,13 @@ const Agent: React.FC<AgentProps> = ({
             }
             w={140}
             allowDeselect={false}
+          />
+
+          <SelectKnowledgeBase
+            value={knowledgeBaseId}
+            onChange={handleSelectKnowledgeBase}
+            size="xs"
+            variant="unstyled"
           />
         </ChatInput>
       </div>
@@ -381,4 +431,4 @@ const Agent: React.FC<AgentProps> = ({
   );
 };
 
-export default Agent;
+export default RagAgent;

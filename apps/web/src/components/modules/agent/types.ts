@@ -1,3 +1,5 @@
+import type { IFile } from '@/types';
+
 export interface IMessage {
   id: string;
   role: 'human' | 'ai';
@@ -36,10 +38,17 @@ export interface IToolCall {
   id: string;
   type: string;
   content?: unknown;
+  artifact?: unknown;
 }
 
 export interface IWebSearchToolResult {
   snippet: string;
   title: string;
   link: string;
+}
+
+export interface IRagArtifact {
+  text: string;
+  file: IFile;
+  score: number;
 }

@@ -6,6 +6,9 @@ import { motion } from 'motion/react';
 
 import { useConversations, useDeleteConversation } from '@/apis/queries/conversation.queries';
 import { cn } from '@/lib/utils';
+import type { IConversation } from '@/types';
+
+import { getPathFromConversationFeature } from '../agent/utils';
 
 interface ConversationsProps {
   className?: string;
@@ -19,15 +22,17 @@ const Conversations: React.FC<ConversationsProps> = ({ className }) => {
   const navigate = useNavigate();
   const deleteConversation = useDeleteConversation();
 
-  const handleClick = async (id: string) => {
-    await navigate(`/agent/chat/${id}`);
+  const handleClick = async (conversation: IConversation) => {
+    await navigate(
+      `${getPathFromConversationFeature(conversation.feature)}/chat/${conversation.id}`
+    );
   };
 
-  const handleDelete = (id: string) => {
-    deleteConversation.mutate(id, {
+  const handleDelete = (conversation: IConversation) => {
+    deleteConversation.mutate(conversation.id, {
       onSuccess: async () => {
-        if (id === conversationId) {
-          await navigate(`/agent`);
+        if (conversation.id === conversationId) {
+          await navigate(getPathFromConversationFeature(conversation.feature));
         }
       },
     });
@@ -46,13 +51,13 @@ const Conversations: React.FC<ConversationsProps> = ({ className }) => {
             type="button"
             className={cn('block w-full cursor-pointer text-left')}
             disabled={deleteConversation.isPending}
-            onClick={() => handleClick(conversation.id)}>
+            onClick={() => handleClick(conversation)}>
             {conversation.title}
           </button>
           <ActionIcon
             variant="subtle"
             color="red"
-            onClick={() => handleDelete(conversation.id)}
+            onClick={() => handleDelete(conversation)}
             disabled={deleteConversation.isPending}>
             <Icon icon="solar:trash-bin-2-bold-duotone" />
           </ActionIcon>

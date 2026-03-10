@@ -128,6 +128,9 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
     ) -> Any:
         if isinstance(output, ToolMessage):
             output.content = json_to_dict(output.content)
+            if output.id is None:
+                output.id = output.tool_call_id
+
             self.llm_message = self.message_controller.upsert_message(
                 data=MessageBase(
                     type="ai",
