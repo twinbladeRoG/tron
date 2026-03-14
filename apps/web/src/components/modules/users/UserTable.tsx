@@ -16,6 +16,7 @@ import type { IUserExtended } from '@/types';
 import AttachDivision from './AttachDivision';
 import AttachOrganization from './AttachOrganization';
 import AttachTeams from './AttachTeams';
+import UserActions from './UserActions';
 
 interface UserTableProps {
   className?: string;
@@ -64,7 +65,7 @@ const UserTable: React.FC<UserTableProps> = ({ className }) => {
       columnHelper.display({
         id: 'actions',
         header: () => <p className="text-center">Actions</p>,
-        cell: () => null,
+        cell: (info) => <UserActions user={info.row.original} />,
       }),
     ],
     []

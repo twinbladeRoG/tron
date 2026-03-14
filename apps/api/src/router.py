@@ -15,6 +15,8 @@ from src.modules.messages.router import router as message_router
 from src.modules.organizations.router import router as organization_router
 from src.modules.scrapper.router import router as scrapper_router
 from src.modules.teams.router import router as team_router
+from src.modules.token_usage.balance.router import router as token_balance_router
+from src.modules.token_usage.bucket.router import router as token_bucket_router
 from src.modules.usage_log.router import router as usage_log_router
 from src.modules.users.router import router as user_router
 
@@ -37,3 +39,5 @@ router.include_router(team_router)
 router.include_router(feature_router)
 router.include_router(file_router)
 router.include_router(knowledge_base_router)
+router.include_router(token_bucket_router)
+router.include_router(token_balance_router)

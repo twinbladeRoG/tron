@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from typing import Any
 from uuid import UUID
 
 import pymupdf
@@ -34,7 +35,9 @@ def init_worker(**kwargs):
 
 
 class BaseTask(Task):
-    def on_failure(self, exc: Exception, task_id, args, kwargs, einfo):
+    def on_failure(
+        self, exc: Exception, task_id: str, args: Any, kwargs: Any, einfo: Any
+    ):
         try:
             if self.name == "parse_document":
                 file_id, knowledge_base_id = args

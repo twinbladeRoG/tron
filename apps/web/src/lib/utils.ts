@@ -204,3 +204,18 @@ export const getKnowledgeBaseStatusColor = (status?: KnowledgeBaseStatus): Defau
       return 'gray';
   }
 };
+
+export const decimalNumberFormatter = new Intl.NumberFormat('en-US', {
+  style: 'decimal',
+});
+
+export const currencyFormatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 6,
+});
+
+export const compactNumberFormatter = new Intl.NumberFormat('en', {
+  notation: 'compact',
+});

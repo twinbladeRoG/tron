@@ -5,7 +5,12 @@ from pydantic.generics import GenericModel
 from sqlmodel import SQLModel
 
 from .models import File, KnowledgeBase, Organization
-from .response import DivisionWithOrganization, TeamExtended, UserPublicExtended
+from .response import (
+    DivisionWithOrganization,
+    TeamExtended,
+    TokenBucketWithSubject,
+    UserPublicExtended,
+)
 
 
 class Pagination(SQLModel):
@@ -62,3 +67,7 @@ class FilePaginated(ModelPaginated[File]):
 
 class KnowledgeBasePaginated(ModelPaginated[KnowledgeBase]):
     data: list[KnowledgeBase]
+
+
+class TokenBucketPaginated(ModelPaginated[TokenBucketWithSubject]):
+    data: list[TokenBucketWithSubject]

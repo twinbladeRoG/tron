@@ -6,7 +6,7 @@ class CustomException(Exception):
     error_code = HTTPStatus.BAD_GATEWAY
     message = HTTPStatus.BAD_GATEWAY.description
 
-    def __init__(self, message=None, *, error_code=None):
+    def __init__(self, message: str | None = None, *, error_code: str | None = None):
         if message:
             self.message = message
         if error_code:

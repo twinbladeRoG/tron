@@ -4,6 +4,7 @@ import type { IAddLlmModelRequest } from '@/types';
 
 import {
   addLlmModel,
+  getLlmModel,
   getLlmModels,
   removeLlmModel,
   updateLlmModel,
@@ -12,10 +13,14 @@ import {
 export const useLlmModels = () =>
   useQuery({
     queryKey: ['llm-models'],
-    queryFn: async () => {
-      const res = await getLlmModels();
-      return res;
-    },
+    queryFn: async () => getLlmModels(),
+  });
+
+export const useLlmModel = (id: string) =>
+  useQuery({
+    queryKey: ['llm-model', id],
+    queryFn: async () => getLlmModel(id),
+    enabled: !!id,
   });
 
 export const useAddLlmModel = () => {

@@ -16,6 +16,10 @@ from src.modules.llm_models.schema import LlmModelBase
 from src.modules.messages.schema import MessageBase
 from src.modules.organizations.schema import OrganizationBase
 from src.modules.teams.schema import TeamBase
+from src.modules.token_usage.balance.schema import TokenBalanceBase
+from src.modules.token_usage.bucket.schema import TokenBucketBase
+from src.modules.token_usage.ledger.schema import TokenLedgerBase
+from src.modules.token_usage.reservation.schema import TokenReservationBase
 from src.modules.usage_log.schema import ModelUsageLogBase
 from src.modules.users.schema import UserBase
 from src.utils.time import utcnow
@@ -66,6 +70,8 @@ class User(BaseModelMixin, UserBase, table=True):
 class LlmModel(BaseModelMixin, LlmModelBase, table=True):
     usage_logs: list["ModelUsageLog"] = Relationship(back_populates="model")
     messages: list["Message"] = Relationship(back_populates="model")
+    balances: list["TokenBalance"] = Relationship(back_populates="model")
+    buckets: list["TokenBucket"] = Relationship(back_populates="model")
 
 
 class ModelUsageLog(BaseModelMixin, ModelUsageLogBase, table=True):
@@ -190,3 +196,34 @@ class KnowledgeBase(BaseModelMixin, KnowledgeBaseBase, table=True):
         link_model=FileKnowledgeBaseLink,
         sa_relationship_kwargs={"passive_deletes": True},
     )
+
+
+class TokenBucket(BaseModelMixin, TokenBucketBase, table=True):
+    parent_bucket_id: Optional[UUID] = Field(default=None, foreign_key="tokenbucket.id")
+
+    __table_args__ = (
+        UniqueConstraint(
+            "subject_type",
+            "subject_id",
+            "model_id",
+            "token_limit",
+            "period_type",
+            name="idx_token_bucket_unique_constraint",
+        ),
+    )
+
+    model_id: UUID = Field(foreign_key="llmmodel.id", nullable=False)
+    model: LlmModel = Relationship(back_populates="buckets")
+
+
+class TokenBalance(TimeStampMixin, TokenBalanceBase, table=True):
+    model_id: UUID = Field(primary_key=True, foreign_key="llmmodel.id", nullable=False)
+    model: LlmModel = Relationship(back_populates="balances")
+
+
+class TokenReservation(BaseModelMixin, TokenReservationBase, table=True):
+    bucket_id: UUID = Field(foreign_key="tokenbucket.id")
+
+
+class TokenLedger(BaseModelMixin, TokenLedgerBase, table=True):
+    bucket_id: UUID = Field(foreign_key="tokenbucket.id")

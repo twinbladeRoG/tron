@@ -29,6 +29,9 @@ from src.modules.messages.controller import MessageController
 from src.modules.organizations.controller import OrganizationController
 from src.modules.scrapper.controller import ScrapeController
 from src.modules.teams.controller import TeamController
+from src.modules.token_usage.balance.controller import TokenBalanceController
+from src.modules.token_usage.bucket.controller import TokenBucketController
+from src.modules.token_usage.service import TokeUsageService
 from src.modules.usage_log.controller import ModelUsageLogController
 from src.modules.users.controller import UserController
 
@@ -149,4 +152,13 @@ KnowledgeBaseControllerDeps = Annotated[
 ]
 RagAgentControllerDeps = Annotated[
     RagAgentController, Depends(Factory().get_rag_agent_controller)
+]
+TokeUsageServiceDeps = Annotated[
+    TokeUsageService, Depends(Factory().get_token_usage_service)
+]
+TokenBucketControllerDeps = Annotated[
+    TokenBucketController, Depends(Factory().get_token_bucker_controller)
+]
+TokenBalanceControllerDeps = Annotated[
+    TokenBalanceController, Depends(Factory().get_token_balance_controller)
 ]

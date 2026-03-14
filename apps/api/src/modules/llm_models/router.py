@@ -15,6 +15,13 @@ def get_models(user: CurrentUser, controller: LlmModelControllerDeps):
     return controller.get_llm_models()
 
 
+@router.get("/{model_identifier}", response_model=LlmModel)
+def get_model(
+    user: CurrentUser, controller: LlmModelControllerDeps, model_identifier: str
+):
+    return controller.get_model(model_identifier)
+
+
 @router.post("/", response_model=LlmModel)
 def add_model(
     user: CurrentUser, controller: LlmModelControllerDeps, body: LlmModelBase

@@ -1,4 +1,10 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 
 import type { IUserQueryParams } from '@/types';
 
@@ -14,6 +20,19 @@ export const useUsers = (query: IUserQueryParams) =>
     queryKey: ['users', query],
     queryFn: () => getUsers(query),
     placeholderData: keepPreviousData,
+  });
+
+export const useUsersInfiniteQuery = (search?: string) =>
+  useInfiniteQuery({
+    queryKey: ['users-infinite', search],
+    queryFn: async ({ pageParam = 0 }) => getUsers({ page: pageParam, limit: 6 }),
+    getNextPageParam: (lastPage) => {
+      if (lastPage.pagination.page < lastPage.pagination.total_pages - 1) {
+        return lastPage.pagination.page + 1;
+      }
+      return undefined;
+    },
+    initialPageParam: 0,
   });
 
 export const useAttachOrganizationToUser = () => {

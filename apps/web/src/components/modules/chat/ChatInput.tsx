@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { type ComponentPropsWithRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { mergeRefs } from 'react-merge-refs';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Icon } from '@iconify/react';
 import { ActionIcon, Textarea } from '@mantine/core';
@@ -9,7 +10,7 @@ import { cn } from '@/lib/utils';
 
 import { ShineBorder } from '../../ui/shine-border';
 
-interface ChatInputProps {
+interface ChatInputProps extends Omit<ComponentPropsWithRef<'textarea'>, 'onSubmit'> {
   className?: string;
   onSubmit?: (message: string) => void;
   disabled?: boolean;
@@ -29,6 +30,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   isStreaming,
   placeholder,
   children,
+  ref,
 }) => {
   const form = useForm({
     resolver: yupResolver(schema),
@@ -77,6 +79,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             classNames={{
               input: '!bg-transparent !border-0 !p-0',
             }}
+            ref={mergeRefs([field.ref, ref])}
           />
         )}
       />

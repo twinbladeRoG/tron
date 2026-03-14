@@ -13,6 +13,7 @@ import KnowledgeBasePage from './pages/knowledge-base';
 import KnowledgeBasesPage from './pages/knowledge-bases';
 import LlmModelsPage from './pages/llm-models';
 import LoginPage from './pages/login';
+import ModelPage from './pages/model';
 import RagAgentPage from './pages/rag-agent';
 import RagAgentChatPage from './pages/rag-agent-chat';
 import ScrapperPage from './pages/scrapper';
@@ -44,6 +45,7 @@ const router = createBrowserRouter([
         loader: protectedLoader('rag'),
       },
       { path: '/models', element: <LlmModelsPage />, loader: protectedLoader('models') },
+      { path: '/models/:id', element: <ModelPage />, loader: protectedLoader('models') },
       { path: '/model-usage', element: <UsageLogPage />, loader: protectedLoader('model-usage') },
       { path: '/files', element: <FilesPage /> },
       { path: '/knowledge-bases', element: <KnowledgeBasesPage /> },

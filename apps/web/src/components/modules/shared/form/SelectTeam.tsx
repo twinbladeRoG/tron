@@ -1,0 +1,97 @@
+import React, { useMemo, useState } from 'react';
+import { Combobox, Loader, Text, TextInput, useCombobox } from '@mantine/core';
+import { useDebouncedValue } from '@mantine/hooks';
+
+import { useTeamsInfiniteQuery } from '@/apis/queries/teams.queries';
+
+interface SelectTeamProps {
+  value?: string;
+  onChange?: (value: string) => void;
+  error?: string;
+}
+
+const SelectTeam: React.FC<SelectTeamProps> = ({ value, onChange, error }) => {
+  const combobox = useCombobox({
+    onDropdownClose: () => combobox.resetSelectedOption(),
+  });
+  const [search, setSearch] = useState('');
+  const [debouncedSearch] = useDebouncedValue(search, 400);
+
+  const { data, fetchNextPage, hasNextPage, isFetching, isFetchingNextPage } =
+    useTeamsInfiniteQuery(debouncedSearch);
+
+  const options = useMemo(() => {
+    return data?.pages.flatMap((page) => page.data) ?? [];
+  }, [data]);
+
+  const handleScroll = async (event: React.UIEvent<HTMLDivElement>) => {
+    const target = event.currentTarget;
+
+    if (
+      target.scrollTop + target.clientHeight >= target.scrollHeight - 10 &&
+      hasNextPage &&
+      !isFetchingNextPage
+    ) {
+      await fetchNextPage();
+    }
+  };
+
+  return (
+    <Combobox
+      store={combobox}
+      onOptionSubmit={(val) => {
+        onChange?.(val);
+        combobox.closeDropdown();
+      }}>
+      <Combobox.Target>
+        <TextInput
+          label="Select Team"
+          value={options.find((o) => o.id === value)?.name || search}
+          onChange={(event) => {
+            setSearch(event.currentTarget.value);
+            combobox.openDropdown();
+          }}
+          onFocus={() => combobox.openDropdown()}
+          rightSection={isFetching ? <Loader size="xs" /> : null}
+          placeholder="Search team..."
+          mb="md"
+          error={error}
+        />
+      </Combobox.Target>
+
+      <Combobox.Dropdown>
+        <Combobox.Options mah={200} style={{ overflowY: 'auto' }} onScroll={handleScroll}>
+          {options.length === 0 && !isFetching ? (
+            <Combobox.Empty>No results</Combobox.Empty>
+          ) : (
+            options.map((team) => (
+              <Combobox.Option value={team.id} key={team.id}>
+                <div className="flex flex-col flex-wrap gap-x-2 gap-y-1">
+                  <Text size="sm" className="block">
+                    {team.name}
+                  </Text>
+                  <Text size="xs" className="" opacity={0.5}>
+                    <span className="uppercase">{team.division.slug}</span>
+                    {' • '}
+                    {team.division.organization.name}
+                  </Text>
+                </div>
+              </Combobox.Option>
+            ))
+          )}
+
+          {(isFetching || isFetchingNextPage) && (
+            <Combobox.Option
+              value="loading"
+              disabled
+              className="flex items-center justify-center opacity-100!">
+              <Loader size="xs" color="blue" type="dots" />
+            </Combobox.Option>
+          )}
+        </Combobox.Options>
+      </Combobox.Dropdown>
+    </Combobox>
+  );
+};
+
+export default SelectTeam;

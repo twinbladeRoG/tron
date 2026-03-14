@@ -51,6 +51,8 @@ export interface ILlmModel extends IBaseEntity {
   name: string;
   display_name: string;
   provider: LlmProvider;
+  context_window: number;
+  max_output_tokens: number;
 }
 
 export interface IScrapeResult {
@@ -187,4 +189,44 @@ export interface IKnowledgeBaseFileLink extends Omit<IBaseEntity, 'id'> {
 
 export interface IKnowledgeBaseFileWithLink extends IFile {
   link: IKnowledgeBaseFileLink;
+}
+
+export interface ITokenBucket extends IBaseEntity {
+  subject_type: string;
+  subject_id: string;
+  model_id: string;
+  parent_bucket_id?: string | null;
+  token_limit: number;
+  period_type: string;
+}
+
+export interface ITokenBucketWithSubject extends ITokenBucket {
+  subject?: IUser | IOrganization | IDivision | ITeam | null;
+}
+
+export interface ITokenBalance extends IBaseEntity {
+  subject_type: string;
+  subject_id: string;
+
+  model_id: string;
+  period_key: string;
+
+  used_tokens: number;
+}
+
+export interface ITokenUsageForModelBucket {
+  subject_type: string;
+  subject_id: string;
+  subject?: IUser | IOrganization | IDivision | ITeam | null;
+  limit: number;
+  used: number;
+  remaining: number;
+}
+
+export interface ITokenUsageForModel {
+  total_limit: number;
+  total_used: number;
+  total_remaining: number;
+
+  buckets: Array<ITokenUsageForModelBucket>;
 }

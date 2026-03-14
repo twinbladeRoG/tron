@@ -1,5 +1,6 @@
 const scopes = [
   { name: 'root' },
+  { name: 'app' },
   { name: 'api' },
   { name: 'web' },
   { name: 'notebook' },

@@ -6,7 +6,16 @@ import { useLlmModels } from '@/apis/queries/llm-models.queries';
 import { getLlmProviderIcon } from '@/lib/utils';
 import type { LlmProvider } from '@/types';
 
-const LlmModelSelect: React.FC<SelectProps> = ({ value, onChange, ...props }) => {
+interface SelectLlmModelProps extends SelectProps {
+  valueKey?: 'name' | 'id';
+}
+
+const SelectLlmModel: React.FC<SelectLlmModelProps> = ({
+  value,
+  valueKey = 'name',
+  onChange,
+  ...props
+}) => {
   const models = useLlmModels();
 
   const renderSelectOption: SelectProps['renderOption'] = ({ option, checked }) => (
@@ -27,7 +36,7 @@ const LlmModelSelect: React.FC<SelectProps> = ({ value, onChange, ...props }) =>
       variant="unstyled"
       disabled={models.isFetching}
       data={(models.data ?? []).map((model) => ({
-        value: model.name,
+        value: model[valueKey],
         label: model.display_name,
       }))}
       renderOption={renderSelectOption}
@@ -36,7 +45,7 @@ const LlmModelSelect: React.FC<SelectProps> = ({ value, onChange, ...props }) =>
       leftSection={
         <Icon
           icon={getLlmProviderIcon(
-            (models.data ?? []).find((m) => m.name === value)?.provider as LlmProvider
+            (models.data ?? []).find((m) => m[valueKey] === value)?.provider as LlmProvider
           )}
         />
       }
@@ -47,4 +56,4 @@ const LlmModelSelect: React.FC<SelectProps> = ({ value, onChange, ...props }) =>
   );
 };
 
-export default LlmModelSelect;
+export default SelectLlmModel;

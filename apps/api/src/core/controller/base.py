@@ -5,9 +5,8 @@ from sqlmodel import SQLModel
 
 from src.core.exception import NotFoundException
 from src.core.repository.base import BaseRepository
-from src.models.mixins import BaseModelMixin
 
-ModelType = TypeVar("ModelType", bound=BaseModelMixin)
+ModelType = TypeVar("ModelType", bound=SQLModel)
 
 
 class BaseController(Generic[ModelType]):

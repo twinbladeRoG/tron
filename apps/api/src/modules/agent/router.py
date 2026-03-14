@@ -9,6 +9,7 @@ from src.core.dependencies import (
     MessageControllerDeps,
     ModelUsageLogControllerDeps,
     SessionDep,
+    TokeUsageServiceDeps,
 )
 
 from .schema import AgentWorkflowResponse, ChatPayload
@@ -27,6 +28,7 @@ async def chat(
     conversation_controller: ConversationControllerDeps,
     message_controller: MessageControllerDeps,
     session: SessionDep,
+    token_service: TokeUsageServiceDeps,
 ):
     return StreamingResponse(
         controller.chat(
@@ -37,6 +39,7 @@ async def chat(
             model_usage_log_controller=model_usage_log_controller,
             conversation_controller=conversation_controller,
             message_controller=message_controller,
+            token_service=token_service,
         ),
         media_type="text/event-stream",
         headers={

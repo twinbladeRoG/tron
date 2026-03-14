@@ -10,7 +10,9 @@ interface SelectKnowledgeBaseProps extends Omit<TextInputProps, 'value' | 'onCha
 }
 
 const SelectKnowledgeBase: React.FC<SelectKnowledgeBaseProps> = ({ value, onChange, ...props }) => {
-  const combobox = useCombobox();
+  const combobox = useCombobox({
+    onDropdownClose: () => combobox.resetSelectedOption(),
+  });
   const [search, setSearch] = useState('');
   const [debouncedSearch] = useDebouncedValue(search, 400);
 
@@ -47,6 +49,7 @@ const SelectKnowledgeBase: React.FC<SelectKnowledgeBaseProps> = ({ value, onChan
             setSearch(event.currentTarget.value);
             combobox.openDropdown();
           }}
+          onClick={() => combobox.openDropdown()}
           onFocus={() => combobox.openDropdown()}
           rightSection={isFetching ? <Loader size="xs" /> : null}
           placeholder="Search knowledge base..."

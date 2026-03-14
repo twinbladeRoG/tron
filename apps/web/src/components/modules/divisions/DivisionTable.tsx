@@ -54,9 +54,7 @@ const DivisionTable: React.FC<DivisionTableProps> = ({ className }) => {
     columns,
     rowCount: divisions.data?.pagination.total_count ?? 0,
     getCoreRowModel: getCoreRowModel(),
-    state: {
-      pagination,
-    },
+    state: { pagination },
     onPaginationChange: setPagination,
     getRowId: (row) => row.id,
     manualPagination: true,

@@ -17,6 +17,10 @@ from src.models.models import (
     ModelUsageLog,
     Organization,
     Team,
+    TokenBalance,
+    TokenBucket,
+    TokenLedger,
+    TokenReservation,
     User,
 )
 from src.modules.access_control.controller import PolicyController
@@ -43,6 +47,13 @@ from src.modules.organizations.repository import OrganizationRepository
 from src.modules.scrapper.controller import ScrapeController
 from src.modules.teams.controller import TeamController
 from src.modules.teams.repository import TeamRepository
+from src.modules.token_usage.balance.controller import TokenBalanceController
+from src.modules.token_usage.balance.repository import TokenBalanceRepository
+from src.modules.token_usage.bucket.controller import TokenBucketController
+from src.modules.token_usage.bucket.repository import TokenBucketRepository
+from src.modules.token_usage.ledger.repository import TokenLedgerRepository
+from src.modules.token_usage.reservation.repository import TokenReservationRepository
+from src.modules.token_usage.service import TokeUsageService
 from src.modules.usage_log.controller import ModelUsageLogController
 from src.modules.usage_log.repository import ModelUsageLogRepository
 from src.modules.users.controller import UserController
@@ -61,6 +72,10 @@ class Factory:
     feature_repository = partial(FeatureRepository, Feature)
     file_repository = partial(FileRepository, File)
     knowledge_base_repository = partial(KnowledgeBaseRepository, KnowledgeBase)
+    token_balance_repository = partial(TokenBalanceRepository, TokenBalance)
+    token_ledger_repository = partial(TokenLedgerRepository, TokenLedger)
+    token_bucket_repository = partial(TokenBucketRepository, TokenBucket)
+    token_reservation_repository = partial(TokenReservationRepository, TokenReservation)
 
     def get_user_controller(self, db_session: SessionDep):
         return UserController(repository=self.user_repository(session=db_session))
@@ -129,5 +144,26 @@ class Factory:
             kafka_producer=kafka_producer,
         )
 
-    def get_rag_agent_controller(self, db_session: SessionDep):
+    def get_rag_agent_controller(self):
         return RagAgentController()
+
+    def get_token_usage_service(self, db_session: SessionDep):
+        return TokeUsageService(
+            token_balance_repository=self.token_balance_repository(session=db_session),
+            token_bucket_repository=self.token_bucket_repository(session=db_session),
+            token_ledger_repository=self.token_ledger_repository(session=db_session),
+            token_reservation_repository=self.token_reservation_repository(
+                session=db_session
+            ),
+            llm_model_repository=self.llm_models_repository(session=db_session),
+        )
+
+    def get_token_bucker_controller(self, db_session: SessionDep):
+        return TokenBucketController(
+            repository=self.token_bucket_repository(session=db_session)
+        )
+
+    def get_token_balance_controller(self, db_session: SessionDep):
+        return TokenBalanceController(
+            repository=self.token_balance_repository(session=db_session)
+        )

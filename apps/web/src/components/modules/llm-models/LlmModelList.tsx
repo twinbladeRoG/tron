@@ -1,5 +1,6 @@
+import { Link } from 'react-router';
 import { Icon } from '@iconify/react';
-import { ActionIcon, Card, Menu, Text, Title } from '@mantine/core';
+import { ActionIcon, Anchor, Card, Menu, Text } from '@mantine/core';
 import { openConfirmModal } from '@mantine/modals';
 
 import { useLlmModels, useRemoveLlmModel } from '@/apis/queries/llm-models.queries';
@@ -26,7 +27,9 @@ const LlmModelList = () => {
           <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3">
             <Icon icon={getLlmProviderIcon(model.provider)} className="text-6xl" />
             <div>
-              <Title order={3}>{model.name}</Title>
+              <Anchor component={Link} to={`/models/${model.id}`} className="text-xl! font-bold!">
+                {model.name}
+              </Anchor>
               <Text>{model.provider}</Text>
             </div>
 

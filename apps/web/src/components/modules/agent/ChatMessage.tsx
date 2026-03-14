@@ -9,6 +9,7 @@ import {
   Popover,
   ScrollArea,
   Skeleton,
+  Table,
   Text,
 } from '@mantine/core';
 import { useClipboard, useDisclosure } from '@mantine/hooks';
@@ -16,7 +17,14 @@ import Markdown from 'marked-react';
 import { motion } from 'motion/react';
 
 import { TextAnimate } from '@/components/ui/text-animate';
-import { cn, formatDuration, getFileIcon, getFileIconColor } from '@/lib/utils';
+import {
+  cn,
+  currencyFormatter,
+  decimalNumberFormatter,
+  formatDuration,
+  getFileIcon,
+  getFileIconColor,
+} from '@/lib/utils';
 
 import renderer from '../../markdown';
 
@@ -42,14 +50,6 @@ const ChatMessage: React.FC<IMessage> = ({
   tools_calls,
 }) => {
   const isUser = role === 'human';
-
-  const currencyFormatter = useMemo(() => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    });
-  }, []);
 
   // for reasoning model, we split the message into content and thought
   // TODO: implement this as remark/rehype plugin in the future
@@ -250,31 +250,55 @@ const ChatMessage: React.FC<IMessage> = ({
         </ActionIcon>
 
         {usage && (
-          <Popover width={180} position="bottom" withArrow shadow="md">
+          <Popover position="bottom" withArrow shadow="md">
             <Popover.Target>
               <ActionIcon variant="subtle">
                 <Icon icon="solar:chart-square-bold-duotone" />
               </ActionIcon>
             </Popover.Target>
             <Popover.Dropdown style={{ pointerEvents: 'none' }} p="xs">
-              <Text size="xs">
-                Prompt Token: <strong>{usage.prompt_tokens}</strong>
-              </Text>
-              <Text size="xs">
-                Completion Token: <strong>{usage.completion_tokens}</strong>
-              </Text>
-              <Text size="xs">
-                Reasoning Token: <strong>{usage.reasoning_tokens}</strong>
-              </Text>
-              <Text size="xs">
-                Total Token: <strong>{usage.total_tokens}</strong>
-              </Text>
-              <Text size="xs">
-                Total Cost: <strong>{currencyFormatter.format(usage.total_cost)}</strong>
-              </Text>
-              <Text size="xs">
-                Total Time: <strong>{formatDuration(usage.time)}</strong>
-              </Text>
+              <Table
+                variant="vertical"
+                withRowBorders={false}
+                horizontalSpacing={8}
+                verticalSpacing={1}>
+                <Table.Tbody>
+                  <Table.Tr>
+                    <Table.Th className="text-xs">Total Token</Table.Th>
+                    <Table.Td className="text-right text-xs">
+                      {decimalNumberFormatter.format(usage.total_tokens)}
+                    </Table.Td>
+                  </Table.Tr>
+                  <Table.Tr>
+                    <Table.Th className="text-xs">Prompt Token</Table.Th>
+                    <Table.Td className="text-right text-xs">
+                      {decimalNumberFormatter.format(usage.prompt_tokens)}
+                    </Table.Td>
+                  </Table.Tr>
+                  <Table.Tr>
+                    <Table.Th className="text-xs">Completion Token</Table.Th>
+                    <Table.Td className="text-right text-xs">
+                      {decimalNumberFormatter.format(usage.completion_tokens)}
+                    </Table.Td>
+                  </Table.Tr>
+                  <Table.Tr>
+                    <Table.Th className="text-xs">Reasoning Token</Table.Th>
+                    <Table.Td className="text-right text-xs">
+                      {decimalNumberFormatter.format(usage.reasoning_tokens)}
+                    </Table.Td>
+                  </Table.Tr>
+                  <Table.Tr>
+                    <Table.Th className="text-xs">Total Cost</Table.Th>
+                    <Table.Td className="text-right text-xs">
+                      {currencyFormatter.format(usage.total_cost)}
+                    </Table.Td>
+                  </Table.Tr>
+                  <Table.Tr>
+                    <Table.Th className="text-xs">Total Time</Table.Th>
+                    <Table.Td className="text-right text-xs">{formatDuration(usage.time)}</Table.Td>
+                  </Table.Tr>
+                </Table.Tbody>
+              </Table>
             </Popover.Dropdown>
           </Popover>
         )}

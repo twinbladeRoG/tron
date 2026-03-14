@@ -5,7 +5,7 @@ import { useClipboard, useDisclosure } from '@mantine/hooks';
 import Markdown from 'marked-react';
 import { motion } from 'motion/react';
 
-import { cn, formatDuration } from '@/lib/utils';
+import { cn, currencyFormatter, formatDuration } from '@/lib/utils';
 
 import renderer from '../../markdown';
 
@@ -27,14 +27,6 @@ const ChatMessage: React.FC<IMessage> = ({
   usage,
 }) => {
   const isUser = role === 'user';
-
-  const currencyFormatter = useMemo(() => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    });
-  }, []);
 
   // for reasoning model, we split the message into content and thought
   // TODO: implement this as remark/rehype plugin in the future

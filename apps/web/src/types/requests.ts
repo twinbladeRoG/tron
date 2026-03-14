@@ -78,3 +78,17 @@ export interface IExtractionStatus {
   file_id: string;
   knowledge_base_id: string;
 }
+
+export interface ICreateUserTokenBucketRequest {
+  model_id: string;
+  token_limit: number;
+  period_type: string;
+}
+
+export interface IModelBucketQueryParams {
+  page: number;
+  limit: number;
+  subject_type?: string;
+  subject_id?: string;
+  period_type?: string;
+}

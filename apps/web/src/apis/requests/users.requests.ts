@@ -8,6 +8,8 @@ export const getUsers = (params: IUserQueryParams) => {
     limit: params.limit.toString(),
   });
 
+  if (params.search) query.append('search', params.search);
+
   return http.get<{ data: Array<IUserExtended>; pagination: IPagination }>(`/api/users?${query}`);
 };
 

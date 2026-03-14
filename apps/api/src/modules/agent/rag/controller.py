@@ -6,6 +6,7 @@ from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.memory import InMemorySaver
 from sqlmodel import Session
 
+from src.core.exception import NotFoundException
 from src.core.logger import logger
 from src.models.models import User
 from src.modules.conversation.controller import ConversationController
@@ -16,6 +17,7 @@ from src.modules.llm_models.controller import LlmModelController
 from src.modules.llm_models.llms.utils.callbacks import get_llm_callback
 from src.modules.messages.controller import MessageController
 from src.modules.messages.schema import MessageBase
+from src.modules.token_usage.service import TokeUsageService
 from src.modules.usage_log.controller import ModelUsageLogController
 from src.utils.parse import json_to_dict
 
@@ -72,6 +74,7 @@ class RagAgentController:
         message_controller: MessageController,
         knowledge_base_controller: KnowledgeBaseController,
         file_controller: FileController,
+        token_service: TokeUsageService,
     ):
         if data.conversation_id:
             conversation = conversation_controller.get_conversation(
@@ -94,14 +97,25 @@ class RagAgentController:
                 data.model, llm_model_controller=llm_model_controller
             )
 
+            bucket = token_service.get_user_bucket(
+                user_id=user.id, model_id=llm_model.id
+            )
+
+            if not bucket:
+                raise NotFoundException(
+                    f"No bucket found for user {user.username} for model {llm_model.name}"
+                )
+
             with get_llm_callback(
                 user,
                 session,
                 llm_model,
                 conversation,
+                bucket,
                 model_usage_log_controller=model_usage_log_controller,
                 conversation_controller=conversation_controller,
                 message_controller=message_controller,
+                token_service=token_service,
             ) as callback:
                 human_message = HumanMessage(content=data.message)
                 message_controller.upsert_message(

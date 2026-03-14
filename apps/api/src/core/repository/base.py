@@ -2,13 +2,12 @@ from typing import Any, Generic, Literal, Optional, Sequence, Type, TypeVar, ove
 from uuid import UUID
 
 from sqlalchemy.exc import IntegrityError, NoResultFound
-from sqlmodel import Session, func, select
+from sqlmodel import Session, SQLModel, func, select
 
 from src.core.exception import BadRequestException, NotFoundException
 from src.core.logger import logger
-from src.models.mixins import BaseModelMixin
 
-ModelType = TypeVar("ModelType", bound=BaseModelMixin)
+ModelType = TypeVar("ModelType", bound=SQLModel)
 
 
 class BaseRepository(Generic[ModelType]):

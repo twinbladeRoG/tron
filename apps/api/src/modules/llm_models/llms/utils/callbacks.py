@@ -1,3 +1,4 @@
+import re
 import threading
 from contextlib import contextmanager
 from contextvars import ContextVar
@@ -8,6 +9,7 @@ from typing import (
 )
 from uuid import UUID
 
+import tiktoken
 from langchain_community.callbacks.openai_info import (
     MODEL_COST_PER_1K_TOKENS,
     TokenType,
@@ -20,10 +22,18 @@ from langchain_core.outputs import ChatGeneration, LLMResult
 from langchain_core.tracers.context import register_configure_hook
 from sqlmodel import Session
 
-from src.models.models import Conversation, LlmModel, Message, ModelUsageLog, User
+from src.models.models import (
+    Conversation,
+    LlmModel,
+    Message,
+    ModelUsageLog,
+    TokenBucket,
+    User,
+)
 from src.modules.conversation.controller import ConversationController
 from src.modules.messages.controller import MessageController
 from src.modules.messages.schema import MessageBase
+from src.modules.token_usage.service import TokeUsageService
 from src.modules.usage_log.controller import ModelUsageLogController
 from src.modules.usage_log.schema import ModelUsageLogBase
 from src.utils.parse import json_to_dict
@@ -43,10 +53,12 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
         session: Session,
         model: LlmModel,
         conversation: Conversation,
+        bucket: TokenBucket,
         *,
         model_usage_log_controller: ModelUsageLogController,
         conversation_controller: ConversationController,
         message_controller: MessageController,
+        token_service: TokeUsageService,
     ) -> None:
         super().__init__()
         self._lock = threading.Lock()
@@ -54,9 +66,14 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
         self.user = user
         self.model = model
         self.conversation = conversation
+        self.bucket = bucket
+
         self.model_usage_log_controller = model_usage_log_controller
         self.conversation_controller = conversation_controller
         self.message_controller = message_controller
+
+        self.token_service = token_service
+
         self.llm_message: Message | None = None
         self.usage_logs: list[dict] = []
 
@@ -91,6 +108,27 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
 
         return usage_log
 
+    def estimate_tokens(self, text: str) -> int:
+        """
+        Rough LLM token estimate.
+        Works reasonably well across GPT, Llama, Mistral, Qwen.
+        """
+        words = re.findall(r"\w+", text)
+
+        word_tokens = len(words) * 1.3
+        char_tokens = len(text) / 4
+
+        return int((word_tokens + char_tokens) / 2)
+
+    def estimate_prompt_tokens(self, prompts: list[str]) -> int:
+        try:
+            model_name = tiktoken.encoding_name_for_model(self.model.name)
+            encoding = tiktoken.encoding_for_model(model_name)
+            return len(encoding.encode("".join(prompts)))
+        except:
+            # TODO: Support tokenize for other models
+            return self.estimate_tokens("".join(prompts))
+
     def on_llm_start(
         self,
         serialized: dict[str, Any],
@@ -105,6 +143,15 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
         with self._lock:
             self.usage_log = ModelUsageLogBase()
             self.usage_log.start_time = utcnow()
+
+        estimated_tokens = (
+            self.estimate_prompt_tokens(prompts)
+            + 4000  # TODO: OPTIMISTIC MAX OUTPUT TOKEN
+        )
+
+        self.reservations = self.token_service.reserve_tokens(
+            tokens_needed=estimated_tokens, bucket=self.bucket, request_id=run_id
+        )
 
         self.llm_message = self.message_controller.upsert_message(
             data=MessageBase(
@@ -128,6 +175,7 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
     ) -> Any:
         if isinstance(output, ToolMessage):
             output.content = json_to_dict(output.content)
+
             if output.id is None:
                 output.id = output.tool_call_id
 
@@ -181,28 +229,6 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
                             model=self.model,
                             previous_message=self.llm_message,
                         )
-
-                    # # For Agent tool call message
-                    # elif (
-                    #     message.response_metadata.get("finish_reason", None)
-                    #     == "tool_calls"
-                    # ):
-                    #     self.llm_message = self.message_controller.upsert_message(
-                    #         data=MessageBase(
-                    #             type="ai",
-                    #             content=str(message.content),
-                    #             reason=message.additional_kwargs.get(
-                    #                 "reasoning_content", None
-                    #             ),
-                    #             run_id=run_id,
-                    #             tool_calls=message.tool_calls,  # type: ignore
-                    #         ),
-                    #         user=self.user,
-                    #         conversation=self.conversation,
-                    #         model=self.model,
-                    #         previous_message=self.llm_message,
-                    #     )
-
                 else:
                     usage_metadata = None
                     response_metadata = None
@@ -300,6 +326,13 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
                 )
                 self.usage_logs.append(model_usage_log.model_dump())
 
+            if self.reservations:
+                self.token_service.commit_usage(
+                    reservations=self.reservations,
+                    tokens_used=self.usage_log.total_tokens,
+                )
+                self.reservations = []
+
 
 llm_callback_var: ContextVar[Optional[LlmUsageCallbackHandler]] = ContextVar(
     "llm_callback", default=None
@@ -314,10 +347,12 @@ def get_llm_callback(
     session: Session,
     model: LlmModel,
     conversation: Conversation,
+    bucket: TokenBucket,
     *,
     model_usage_log_controller: ModelUsageLogController,
     conversation_controller: ConversationController,
     message_controller: MessageController,
+    token_service: TokeUsageService,
 ) -> Generator[LlmUsageCallbackHandler, None, None]:
     """Get the LLM callback handler in a context manager.
     which conveniently exposes token and cost information.
@@ -334,9 +369,11 @@ def get_llm_callback(
         session,
         model,
         conversation,
+        bucket,
         model_usage_log_controller=model_usage_log_controller,
         conversation_controller=conversation_controller,
         message_controller=message_controller,
+        token_service=token_service,
     )
     llm_callback_var.set(cb)
     yield cb

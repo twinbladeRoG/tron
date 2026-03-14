@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Icon } from '@iconify/react';
@@ -9,10 +9,10 @@ import dayjs from 'dayjs';
 import * as yup from 'yup';
 
 import { useUsageLogs } from '@/apis/queries/usage-logs.queries';
-import { cn, formatDuration } from '@/lib/utils';
+import { cn, currencyFormatter, decimalNumberFormatter, formatDuration } from '@/lib/utils';
 import type { IUsageLogQueryParams } from '@/types';
 
-import LlmModelSelect from '../shared/form/LlmModelSelect';
+import SelectLlmModel from '../shared/form/SelectLlmModel';
 
 interface UsageLogsProps {
   className?: string;
@@ -43,20 +43,6 @@ const UsageLogs: React.FC<UsageLogsProps> = ({ className }) => {
     await queryClient.invalidateQueries({ queryKey: ['usage-logs', payload] });
   });
 
-  const currencyFormatter = useMemo(() => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 6,
-    });
-  }, []);
-
-  const numberFormatter = useMemo(() => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'decimal',
-    });
-  }, []);
-
   return (
     <div className={cn(className)}>
       <form
@@ -66,7 +52,7 @@ const UsageLogs: React.FC<UsageLogsProps> = ({ className }) => {
           control={form.control}
           name="model"
           render={({ field, fieldState }) => (
-            <LlmModelSelect
+            <SelectLlmModel
               value={field.value}
               onChange={field.onChange}
               error={fieldState.error?.message}
@@ -126,7 +112,7 @@ const UsageLogs: React.FC<UsageLogsProps> = ({ className }) => {
         <Card>
           Total Tokens:{' '}
           <strong>
-            {numberFormatter.format(
+            {decimalNumberFormatter.format(
               (logs.data ?? []).reduce((acc, val) => acc + val.total_tokens, 0)
             )}
           </strong>

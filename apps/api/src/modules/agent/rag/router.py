@@ -11,6 +11,7 @@ from src.core.dependencies import (
     ModelUsageLogControllerDeps,
     RagAgentControllerDeps,
     SessionDep,
+    TokeUsageServiceDeps,
 )
 
 from ..schema import AgentWorkflowResponse
@@ -32,6 +33,7 @@ async def chat(
     knowledge_base_controller: KnowledgeBaseControllerDeps,
     file_controller: FileControllerDeps,
     session: SessionDep,
+    token_service: TokeUsageServiceDeps,
 ):
     return StreamingResponse(
         controller.chat(
@@ -44,6 +46,7 @@ async def chat(
             message_controller=message_controller,
             knowledge_base_controller=knowledge_base_controller,
             file_controller=file_controller,
+            token_service=token_service,
         ),
         media_type="text/event-stream",
         headers={

@@ -14,6 +14,7 @@ import {
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { EventStreamContentType, fetchEventSource } from '@microsoft/fetch-event-source';
+import { useQueryClient } from '@tanstack/react-query';
 import { ReactFlowProvider } from '@xyflow/react';
 import { AnimatePresence, motion } from 'motion/react';
 import { v4 as uuid } from 'uuid';
@@ -34,6 +35,7 @@ import ChatMessage from './ChatMessage';
 import useChatMessages from './hook';
 import Mermaid from './Mermaid';
 import type { IMessage, IUsage } from './types';
+import UserModelUsageTrack from './UserModelUsageTrack';
 
 interface RagAgentProps {
   className?: string;
@@ -58,6 +60,8 @@ const RagAgent: React.FC<RagAgentProps> = ({
   const workflow = useRagAgentWorkflow(model);
   const [searchParams, setSearchParams] = useSearchParams();
   const [knowledgeBaseId, setKnowledgeBaseId] = useState<string | null | undefined>(null);
+  const queryClient = useQueryClient();
+  const chatInputRef = useRef<HTMLTextAreaElement>(null);
 
   const knowledgeBase = useKnowledgeBase(knowledgeBaseId);
 
@@ -259,10 +263,14 @@ const RagAgent: React.FC<RagAgentProps> = ({
       },
       onmessage(ev) {
         updateMessage(ev, botMessageId, {
-          onDone: () => {
+          onDone: async () => {
             ctrl.abort();
             appendVisitedNode('__end__');
             setIsStreaming(false);
+            await queryClient.invalidateQueries({ queryKey: ['token-usage'] });
+            setTimeout(() => {
+              chatInputRef.current?.focus();
+            }, 100);
           },
           onNodeChange: (node: string) => {
             appendVisitedNode(node);
@@ -323,6 +331,7 @@ const RagAgent: React.FC<RagAgentProps> = ({
         </ScrollArea.Autosize>
 
         <ChatInput
+          ref={chatInputRef}
           className="mx-auto mt-auto w-full max-w-2xl"
           onSubmit={handleSubmit}
           disabled={isStreaming}
@@ -363,6 +372,8 @@ const RagAgent: React.FC<RagAgentProps> = ({
             size="xs"
             variant="unstyled"
           />
+
+          <UserModelUsageTrack modelSlug={model} className="min-w-56" />
         </ChatInput>
       </div>
 

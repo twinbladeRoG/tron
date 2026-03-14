@@ -4,6 +4,8 @@ import http from '../http';
 
 export const getLlmModels = () => http.get<Array<ILlmModel>>('/api/llm-models');
 
+export const getLlmModel = (id: string) => http.get<ILlmModel>(`/api/llm-models/${id}`);
+
 export const addLlmModel = (data: IAddLlmModelRequest) =>
   http.post<ILlmModel>('/api/llm-models', data);
 

@@ -42,3 +42,6 @@ class LlmModelController(BaseController[LlmModel]):
                 return llama_cpp.get_model(model.name)
             case _:
                 raise NotFoundException(f"No model found named: {model.name}")
+
+    def get_model(self, identifier: str | UUID):
+        return self.repository.get_model(identifier)
