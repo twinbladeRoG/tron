@@ -1,4 +1,4 @@
-import { Button, Divider, Modal, Skeleton, Table, Title } from '@mantine/core';
+import { Button, Divider, Drawer, Skeleton, Table, Title } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 
 import { usePolicies } from '@/apis/queries/policy.queries';
@@ -51,9 +51,9 @@ const Policies = () => {
         </div>
       )}
 
-      <Modal opened={opened} onClose={handler.close} title="Add Policy">
+      <Drawer size="lg" position="right" opened={opened} onClose={handler.close} title="Add Policy">
         <AddPolicy onSubmit={handler.close} />
-      </Modal>
+      </Drawer>
     </section>
   );
 };

@@ -1,16 +1,22 @@
 import React, { useMemo, useState } from 'react';
-import { Combobox, Loader, TextInput, useCombobox } from '@mantine/core';
+import { Combobox, Loader, TextInput, type TextInputProps, useCombobox } from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
 
 import { useOrganizationsInfiniteQuery } from '@/apis/queries/organizations.queries';
+import type { IOrganization } from '@/types';
 
-interface SelectOrganizationProps {
+interface SelectOrganizationProps extends Omit<TextInputProps, 'value' | 'onChange'> {
   value?: string;
   onChange?: (value: string) => void;
-  error?: string;
+  valueKey?: keyof IOrganization;
 }
 
-const SelectOrganization: React.FC<SelectOrganizationProps> = ({ value, onChange, error }) => {
+const SelectOrganization: React.FC<SelectOrganizationProps> = ({
+  valueKey = 'id',
+  value,
+  onChange,
+  ...props
+}) => {
   const combobox = useCombobox();
   const [search, setSearch] = useState('');
   const [debouncedSearch] = useDebouncedValue(search, 400);
@@ -44,16 +50,17 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({ value, onChange
       <Combobox.Target>
         <TextInput
           label="Select Organization"
-          value={options.find((o) => o.id === value)?.name || search}
+          placeholder="Search organization..."
+          mb="md"
+          {...props}
+          value={options.find((o) => o[valueKey] === value)?.name || search}
           onChange={(event) => {
             setSearch(event.currentTarget.value);
             combobox.openDropdown();
           }}
+          onClick={() => combobox.openDropdown()}
           onFocus={() => combobox.openDropdown()}
           rightSection={isFetching ? <Loader size="xs" /> : null}
-          placeholder="Search organization..."
-          mb="md"
-          error={error}
         />
       </Combobox.Target>
 
@@ -63,7 +70,7 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({ value, onChange
             <Combobox.Empty>No results</Combobox.Empty>
           ) : (
             options.map((item) => (
-              <Combobox.Option value={item.id} key={item.id}>
+              <Combobox.Option value={item[valueKey]} key={item.id}>
                 {item.name}
               </Combobox.Option>
             ))

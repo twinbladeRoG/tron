@@ -98,13 +98,13 @@ const RootLayout = () => {
           to: '/files',
           label: 'Files',
           icon: 'solar:file-bold-duotone',
-          // featureSlug: 'model-usage',
+          featureSlug: 'files',
         },
         {
           to: '/knowledge-bases',
           label: 'Knowledge Base',
           icon: 'solar:book-bookmark-minimalistic-bold-duotone',
-          // featureSlug: 'model-usage',
+          featureSlug: 'knowledge-base',
         },
         {
           to: '/scrapper',
@@ -116,7 +116,7 @@ const RootLayout = () => {
           to: '/admin',
           label: 'Admin',
           icon: 'solar:folder-security-bold-duotone',
-          // featureSlug: 'model-usage',
+          featureSlug: 'admin',
         },
       ] as Array<NavItem>,
     []

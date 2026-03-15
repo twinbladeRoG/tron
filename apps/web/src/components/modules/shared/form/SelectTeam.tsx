@@ -1,19 +1,18 @@
 import React, { useMemo, useState } from 'react';
-import { Combobox, Loader, Text, TextInput, useCombobox } from '@mantine/core';
+import { Combobox, Loader, Text, TextInput, type TextInputProps, useCombobox } from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
 
 import { useTeamsInfiniteQuery } from '@/apis/queries/teams.queries';
+import type { ITeam } from '@/types';
 
-interface SelectTeamProps {
+interface SelectTeamProps extends Omit<TextInputProps, 'value' | 'onChange'> {
   value?: string;
   onChange?: (value: string) => void;
-  error?: string;
+  valueKey?: keyof ITeam;
 }
 
-const SelectTeam: React.FC<SelectTeamProps> = ({ value, onChange, error }) => {
-  const combobox = useCombobox({
-    onDropdownClose: () => combobox.resetSelectedOption(),
-  });
+const SelectTeam: React.FC<SelectTeamProps> = ({ valueKey = 'id', value, onChange, ...props }) => {
+  const combobox = useCombobox();
   const [search, setSearch] = useState('');
   const [debouncedSearch] = useDebouncedValue(search, 400);
 
@@ -46,16 +45,17 @@ const SelectTeam: React.FC<SelectTeamProps> = ({ value, onChange, error }) => {
       <Combobox.Target>
         <TextInput
           label="Select Team"
-          value={options.find((o) => o.id === value)?.name || search}
+          placeholder="Search team..."
+          mb="md"
+          {...props}
+          value={options.find((o) => o[valueKey] === value)?.name || search}
           onChange={(event) => {
             setSearch(event.currentTarget.value);
             combobox.openDropdown();
           }}
+          onClick={() => combobox.openDropdown()}
           onFocus={() => combobox.openDropdown()}
           rightSection={isFetching ? <Loader size="xs" /> : null}
-          placeholder="Search team..."
-          mb="md"
-          error={error}
         />
       </Combobox.Target>
 
@@ -65,7 +65,7 @@ const SelectTeam: React.FC<SelectTeamProps> = ({ value, onChange, error }) => {
             <Combobox.Empty>No results</Combobox.Empty>
           ) : (
             options.map((team) => (
-              <Combobox.Option value={team.id} key={team.id}>
+              <Combobox.Option value={team[valueKey]} key={team.id}>
                 <div className="flex flex-col flex-wrap gap-x-2 gap-y-1">
                   <Text size="sm" className="block">
                     {team.name}

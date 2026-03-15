@@ -15,7 +15,7 @@ const FeatureGate: React.FC<FeatureGateProps> = ({
   fallback,
   hide,
   children,
-  action = 'access',
+  action = 'view',
 }) => {
   const checkAccess = useFeatureAccess(feature, action);
 

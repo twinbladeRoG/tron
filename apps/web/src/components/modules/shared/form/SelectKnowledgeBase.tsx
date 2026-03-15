@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react';
+import { Icon } from '@iconify/react';
 import { Combobox, Loader, TextInput, type TextInputProps, useCombobox } from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
+import { ChevronsUpDown } from 'lucide-react';
 
 import { useKnowledgeBasesInfiniteQuery } from '@/apis/queries/knowledge-base.queries';
 
@@ -51,7 +53,8 @@ const SelectKnowledgeBase: React.FC<SelectKnowledgeBaseProps> = ({ value, onChan
           }}
           onClick={() => combobox.openDropdown()}
           onFocus={() => combobox.openDropdown()}
-          rightSection={isFetching ? <Loader size="xs" /> : null}
+          leftSection={<Icon icon="solar:book-bookmark-minimalistic-bold-duotone" />}
+          rightSection={isFetching ? <Loader size="xs" /> : <ChevronsUpDown size={14} />}
           placeholder="Search knowledge base..."
           {...props}
         />

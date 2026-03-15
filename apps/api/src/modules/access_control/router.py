@@ -52,7 +52,7 @@ def get_user_features(
     for feature in feature_controller.get_features():
         try:
             result = controller.check_if_user_has_access(
-                f"feature:{feature.slug}", "access", user=user
+                f"feature:{feature.slug}", "view", user=user
             )
             feature_list.append(
                 FeatureAccess(

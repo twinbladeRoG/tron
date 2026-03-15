@@ -1,19 +1,18 @@
 import React, { useMemo, useState } from 'react';
-import { Combobox, Loader, Text, TextInput, useCombobox } from '@mantine/core';
+import { Combobox, Loader, Text, TextInput, type TextInputProps, useCombobox } from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
 
 import { useUsersInfiniteQuery } from '@/apis/queries/users.queries';
+import type { IUser } from '@/types';
 
-interface SelectUserProps {
+interface SelectUserProps extends Omit<TextInputProps, 'value' | 'onChange'> {
   value?: string;
   onChange?: (value: string) => void;
-  error?: string;
+  valueKey?: keyof IUser;
 }
 
-const SelectUser: React.FC<SelectUserProps> = ({ value, onChange, error }) => {
-  const combobox = useCombobox({
-    onDropdownClose: () => combobox.resetSelectedOption(),
-  });
+const SelectUser: React.FC<SelectUserProps> = ({ valueKey = 'id', value, onChange, ...props }) => {
+  const combobox = useCombobox();
   const [search, setSearch] = useState('');
   const [debouncedSearch] = useDebouncedValue(search, 400);
 
@@ -46,16 +45,17 @@ const SelectUser: React.FC<SelectUserProps> = ({ value, onChange, error }) => {
       <Combobox.Target>
         <TextInput
           label="Select User"
-          value={options.find((o) => o.id === value)?.username || search}
+          placeholder="Search user..."
+          mb="md"
+          {...props}
+          value={options.find((o) => o[valueKey] === value)?.username || search}
           onChange={(event) => {
             setSearch(event.currentTarget.value);
             combobox.openDropdown();
           }}
+          onClick={() => combobox.openDropdown()}
           onFocus={() => combobox.openDropdown()}
           rightSection={isFetching ? <Loader size="xs" /> : null}
-          placeholder="Search user..."
-          mb="md"
-          error={error}
         />
       </Combobox.Target>
 
@@ -65,7 +65,7 @@ const SelectUser: React.FC<SelectUserProps> = ({ value, onChange, error }) => {
             <Combobox.Empty>No results</Combobox.Empty>
           ) : (
             options.map((option) => (
-              <Combobox.Option value={option.id} key={option.id}>
+              <Combobox.Option value={option[valueKey]} key={option.id}>
                 <div className="flex flex-col flex-wrap gap-x-2 gap-y-1">
                   <Text size="sm" className="block">
                     {option.first_name} {option.last_name}

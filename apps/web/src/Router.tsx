@@ -47,8 +47,12 @@ const router = createBrowserRouter([
       { path: '/models', element: <LlmModelsPage />, loader: protectedLoader('models') },
       { path: '/models/:id', element: <ModelPage />, loader: protectedLoader('models') },
       { path: '/model-usage', element: <UsageLogPage />, loader: protectedLoader('model-usage') },
-      { path: '/files', element: <FilesPage /> },
-      { path: '/knowledge-bases', element: <KnowledgeBasesPage /> },
+      { path: '/files', element: <FilesPage />, loader: protectedLoader('files') },
+      {
+        path: '/knowledge-bases',
+        element: <KnowledgeBasesPage />,
+        loader: protectedLoader('knowledge-base'),
+      },
       { path: '/knowledge-bases/:slug', element: <KnowledgeBasePage /> },
       {
         path: '/admin',

@@ -1,16 +1,20 @@
 from functools import lru_cache
-from typing import Annotated
+from typing import Annotated, Any
 
 from aiokafka import AIOKafkaProducer
 from casbin.enforcer import Enforcer
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from pydantic import ValidationError
 from qdrant_client import QdrantClient
 from sqlmodel import Session
 
-from src.core.exception import ForbiddenException
+from src.core.exception import (
+    ForbiddenException,
+    NotFoundException,
+    UnauthorizedException,
+)
 from src.core.kafka.dependencies import get_kafka_producer
 from src.models.models import User
 from src.modules.access_control.controller import PolicyController
@@ -36,7 +40,6 @@ from src.modules.usage_log.controller import ModelUsageLogController
 from src.modules.users.controller import UserController
 
 from .access_control.casbin import get_casbin_enforcer
-from .access_control.types import Resource, Subject
 from .config import Settings
 from .db import engine
 from .jwt import JwtHandler
@@ -68,17 +71,12 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
         payload = JwtHandler.validate_token(token)
         token_data = TokenPayload(**payload)
     except (InvalidTokenError, ValidationError, ExpiredSignatureError):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Could not validate credentials",
-        )
+        raise ForbiddenException("Could not validate credentials")
 
     user = session.get(User, token_data.sub)
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise NotFoundException("User not found")
 
     return user
 
@@ -93,19 +91,6 @@ def get_vector_database():
 VectorDatabaseDep = Annotated[QdrantClient, Depends(get_vector_database)]
 
 CasbinEnforcerDeps = Annotated[Enforcer, Depends(get_casbin_enforcer)]
-
-
-def policy_enforcer(req: Request, enforcer: CasbinEnforcerDeps, me: CurrentUser):
-    sub = Subject(id=1, org_id=2)
-    obj = Resource(type="ai_agent", owner_id=1)
-    act = "use"
-
-    if enforcer.enforce(sub, obj, act):
-        return True
-    raise ForbiddenException("Action not allowed")
-
-
-PolicyEnforcerDeps = Annotated[bool, Depends(policy_enforcer)]
 
 KafkaProducerDep = Annotated[AIOKafkaProducer, Depends(get_kafka_producer)]
 
@@ -162,3 +147,19 @@ TokenBucketControllerDeps = Annotated[
 TokenBalanceControllerDeps = Annotated[
     TokenBalanceController, Depends(Factory().get_token_balance_controller)
 ]
+
+
+class Guard:
+    def __init__(self, target: str, action: str) -> None:
+        self.target = target
+        self.action = action
+
+    def __call__(self, user: CurrentUser, controller: PolicyControllerDeps) -> Any:
+        result = controller.check_if_user_has_access(
+            self.target, self.action, user=user
+        )
+
+        if not result.is_allowed:
+            raise UnauthorizedException("You are not authorized to access this!")
+
+        return True

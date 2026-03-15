@@ -50,17 +50,17 @@ export const useDeletePolicy = () => {
 
 export const useCheckFeatureAccess = () =>
   useMutation({
-    mutationFn: async ({ feature, action = 'access' }: { feature: string; action?: string }) =>
+    mutationFn: async ({ feature, action = 'view' }: { feature: string; action?: string }) =>
       checkFeatureAccess(feature, action),
   });
 
-const featureAccessQuery = (feature: string, action: string = 'access') => ({
+const featureAccessQuery = (feature: string, action: string = 'view') => ({
   queryKey: ['feature-access', feature, action],
   queryFn: async () => checkFeatureAccess(feature, action),
   staleTime: 5 * 60 * 1000, // cached for 5 mins
 });
 
-export const useFeatureAccess = (feature: string, action: string = 'access') =>
+export const useFeatureAccess = (feature: string, action: string = 'view') =>
   useQuery(featureAccessQuery(feature, action));
 
 const fetchUserFeaturesQuery = {

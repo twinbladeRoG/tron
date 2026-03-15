@@ -1,8 +1,8 @@
-import type { IAddLlmModelRequest, ILlmModel } from '@/types';
+import type { IAddLlmModelRequest, ILlmModel, ILlmModelWithAccess } from '@/types';
 
 import http from '../http';
 
-export const getLlmModels = () => http.get<Array<ILlmModel>>('/api/llm-models');
+export const getLlmModels = () => http.get<Array<ILlmModelWithAccess>>('/api/llm-models');
 
 export const getLlmModel = (id: string) => http.get<ILlmModel>(`/api/llm-models/${id}`);
 

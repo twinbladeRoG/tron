@@ -15,6 +15,7 @@ from src.models.models import (
 from src.modules.divisions.schema import DivisionBase
 from src.modules.file_storage.schema import FileBase
 from src.modules.knowledge_base.schema import KnowledgeBaseBase
+from src.modules.llm_models.schema import LlmModelBase
 from src.modules.teams.schema import TeamBase
 from src.modules.token_usage.bucket.schema import TokenBucketBase
 from src.modules.users.schema import UserPublic
@@ -50,3 +51,7 @@ class KnowledgeBaseFileAndLink(BaseModelMixin, FileBase):
 
 class TokenBucketWithSubject(BaseModelMixin, TokenBucketBase):
     subject: User | Team | Division | Organization | None = None
+
+
+class LlmModelWithAccess(BaseModelMixin, LlmModelBase):
+    has_access: bool = False

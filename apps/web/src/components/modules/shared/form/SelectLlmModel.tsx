@@ -1,22 +1,44 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import { Group, Select, type SelectProps } from '@mantine/core';
 
 import { useLlmModels } from '@/apis/queries/llm-models.queries';
 import { getLlmProviderIcon } from '@/lib/utils';
-import type { LlmProvider } from '@/types';
+import type { ILlmModel, LlmProvider } from '@/types';
 
 interface SelectLlmModelProps extends SelectProps {
-  valueKey?: 'name' | 'id';
+  valueKey?: keyof ILlmModel;
+  autoSelectFirstValue?: boolean;
+  allowSelectDisabledModels?: boolean;
 }
 
 const SelectLlmModel: React.FC<SelectLlmModelProps> = ({
   value,
   valueKey = 'name',
   onChange,
+  autoSelectFirstValue = false,
+  allowSelectDisabledModels = false,
   ...props
 }) => {
   const models = useLlmModels();
+
+  const options = (models.data ?? []).map((model) => ({
+    value: String(model[valueKey]),
+    label: model.display_name,
+    disabled: !allowSelectDisabledModels && !model.has_access,
+  }));
+
+  useEffect(() => {
+    if (autoSelectFirstValue && value === null && models.data && models.data.length > 0) {
+      const val = models.data[0][valueKey];
+      const option = models.data[0];
+      onChange?.(String(val), {
+        value: String(option[valueKey]),
+        label: option.display_name,
+        disabled: !option.has_access,
+      });
+    }
+  }, [autoSelectFirstValue, value, models.data, onChange, valueKey]);
 
   const renderSelectOption: SelectProps['renderOption'] = ({ option, checked }) => (
     <Group flex="1" gap="xs">
@@ -27,18 +49,16 @@ const SelectLlmModel: React.FC<SelectLlmModelProps> = ({
       />
       <div className="whitespace-nowrap">{option.label}</div>
       {checked && <Icon icon="solar:check-circle-bold-duotone" className="ml-auto" />}
+      {!checked && option.disabled && (
+        <Icon icon="solar:shield-cross-bold-duotone" className="ml-auto text-red-600" />
+      )}
     </Group>
   );
 
   return (
     <Select
-      size="xs"
-      variant="unstyled"
       disabled={models.isFetching}
-      data={(models.data ?? []).map((model) => ({
-        value: model[valueKey],
-        label: model.display_name,
-      }))}
+      data={options}
       renderOption={renderSelectOption}
       value={value}
       onChange={onChange}

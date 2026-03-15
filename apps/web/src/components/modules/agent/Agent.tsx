@@ -1,16 +1,7 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { Icon } from '@iconify/react';
-import {
-  ActionIcon,
-  Divider,
-  Group,
-  ScrollArea,
-  Select,
-  type SelectProps,
-  Tabs,
-  Tooltip,
-} from '@mantine/core';
+import { ActionIcon, Divider, ScrollArea, Tabs, Tooltip } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { EventStreamContentType, fetchEventSource } from '@microsoft/fetch-event-source';
@@ -21,12 +12,12 @@ import { v4 as uuid } from 'uuid';
 
 import { getToken } from '@/apis/http';
 import { useAgentWorkflow } from '@/apis/queries/agent.queries';
-import { useLlmModels } from '@/apis/queries/llm-models.queries';
-import { cn, getLlmProviderIcon } from '@/lib/utils';
-import type { IConversationMessageWithUsageLogs, LlmProvider } from '@/types';
+import { cn } from '@/lib/utils';
+import type { IConversationMessageWithUsageLogs } from '@/types';
 
 import ChatInput from '../chat/ChatInput';
 import Conversations from '../conversations/Conversations';
+import SelectLlmModel from '../shared/form/SelectLlmModel';
 
 import AgentGraph from './AgentGraph';
 import ChatMessage from './ChatMessage';
@@ -48,7 +39,6 @@ const Agent: React.FC<AgentProps> = ({
   previousMessages,
   conversationId: existingConversationId,
 }) => {
-  const models = useLlmModels();
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -64,23 +54,8 @@ const Agent: React.FC<AgentProps> = ({
     if (model === null && searchParams.get('model') !== null) {
       // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect, react-hooks/set-state-in-effect
       setModel(searchParams.get('model'));
-    } else if (model === null && models.data && models.data.length > 0) {
-      // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect
-      setModel(models.data[0].name);
     }
-  }, [searchParams, model, models.data]);
-
-  const renderSelectOption: SelectProps['renderOption'] = ({ option, checked }) => (
-    <Group flex="1" gap="xs">
-      <Icon
-        icon={getLlmProviderIcon(
-          (models.data ?? []).find((m) => m.name === option.value)?.provider as LlmProvider
-        )}
-      />
-      <div className="whitespace-nowrap">{option.label}</div>
-      {checked && <Icon icon="solar:check-circle-bold-duotone" className="ml-auto" />}
-    </Group>
-  );
+  }, [searchParams, model]);
 
   const {
     messages,
@@ -298,29 +273,17 @@ const Agent: React.FC<AgentProps> = ({
           disabled={isStreaming}
           isStreaming={isStreaming}
           placeholder="Ask anything">
-          <Select
+          <SelectLlmModel
             size="xs"
             variant="unstyled"
-            disabled={models.isFetching}
-            data={(models.data ?? []).map((model) => ({
-              value: model.name,
-              label: model.display_name,
-            }))}
-            renderOption={renderSelectOption}
             value={model}
             onChange={(value) => {
               setModel(value);
               if (value) setSearchParams({ model: value });
             }}
-            leftSection={
-              <Icon
-                icon={getLlmProviderIcon(
-                  (models.data ?? []).find((m) => m.name === model)?.provider as LlmProvider
-                )}
-              />
-            }
             w={140}
             allowDeselect={false}
+            autoSelectFirstValue
           />
 
           <UserModelUsageTrack modelSlug={model} className="min-w-56" />

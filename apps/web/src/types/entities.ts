@@ -55,6 +55,10 @@ export interface ILlmModel extends IBaseEntity {
   max_output_tokens: number;
 }
 
+export interface ILlmModelWithAccess extends ILlmModel {
+  has_access: boolean;
+}
+
 export interface IScrapeResult {
   result: string;
   metadata: {

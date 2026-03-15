@@ -59,6 +59,7 @@ const UsageLogs: React.FC<UsageLogsProps> = ({ className }) => {
               variant="default"
               size="sm"
               w={180}
+              allowSelectDisabledModels
             />
           )}
         />
