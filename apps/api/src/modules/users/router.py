@@ -44,7 +44,9 @@ def get_user_by_id(id: UUID, user_controller: UserControllerDeps, user: CurrentU
 
 
 @router.post("/", response_model=UserPublic)
-def create_user(user_controller: UserControllerDeps, user: UserCreate):
+def create_user(
+    user_controller: UserControllerDeps, user: UserCreate, auth_user: CurrentUser
+):
     username_exists = user_controller.repository.get_by("username", user.username)
     if username_exists:
         raise BadRequestException(f"Username {user.username} already exists")

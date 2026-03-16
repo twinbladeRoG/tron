@@ -53,12 +53,12 @@ class User(BaseModelMixin, UserBase, table=True):
     knowledge_bases: list["KnowledgeBase"] = Relationship(back_populates="owner")
 
     organization_id: Optional[UUID] = Field(
-        foreign_key="organization.id", nullable=True, index=True
+        foreign_key="organization.id", nullable=True, index=True, default=None
     )
     organization: Optional["Organization"] = Relationship(back_populates="users")
 
     division_id: Optional[UUID] = Field(
-        foreign_key="division.id", nullable=True, index=True
+        foreign_key="division.id", nullable=True, index=True, default=None
     )
     division: Optional["Division"] = Relationship(back_populates="users")
 

@@ -16,6 +16,7 @@ from src.core.exception import (
     UnauthorizedException,
 )
 from src.core.kafka.dependencies import get_kafka_producer
+from src.core.logger import logger
 from src.models.models import User
 from src.modules.access_control.controller import PolicyController
 from src.modules.agent.controller import AgentController
@@ -70,7 +71,8 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
     try:
         payload = JwtHandler.validate_token(token)
         token_data = TokenPayload(**payload)
-    except (InvalidTokenError, ValidationError, ExpiredSignatureError):
+    except (InvalidTokenError, ValidationError, ExpiredSignatureError) as e:
+        logger.error(e)
         raise ForbiddenException("Could not validate credentials")
 
     user = session.get(User, token_data.sub)

@@ -12,6 +12,9 @@ class TokenWithUser(SQLModel):
     user: UserPublic
     tokens: Tokens
 
+    access_token: str  # NOTE: Needed for OAuth2PasswordBearer
+    token_type: str  # NOTE: Needed for OAuth2PasswordBearer
+
 
 class TokenPayload(SQLModel):
     sub: str | None = None

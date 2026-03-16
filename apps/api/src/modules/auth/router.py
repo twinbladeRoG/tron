@@ -19,7 +19,12 @@ def login(
     user, tokens = auth_controller.login(
         email=form_data.username, password=form_data.password
     )
-    return TokenWithUser(user=UserPublic.model_validate(user), tokens=tokens)
+    return TokenWithUser(
+        user=UserPublic.model_validate(user),
+        tokens=tokens,
+        access_token=tokens.access_token,
+        token_type="bearer",
+    )
 
 
 @router.get("/refresh", response_model=Tokens)
