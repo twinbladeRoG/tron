@@ -1,8 +1,8 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { Icon } from '@iconify/react';
-import { ActionIcon, Divider, ScrollArea, Tabs, Tooltip } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
+import { ActionIcon, Divider, Kbd, ScrollArea, Tabs, Tooltip } from '@mantine/core';
+import { useDisclosure, useHotkeys } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { EventStreamContentType, fetchEventSource } from '@microsoft/fetch-event-source';
 import { useQueryClient } from '@tanstack/react-query';
@@ -223,11 +223,13 @@ const Agent: React.FC<AgentProps> = ({
     });
   }, [messages]);
 
-  const handleClearConversation = async () => {
+  const handleNewConversation = async () => {
     setMessages([]);
     setConversationId(null);
     await navigate(model ? `/agent?model=${model}` : '/agent');
   };
+
+  useHotkeys([['ctrl + shift + O', () => handleNewConversation()]]);
 
   return (
     <section
@@ -245,8 +247,14 @@ const Agent: React.FC<AgentProps> = ({
             <h1 className="font-bold">Agent Chat</h1>
           </div>
 
-          <Tooltip label="New Conversation">
-            <ActionIcon variant="subtle" ml="auto" onClick={handleClearConversation}>
+          <Tooltip
+            position="left"
+            label={
+              <div className="flex">
+                <Kbd>Ctrl</Kbd> + <Kbd>Shift</Kbd> + <Kbd>O</Kbd>
+              </div>
+            }>
+            <ActionIcon variant="subtle" ml="auto" onClick={handleNewConversation}>
               <Icon icon="mdi:chat-plus" className="text-2xl" />
             </ActionIcon>
           </Tooltip>

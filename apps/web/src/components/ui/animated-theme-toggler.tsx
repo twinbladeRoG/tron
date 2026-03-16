@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { flushSync } from 'react-dom';
 import { useMantineColorScheme } from '@mantine/core';
+import { useHotkeys } from '@mantine/hooks';
 import { Moon, Sun } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -61,6 +62,8 @@ export const AnimatedThemeToggler = ({
       }
     );
   }, [duration, toggleColorScheme]);
+
+  useHotkeys([['mod + J', () => toggleTheme()]]);
 
   return (
     <button

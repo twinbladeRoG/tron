@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Navigate, Outlet, useNavigate } from 'react-router';
 import { Icon, type IconifyIcon } from '@iconify/react';
 import { ActionIcon, Avatar, Menu, Skeleton, Text } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
+import { useDisclosure, useHotkeys } from '@mantine/hooks';
 import { modals } from '@mantine/modals';
 import { useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
@@ -28,6 +28,8 @@ const RootLayout = () => {
   const user = useActiveUser();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+
+  useHotkeys([['ctrl + B', () => toggleDesktop()]]);
 
   const handleLogout = () => {
     modals.openConfirmModal({

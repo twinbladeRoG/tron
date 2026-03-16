@@ -1,10 +1,9 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Query
 
 from src.core.dependencies import (
     CurrentUser,
-    Guard,
     LlmModelControllerDeps,
     ModelUsageLogControllerDeps,
 )
@@ -15,11 +14,7 @@ from .schema import FilterParams
 router = APIRouter(prefix="/usage-logs", tags=["Usage Logs"])
 
 
-@router.get(
-    "/",
-    response_model=list[ModelUsageLog],
-    dependencies=[Depends(Guard("feature:model-usage", "view"))],
-)
+@router.get("/", response_model=list[ModelUsageLog])
 def get_user_logs(
     user: CurrentUser,
     controller: ModelUsageLogControllerDeps,

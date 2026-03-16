@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from src.core.dependencies import guard
 from src.modules.access_control.router import router as access_control_router
 from src.modules.agent.rag.router import router as rag_router
 from src.modules.agent.router import router as agent_router
@@ -25,11 +26,11 @@ router = APIRouter()
 router.include_router(user_router)
 router.include_router(auth_router)
 router.include_router(llm_models_router)
-router.include_router(chat_router)
-router.include_router(scrapper_router)
-router.include_router(agent_router)
-router.include_router(rag_router)
-router.include_router(usage_log_router)
+router.include_router(chat_router, dependencies=[guard("feature:chat")])
+router.include_router(scrapper_router, dependencies=[guard("feature:scrapper")])
+router.include_router(agent_router, dependencies=[guard("feature:chat")])
+router.include_router(rag_router, dependencies=[guard("feature:rag")])
+router.include_router(usage_log_router, dependencies=[guard("feature:model-usage")])
 router.include_router(conversation_router)
 router.include_router(message_router)
 router.include_router(access_control_router)
@@ -37,7 +38,9 @@ router.include_router(organization_router)
 router.include_router(division_router)
 router.include_router(team_router)
 router.include_router(feature_router)
-router.include_router(file_router)
-router.include_router(knowledge_base_router)
+router.include_router(file_router, dependencies=[guard("feature:files")])
+router.include_router(
+    knowledge_base_router, dependencies=[guard("feature:knowledge-base")]
+)
 router.include_router(token_bucket_router)
 router.include_router(token_balance_router)

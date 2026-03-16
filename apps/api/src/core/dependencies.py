@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import Annotated, Any
+from typing import Annotated, Any, Iterable, Literal
 
 from aiokafka import AIOKafkaProducer
 from casbin.enforcer import Enforcer
@@ -149,17 +149,47 @@ TokenBalanceControllerDeps = Annotated[
 ]
 
 
-class Guard:
-    def __init__(self, target: str, action: str) -> None:
-        self.target = target
-        self.action = action
+Rule = tuple[str, str] | str
+
+
+class GuardChecker:
+    def __init__(
+        self,
+        rules: Iterable[Rule],
+        mode: Literal["ANY", "ALL"] = "ALL",
+    ) -> None:
+        self.rules = list(rules)
+        self.mode = mode
 
     def __call__(self, user: CurrentUser, controller: PolicyControllerDeps) -> Any:
-        result = controller.check_if_user_has_access(
-            self.target, self.action, user=user
-        )
+        results: list[bool] = []
 
-        if not result.is_allowed:
-            raise UnauthorizedException("You are not authorized to access this!")
+        for rule in self.rules:
+            if isinstance(rule, tuple):
+                target, action = rule
+            else:
+                target = rule
+                action = "view"
+
+            try:
+                result = controller.check_if_user_has_access(target, action, user=user)
+                results.append(result.is_allowed)
+
+                if self.mode == "ANY" and result.is_allowed:
+                    return True
+
+                if self.mode == "ALL" and not result.is_allowed:
+                    raise UnauthorizedException(
+                        "You are not authorized to access this!"
+                    )
+            except:
+                raise UnauthorizedException("You are not authorized to access this!")
+
+        if self.mode == "ALL":
+            return True
 
         return True
+
+
+def guard(*rules: Rule, mode: Literal["ANY", "ALL"] = "ALL"):
+    return Depends(GuardChecker(rules, mode))
