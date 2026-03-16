@@ -1,13 +1,6 @@
-from enum import StrEnum
-
 from langchain_openai import ChatOpenAI
 
 from src.core.config import settings
-
-
-class OpenAIModels(StrEnum):
-    GPT_4o_mini = "gpt-4o-mini"
-    GPT_5_nano = "gpt-5-nano"
 
 
 class OpenAIModelProvider:

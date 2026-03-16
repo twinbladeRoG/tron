@@ -4,6 +4,7 @@ from src.core.controller.base import BaseController
 from src.core.exception import NotFoundException
 from src.models.models import LlmModel
 
+from .llms.azure_openai import AzureOpenAIModelProvider
 from .llms.llama_cpp import LlamaCppProvider
 from .llms.openai import OpenAIModelProvider
 from .repository import LlmModelRepository
@@ -40,8 +41,13 @@ class LlmModelController(BaseController[LlmModel]):
             case LlmProvider.LLAMA_CPP.value:
                 llama_cpp = LlamaCppProvider()
                 return llama_cpp.get_model(model.name)
+            case LlmProvider.AZURE.value:
+                azure = AzureOpenAIModelProvider()
+                return azure.get_model(model.name)
             case _:
-                raise NotFoundException(f"No model found named: {model.name}")
+                raise NotFoundException(
+                    f"No model found named: {model.name} for provider {model.provider}"
+                )
 
     def get_model(self, identifier: str | UUID):
         return self.repository.get_model(identifier)
