@@ -63,8 +63,15 @@ class BaseRepository(Generic[ModelType]):
         return result.all()
 
     def delete(self, model: ModelType) -> None:
-        self.session.delete(model)
-        self.session.commit()
+        try:
+            self.session.delete(model)
+            self.session.commit()
+        except IntegrityError as e:
+            logger.error(e._message())
+            raise BadRequestException(
+                f"Cannot delete {self.model_class.__name__}",
+                error_code="IntegrityError",
+            )
 
     def _query(self):
         query = select(self.model_class)
@@ -90,7 +97,7 @@ class BaseRepository(Generic[ModelType]):
             self.session.refresh(model)
             return model
         except IntegrityError as e:
-            logger.error(e._message)
+            logger.error(e._message())
             raise BadRequestException(
                 f"Cannot create {self.model_class.__name__}",
                 error_code="IntegrityError",

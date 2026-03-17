@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 import { Icon } from '@iconify/react';
 import { ActionIcon, Anchor, Card, Menu, Text } from '@mantine/core';
 import { openConfirmModal } from '@mantine/modals';
+import { notifications } from '@mantine/notifications';
 
 import { useLlmModels, useRemoveLlmModel } from '@/apis/queries/llm-models.queries';
 import { getLlmProviderIcon } from '@/lib/utils';
@@ -15,7 +16,14 @@ const LlmModelList = () => {
       title: 'Are your sure you want to remove this model?',
       labels: { confirm: 'Confirm', cancel: 'Cancel' },
       onConfirm: () => {
-        removeModel.mutate(modelId);
+        removeModel.mutate(modelId, {
+          onError: (err) => {
+            notifications.show({
+              message: err.message,
+              color: 'red',
+            });
+          },
+        });
       },
     });
   };
@@ -28,9 +36,9 @@ const LlmModelList = () => {
             <Icon icon={getLlmProviderIcon(model.provider)} className="text-6xl" />
             <div>
               <Anchor component={Link} to={`/models/${model.id}`} className="text-xl! font-bold!">
-                {model.name}
+                {model.display_name}
               </Anchor>
-              <Text>{model.provider}</Text>
+              <Text>{model.name}</Text>
             </div>
 
             <Menu position="bottom-end">
