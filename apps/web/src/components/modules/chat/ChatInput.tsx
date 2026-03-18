@@ -1,6 +1,7 @@
-import React, { type ComponentPropsWithRef } from 'react';
+import React, { type ComponentPropsWithRef, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { mergeRefs } from 'react-merge-refs';
+import { useSearchParams } from 'react-router';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Icon } from '@iconify/react';
 import { ActionIcon, Textarea } from '@mantine/core';
@@ -32,6 +33,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   children,
   ref,
 }) => {
+  const [searchParams] = useSearchParams();
   const form = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
@@ -50,6 +52,15 @@ const ChatInput: React.FC<ChatInputProps> = ({
       await handleSubmit();
     }
   };
+
+  useEffect(() => {
+    const query = searchParams.get('q');
+
+    if (query) {
+      form.setValue('message', query);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <form

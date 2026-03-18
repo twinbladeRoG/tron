@@ -5,13 +5,20 @@ import { useDebouncedValue } from '@mantine/hooks';
 import { ChevronsUpDown } from 'lucide-react';
 
 import { useKnowledgeBasesInfiniteQuery } from '@/apis/queries/knowledge-base.queries';
+import type { IKnowledgeBase } from '@/types';
 
 interface SelectKnowledgeBaseProps extends Omit<TextInputProps, 'value' | 'onChange'> {
   value?: string | null;
   onChange?: (value: string) => void;
+  valueKey?: keyof IKnowledgeBase;
 }
 
-const SelectKnowledgeBase: React.FC<SelectKnowledgeBaseProps> = ({ value, onChange, ...props }) => {
+const SelectKnowledgeBase: React.FC<SelectKnowledgeBaseProps> = ({
+  valueKey = 'id',
+  value,
+  onChange,
+  ...props
+}) => {
   const combobox = useCombobox({
     onDropdownClose: () => combobox.resetSelectedOption(),
   });
@@ -46,7 +53,7 @@ const SelectKnowledgeBase: React.FC<SelectKnowledgeBaseProps> = ({ value, onChan
       }}>
       <Combobox.Target>
         <TextInput
-          value={options.find((o) => o.id === value)?.name || search}
+          value={options.find((o) => o[valueKey] === value)?.name || search}
           onChange={(event) => {
             setSearch(event.currentTarget.value);
             combobox.openDropdown();
@@ -66,7 +73,7 @@ const SelectKnowledgeBase: React.FC<SelectKnowledgeBaseProps> = ({ value, onChan
             <Combobox.Empty>No results</Combobox.Empty>
           ) : (
             options.map((item) => (
-              <Combobox.Option value={item.id} key={item.id}>
+              <Combobox.Option value={String(item[valueKey])} key={item.id}>
                 {item.name}
               </Combobox.Option>
             ))

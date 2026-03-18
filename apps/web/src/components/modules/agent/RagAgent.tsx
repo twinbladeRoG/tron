@@ -10,9 +10,10 @@ import { ReactFlowProvider } from '@xyflow/react';
 import { AnimatePresence, motion } from 'motion/react';
 import { v4 as uuid } from 'uuid';
 
-import { getToken } from '@/apis/http';
+import { ApiResponseError, getToken } from '@/apis/http';
 import { useRagAgentWorkflow } from '@/apis/queries/agent.queries';
 import { useKnowledgeBase } from '@/apis/queries/knowledge-base.queries';
+import { getKnowledgeBase } from '@/apis/requests/knowledge-base.requests';
 import { cn } from '@/lib/utils';
 import { useUserStore } from '@/store';
 import type { IConversation, IConversationMessageWithUsageLogs } from '@/types';
@@ -51,18 +52,24 @@ const RagAgent: React.FC<RagAgentProps> = ({
   const [model, setModel] = useState<string | null>(null);
   const workflow = useRagAgentWorkflow(model);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [knowledgeBaseId, setKnowledgeBaseId] = useState<string | null | undefined>(null);
+  const [knowledgeBaseSlug, setKnowledgeBaseSlug] = useState<string | null | undefined>(null);
   const queryClient = useQueryClient();
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
 
-  const knowledgeBase = useKnowledgeBase(knowledgeBaseId);
+  const knowledgeBase = useKnowledgeBase(knowledgeBaseSlug);
 
   useEffect(() => {
     if (existingConversation?.parameters) {
       if (Object.hasOwn(existingConversation.parameters, 'knowledge_base_id')) {
         if (typeof existingConversation.parameters.knowledge_base_id === 'string') {
-          // eslint-disable-next-line react-hooks/set-state-in-effect, @eslint-react/hooks-extra/no-direct-set-state-in-use-effect
-          setKnowledgeBaseId(existingConversation.parameters.knowledge_base_id);
+          // TODO: Use queryClient.prefetchQuery
+          getKnowledgeBase(existingConversation.parameters.knowledge_base_id)
+            .then((value) => {
+              setKnowledgeBaseSlug(value.slug);
+            })
+            .catch((err) => {
+              notifications.show({ message: (err as ApiResponseError).message, color: 'red' });
+            });
         }
       }
     }
@@ -72,6 +79,13 @@ const RagAgent: React.FC<RagAgentProps> = ({
     if (model === null && searchParams.get('model') !== null) {
       // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect, react-hooks/set-state-in-effect
       setModel(searchParams.get('model'));
+    }
+  }, [searchParams, model]);
+
+  useEffect(() => {
+    if (model === null && searchParams.get('knowledge-base') !== null) {
+      // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect, react-hooks/set-state-in-effect
+      setKnowledgeBaseSlug(searchParams.get('knowledge-base'));
     }
   }, [searchParams, model]);
 
@@ -86,10 +100,6 @@ const RagAgent: React.FC<RagAgentProps> = ({
       );
     }
   }, [knowledgeBase.data, setSearchParams]);
-
-  const handleSelectKnowledgeBase = (value: string) => {
-    setKnowledgeBaseId(value);
-  };
 
   const {
     messages,
@@ -161,7 +171,7 @@ const RagAgent: React.FC<RagAgentProps> = ({
       return;
     }
 
-    if (!knowledgeBaseId) {
+    if (!knowledgeBase.data) {
       notifications.show({
         message: 'Please select a Knowledge Base',
         color: 'yellow',
@@ -200,7 +210,7 @@ const RagAgent: React.FC<RagAgentProps> = ({
         message: message,
         model: model,
         conversation_id: conversationId,
-        knowledge_base_id: knowledgeBaseId,
+        knowledge_base_id: knowledgeBase.data.id,
       }),
       signal: ctrl.signal,
       // eslint-disable-next-line @typescript-eslint/require-await
@@ -335,8 +345,9 @@ const RagAgent: React.FC<RagAgentProps> = ({
           isStreaming={isStreaming || !messages.length}
           placeholder="Ask anything">
           <SelectKnowledgeBase
-            value={knowledgeBaseId}
-            onChange={handleSelectKnowledgeBase}
+            valueKey="slug"
+            value={knowledgeBaseSlug}
+            onChange={setKnowledgeBaseSlug}
             size="xs"
             variant="unstyled"
             w={160}
@@ -349,7 +360,14 @@ const RagAgent: React.FC<RagAgentProps> = ({
             value={model}
             onChange={(value) => {
               setModel(value);
-              if (value) setSearchParams({ model: value }, { replace: true });
+              if (value)
+                setSearchParams(
+                  (params) => {
+                    params.set('model', value);
+                    return params;
+                  },
+                  { replace: true }
+                );
             }}
             w={140}
             allowDeselect={false}

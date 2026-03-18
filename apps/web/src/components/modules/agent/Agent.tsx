@@ -304,7 +304,14 @@ const Agent: React.FC<AgentProps> = ({
             value={model}
             onChange={(value) => {
               setModel(value);
-              if (value) setSearchParams({ model: value }, { replace: true });
+              if (value)
+                setSearchParams(
+                  (params) => {
+                    params.set('model', value);
+                    return params;
+                  },
+                  { replace: true }
+                );
             }}
             w={140}
             allowDeselect={false}

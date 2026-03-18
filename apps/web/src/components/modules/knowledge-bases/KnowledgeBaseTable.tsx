@@ -2,7 +2,17 @@
 
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import { Anchor, Divider, Pagination, Select, Skeleton, Table, TextInput } from '@mantine/core';
+import { Icon } from '@iconify/react';
+import {
+  Anchor,
+  Badge,
+  Divider,
+  Pagination,
+  Select,
+  Skeleton,
+  Table,
+  TextInput,
+} from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
 import {
   createColumnHelper,
@@ -13,6 +23,7 @@ import {
 } from '@tanstack/react-table';
 
 import { useKnowledgeBases } from '@/apis/queries/knowledge-base.queries';
+import { getKnowledgeBaseStatusColor } from '@/lib/utils';
 import type { IKnowledgeBase } from '@/types';
 
 import KnowledgeBaseAction from './KnowledgeBaseAction';
@@ -48,8 +59,21 @@ const KnowledgeBaseTable: React.FC<KnowledgeBaseTableProps> = ({ className }) =>
         ),
       }),
       columnHelper.accessor('description', { header: 'Description' }),
-      columnHelper.accessor('slug', { header: 'Slug' }),
-      columnHelper.accessor('status', { header: 'Status' }),
+      columnHelper.accessor('slug', {
+        header: 'Slug',
+        cell: (info) => <Badge className="normal-case!">{info.getValue()}</Badge>,
+      }),
+      columnHelper.accessor('status', {
+        header: 'Status',
+        cell: (info) => (
+          <Badge
+            size="lg"
+            color={getKnowledgeBaseStatusColor(info.getValue())}
+            leftSection={<Icon icon="solar:check-circle-broken" className="text-xl" />}>
+            {info.getValue()}
+          </Badge>
+        ),
+      }),
       columnHelper.display({
         id: 'actions',
         header: () => <p className="text-center">Actions</p>,
