@@ -46,7 +46,7 @@ const Navbar: React.FC<NavbarProps> = ({ className, backTo = '..', canBack = tru
               gradient={{ from: 'red', to: 'indigo', deg: 127 }}
               size="compact-sm"
               component={Link}
-              to="/chat">
+              to="/agent">
               Chat
             </Button>
           ) : (

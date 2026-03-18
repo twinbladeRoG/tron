@@ -30,7 +30,7 @@ const Home = () => {
               {user ? (
                 <Button
                   component={Link}
-                  to="/chat"
+                  to="/agent"
                   variant="gradient"
                   gradient={{ from: 'red', to: 'indigo', deg: 127 }}>
                   Chat
