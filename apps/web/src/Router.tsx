@@ -96,7 +96,7 @@ const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />,
-    loader: authGuard({ optional: true, redirectIfAuthenticated: '/chat' }),
+    loader: authGuard({ optional: true, redirectIfAuthenticated: '/agent' }),
   },
   { path: '*', element: <NotFound /> },
 ]);
