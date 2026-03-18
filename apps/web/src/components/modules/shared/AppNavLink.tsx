@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router';
+import { Link, useMatch } from 'react-router';
 import { Icon, type IconifyIcon } from '@iconify/react';
 import { AnimatePresence, motion } from 'motion/react';
 
@@ -21,7 +21,7 @@ const AppNavLink: React.FC<AppNavLinkProps> = ({
   isCollapsed,
   disabled,
 }) => {
-  const location = useLocation();
+  const match = useMatch({ path: to, end: false });
 
   return (
     <Link
@@ -31,7 +31,7 @@ const AppNavLink: React.FC<AppNavLinkProps> = ({
         'flex h-12 items-center gap-3 rounded-2xl px-3 py-1',
         'hover:bg-gray-200 dark:hover:bg-gray-800',
         {
-          'bg-gray-300 text-blue-400 dark:bg-gray-900': location.pathname.startsWith(to),
+          'bg-gray-300 text-blue-400 dark:bg-gray-900': !!match,
         },
         {
           'opacity-40': disabled,

@@ -2,8 +2,10 @@
 import { redirect } from 'react-router';
 
 import { fetchUserFeatures } from '@/apis/queries/policy.queries';
+import { getActiveUser } from '@/apis/requests/auth.requests';
+import { useUserStore } from '@/store';
 
-export const protectedLoader = (featureSlug: string) => async () => {
+export const featureGuard = (featureSlug: string) => async () => {
   try {
     const features = await fetchUserFeatures();
     const feature = features.find((f) => f.slug === featureSlug);
@@ -16,3 +18,18 @@ export const protectedLoader = (featureSlug: string) => async () => {
     throw redirect('/login');
   }
 };
+
+export const authGuard =
+  (options?: { optional?: boolean; redirectIfAuthenticated?: string }) => async () => {
+    try {
+      const res = await getActiveUser();
+      useUserStore.getState().updateUser(res);
+    } catch {
+      if (options?.optional) return null;
+      throw redirect('/login');
+    }
+
+    if (options?.redirectIfAuthenticated) throw redirect(options.redirectIfAuthenticated);
+
+    return null;
+  };

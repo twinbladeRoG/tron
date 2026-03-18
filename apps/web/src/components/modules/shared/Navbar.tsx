@@ -5,6 +5,7 @@ import { ActionIcon, Button } from '@mantine/core';
 
 import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler';
 import { cn } from '@/lib/utils';
+import { useUserStore } from '@/store';
 
 interface NavbarProps {
   className?: string;
@@ -13,6 +14,8 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ className, backTo = '..', canBack = true }) => {
+  const user = useUserStore((state) => state.user);
+
   return (
     <header className={className}>
       <nav
@@ -26,23 +29,36 @@ const Navbar: React.FC<NavbarProps> = ({ className, backTo = '..', canBack = tru
           </ActionIcon>
         ) : null}
 
-        <span
-          className={cn(
-            'pointer-events-none z-10 bg-linear-to-b from-[#ffd319] via-[#ff2975] to-[#8c1eff] bg-clip-text tracking-tighter whitespace-pre-wrap text-transparent',
-            'text-center text-2xl leading-none font-bold'
-          )}>
-          {import.meta.env.VITE_APP_NAME}
-        </span>
+        <Link to="/">
+          <span
+            className={cn(
+              'pointer-events-none z-10 bg-linear-to-b from-[#ffd319] via-[#ff2975] to-[#8c1eff] bg-clip-text tracking-tighter whitespace-pre-wrap text-transparent',
+              'text-center text-2xl leading-none font-bold'
+            )}>
+            {import.meta.env.VITE_APP_NAME}
+          </span>
+        </Link>
 
         <div className="ml-auto flex items-center gap-x-4">
-          <Button
-            variant="gradient"
-            gradient={{ from: 'red', to: 'indigo', deg: 127 }}
-            size="compact-sm"
-            component={Link}
-            to="/login">
-            Login
-          </Button>
+          {user ? (
+            <Button
+              variant="gradient"
+              gradient={{ from: 'red', to: 'indigo', deg: 127 }}
+              size="compact-sm"
+              component={Link}
+              to="/chat">
+              Chat
+            </Button>
+          ) : (
+            <Button
+              variant="gradient"
+              gradient={{ from: 'red', to: 'indigo', deg: 127 }}
+              size="compact-sm"
+              component={Link}
+              to="/login">
+              Login
+            </Button>
+          )}
           <AnimatedThemeToggler />
         </div>
       </nav>

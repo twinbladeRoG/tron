@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router';
+import { createBrowserRouter, Navigate } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 
 import Policies from './components/modules/acesss-control/Policies';
@@ -9,10 +9,11 @@ import RootLayout from './components/modules/shared/RootLayout';
 import Teams from './components/modules/teams/Teams';
 import Users from './components/modules/users/Users';
 import NotFound from './components/NotFound';
-import { protectedLoader } from './lib/loaders';
+import { authGuard, featureGuard } from './lib/loaders';
 import AdminPage from './pages/admin';
 import AgentPage from './pages/agent';
 import AgentChatPage from './pages/agent-chat';
+import AgentsPage from './pages/agents';
 import ChatPage from './pages/chat';
 import FilesPage from './pages/files';
 import KnowledgeBasePage from './pages/knowledge-base';
@@ -31,36 +32,44 @@ const router = createBrowserRouter([
   {
     path: '/',
     element: <Home />,
+    loader: authGuard({ optional: true }),
   },
   {
     path: '/',
     element: <RootLayout />,
+    loader: authGuard(),
     errorElement: <div>Not Found</div>,
     children: [
-      { path: '/chat', element: <ChatPage />, loader: protectedLoader('chat') },
-      { path: '/agent', element: <AgentPage />, loader: protectedLoader('chat') },
+      { path: '/chat', element: <ChatPage />, loader: featureGuard('chat') },
+      { path: '/agent', element: <AgentPage />, loader: featureGuard('chat') },
       {
         path: '/agent/chat/:conversationId',
         element: <AgentChatPage />,
-        loader: protectedLoader('chat'),
+        loader: featureGuard('chat'),
       },
-      { path: '/rag-agent', element: <RagAgentPage />, loader: protectedLoader('rag') },
+      { path: '/rag-agent', element: <RagAgentPage />, loader: featureGuard('rag') },
       {
         path: '/rag-agent/chat/:conversationId',
         element: <RagAgentChatPage />,
-        loader: protectedLoader('rag'),
+        loader: featureGuard('rag'),
       },
-      { path: '/files', element: <FilesPage />, loader: protectedLoader('files') },
+      { path: '/agents', element: <AgentsPage /> },
+      { path: '/files', element: <FilesPage />, loader: featureGuard('files') },
       {
         path: '/knowledge-bases',
         element: <KnowledgeBasesPage />,
-        loader: protectedLoader('knowledge-base'),
+        loader: featureGuard('knowledge-base'),
       },
-      { path: '/knowledge-bases/:slug', element: <KnowledgeBasePage /> },
+      {
+        path: '/knowledge-bases/:slug',
+        element: <KnowledgeBasePage />,
+        loader: featureGuard('knowledge-base'),
+      },
       {
         path: '/admin',
         element: <AdminPage />,
         children: [
+          { index: true, element: <Navigate to="policies" replace /> },
           { path: 'policies', element: <Policies /> },
           { path: 'organizations', element: <Organizations /> },
           { path: 'divisions', element: <Divisions /> },
@@ -70,16 +79,16 @@ const router = createBrowserRouter([
             path: 'features',
             element: <Features />,
           },
-          { path: 'models', element: <LlmModelsPage />, loader: protectedLoader('models') },
-          { path: 'models/:id', element: <ModelPage />, loader: protectedLoader('models') },
+          { path: 'models', element: <LlmModelsPage />, loader: featureGuard('models') },
+          { path: 'models/:id', element: <ModelPage />, loader: featureGuard('models') },
           {
             path: 'model-usage',
             element: <UsageLogPage />,
-            loader: protectedLoader('model-usage'),
+            loader: featureGuard('model-usage'),
           },
         ],
       },
-      { path: '/scrapper', element: <ScrapperPage />, loader: protectedLoader('scrapper') },
+      { path: '/scrapper', element: <ScrapperPage />, loader: featureGuard('scrapper') },
       { path: '/unauthorized', Component: UnauthorizedPage },
       { path: '*', element: <NotFound /> },
     ],
@@ -87,6 +96,7 @@ const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />,
+    loader: authGuard({ optional: true, redirectIfAuthenticated: '/chat' }),
   },
   { path: '*', element: <NotFound /> },
 ]);

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Navigate, Outlet, useNavigate } from 'react-router';
+import { Link, Navigate, Outlet, useNavigate } from 'react-router';
 import { Icon, type IconifyIcon } from '@iconify/react';
 import { ActionIcon, Avatar, Menu, Skeleton, Text } from '@mantine/core';
 import { useDisclosure, useHotkeys } from '@mantine/hooks';
@@ -11,6 +11,7 @@ import { useActiveUser } from '@/apis/queries/auth.queries';
 import { useUserFeatures } from '@/apis/queries/policy.queries';
 import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler';
 import { cn } from '@/lib/utils';
+import { useUserStore } from '@/store';
 
 import AppNavLink from './AppNavLink';
 
@@ -30,6 +31,7 @@ const RootLayout = () => {
   const navigate = useNavigate();
 
   useHotkeys([['ctrl + B', () => toggleDesktop()]]);
+  const removeUser = useUserStore((state) => state.removeUser);
 
   const handleLogout = () => {
     modals.openConfirmModal({
@@ -46,6 +48,7 @@ const RootLayout = () => {
         localStorage.removeItem('ACCESS_TOKEN');
         localStorage.removeItem('REFRESH_TOKEN');
         queryClient.clear();
+        removeUser();
         await navigate('/');
       },
     });
@@ -73,14 +76,8 @@ const RootLayout = () => {
           featureSlug: 'chat',
         },
         {
-          to: '/rag-agent',
-          label: 'RAG Agent',
-          icon: 'ph:robot-duotone',
-          featureSlug: 'rag',
-        },
-        {
           to: '/agents',
-          label: 'Agent Garden',
+          label: 'Agent Foundry',
           icon: 'solar:black-hole-bold-duotone',
         },
         {
@@ -131,13 +128,15 @@ const RootLayout = () => {
           />
         </ActionIcon>
 
-        <h1
-          className={cn(
-            'pointer-events-none z-10 bg-linear-to-b from-[#ffd319] via-[#ff2975] to-[#8c1eff] bg-clip-text tracking-tighter whitespace-pre-wrap text-transparent',
-            'm-0 text-center text-2xl leading-none font-bold'
-          )}>
-          {import.meta.env.VITE_APP_NAME}
-        </h1>
+        <Link to="/">
+          <h1
+            className={cn(
+              'pointer-events-none z-10 bg-linear-to-b from-[#ffd319] via-[#ff2975] to-[#8c1eff] bg-clip-text tracking-tighter whitespace-pre-wrap text-transparent',
+              'm-0 text-center text-2xl leading-none font-bold'
+            )}>
+            {import.meta.env.VITE_APP_NAME}
+          </h1>
+        </Link>
 
         <AnimatedThemeToggler className="ml-auto" />
       </header>

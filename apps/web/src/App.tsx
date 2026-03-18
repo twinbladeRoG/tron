@@ -14,7 +14,7 @@ import '@mantine/dates/styles.css';
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <MantineProvider theme={theme} defaultColorScheme="dark">
+      <MantineProvider theme={theme} defaultColorScheme="light">
         <ModalsProvider>
           <Router />
           <Notifications />

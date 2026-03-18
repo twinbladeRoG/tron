@@ -7,6 +7,7 @@ import * as yup from 'yup';
 
 import { useLogin } from '@/apis/queries/auth.queries';
 import { MagicCard } from '@/components/ui/magic-card';
+import { useUserStore } from '@/store';
 
 const schema = yup.object({
   username: yup.string().required(),
@@ -28,13 +29,14 @@ const LoginForm: React.FC<LoginFormProps> = ({ className }) => {
 
   const login = useLogin();
   const navigate = useNavigate();
+  const updateUser = useUserStore((state) => state.updateUser);
 
   const handleSubmit = form.handleSubmit((data) => {
     login.mutate(data, {
       onSuccess: async (res) => {
         localStorage.setItem('ACCESS_TOKEN', res.tokens.access_token);
         localStorage.setItem('REFRESH_TOKEN', res.tokens.refresh_token);
-
+        updateUser(res.user);
         await navigate('/chat');
       },
       onError: (error) => {

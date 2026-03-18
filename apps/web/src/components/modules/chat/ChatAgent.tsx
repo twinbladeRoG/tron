@@ -265,7 +265,7 @@ const ChatAgent: React.FC<ChatAgentProps> = ({ className }) => {
             defaultValue={models?.data?.[0].name}
             onChange={(value) => {
               setModel(value);
-              if (value) setSearchParams({ model: value });
+              if (value) setSearchParams({ model: value }, { replace: true });
             }}
             leftSection={
               <Icon

@@ -75,10 +75,13 @@ const RagAgent: React.FC<RagAgentProps> = ({
 
   useEffect(() => {
     if (knowledgeBase.data) {
-      setSearchParams((params) => {
-        params.set('knowledge-base', knowledgeBase.data.slug);
-        return params;
-      });
+      setSearchParams(
+        (params) => {
+          params.set('knowledge-base', knowledgeBase.data.slug);
+          return params;
+        },
+        { replace: true }
+      );
     }
   }, [knowledgeBase.data, setSearchParams]);
 
@@ -265,7 +268,7 @@ const RagAgent: React.FC<RagAgentProps> = ({
   const handleClearConversation = async () => {
     setMessages([]);
     setConversationId(null);
-    await navigate(model ? `/rag-agent?model=${model}` : '/rag-agent');
+    await navigate(model ? `/rag-agent?model=${model}` : '/rag-agent', { replace: true });
   };
 
   return (
@@ -318,7 +321,7 @@ const RagAgent: React.FC<RagAgentProps> = ({
             value={model}
             onChange={(value) => {
               setModel(value);
-              if (value) setSearchParams({ model: value });
+              if (value) setSearchParams({ model: value }, { replace: true });
             }}
             w={140}
             allowDeselect={false}

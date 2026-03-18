@@ -226,7 +226,7 @@ const Agent: React.FC<AgentProps> = ({
   const handleNewConversation = async () => {
     setMessages([]);
     setConversationId(null);
-    await navigate(model ? `/agent?model=${model}` : '/agent');
+    await navigate(model ? `/agent?model=${model}` : '/agent', { replace: true });
   };
 
   useHotkeys([['ctrl + shift + O', () => handleNewConversation()]]);
@@ -287,7 +287,7 @@ const Agent: React.FC<AgentProps> = ({
             value={model}
             onChange={(value) => {
               setModel(value);
-              if (value) setSearchParams({ model: value });
+              if (value) setSearchParams({ model: value }, { replace: true });
             }}
             w={140}
             allowDeselect={false}

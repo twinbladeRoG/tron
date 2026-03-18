@@ -18,6 +18,9 @@ const AdminPage = () => {
         color="blue"
         value={tab}
         onChange={(value) => navigate(`/admin/${value}`)}
+        classNames={{
+          control: 'before:content-none!',
+        }}
         data={[
           {
             label: (
@@ -31,7 +34,7 @@ const AdminPage = () => {
           {
             label: (
               <Center className="gap-2">
-                <Icon icon="solar:users-group-two-rounded-bold-duotone" className="text-xl" />
+                <Icon icon="solar:buildings-3-bold-duotone" className="text-xl" />
                 <span>Organizations</span>
               </Center>
             ),
@@ -40,7 +43,7 @@ const AdminPage = () => {
           {
             label: (
               <Center className="gap-2">
-                <Icon icon="solar:users-group-two-rounded-bold-duotone" className="text-xl" />
+                <Icon icon="solar:buildings-bold-duotone" className="text-xl" />
                 <span>Divisions</span>
               </Center>
             ),
@@ -58,8 +61,8 @@ const AdminPage = () => {
           {
             label: (
               <Center className="gap-2">
-                <span>Users</span>
                 <Icon icon="solar:users-group-rounded-bold-duotone" className="text-xl" />
+                <span>Users</span>
               </Center>
             ),
             value: 'users',
