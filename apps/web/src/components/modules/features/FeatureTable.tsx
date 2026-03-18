@@ -1,7 +1,8 @@
 'use no memo'; // !HOTFIX for TanStack Table with React Compiler - https://github.com/TanStack/table/issues/5567#issuecomment-2442997182
 
 import React, { useMemo } from 'react';
-import { Skeleton, Table } from '@mantine/core';
+import { Icon } from '@iconify/react';
+import { Badge, Skeleton, Table } from '@mantine/core';
 import {
   createColumnHelper,
   flexRender,
@@ -26,9 +27,24 @@ const FeatureTable: React.FC<FeatureTableProps> = ({ className }) => {
   const columns = useMemo(
     () => [
       columnHelper.accessor('name', { header: 'Name' }),
-      columnHelper.accessor('slug', { header: 'Slug' }),
+      columnHelper.accessor('slug', {
+        header: 'Slug',
+        cell: (info) => (
+          <Badge className="normal-case!" size="lg">
+            {info.getValue()}
+          </Badge>
+        ),
+      }),
       columnHelper.accessor('description', { header: 'Description' }),
-      columnHelper.accessor('is_active', { header: 'Active' }),
+      columnHelper.accessor('is_active', {
+        header: 'Active',
+        cell: (info) =>
+          info.getValue() ? (
+            <Icon icon="solar:check-circle-bold" className="text-2xl text-green-600" />
+          ) : (
+            <Icon icon="solar:close-circle-bold" className="text-2xl text-red-600" />
+          ),
+      }),
       columnHelper.display({
         id: 'actions',
         header: () => <p className="text-center">Actions</p>,
