@@ -4,6 +4,7 @@ from src.core.dependencies import (
     CurrentUser,
     LlmModelControllerDeps,
     ScrapeControllerDeps,
+    guard,
 )
 from src.core.logger import logger
 
@@ -12,7 +13,7 @@ from .schema import ScrapePayload, ScrapeResult
 router = APIRouter(prefix="/scrapper", tags=["Scrapper"])
 
 
-@router.post("/", response_model=ScrapeResult)
+@router.post("/", response_model=ScrapeResult, dependencies=[guard("feature:scrapper")])
 async def scrape(
     user: CurrentUser,
     controller: ScrapeControllerDeps,
@@ -29,7 +30,9 @@ async def scrape(
     )
 
 
-@router.post("/discover", response_model=list[str])
+@router.post(
+    "/discover", response_model=list[str], dependencies=[guard("feature:scrapper")]
+)
 async def discover_urls(
     user: CurrentUser,
     controller: ScrapeControllerDeps,

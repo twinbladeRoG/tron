@@ -11,6 +11,7 @@ from src.core.dependencies import (
     CurrentUser,
     FileControllerDeps,
     KnowledgeBaseControllerDeps,
+    guard,
 )
 from src.core.kafka.consumer import create_kafka_consumer
 from src.core.kafka.enums import KafkaTopic
@@ -32,12 +33,20 @@ from .schema import (
 router = APIRouter(prefix="/knowledge-base", tags=["Knowledge Base"])
 
 
-@router.get("/embedding-providers", response_model=dict[str, list[EmbeddingModel]])
+@router.get(
+    "/embedding-providers",
+    response_model=dict[str, list[EmbeddingModel]],
+    dependencies=[guard("feature:knowledge-base")],
+)
 def get_embedding_providers(user: CurrentUser, controller: KnowledgeBaseControllerDeps):
     return controller.get_embedding_models()
 
 
-@router.get("/", response_model=KnowledgeBasePaginated)
+@router.get(
+    "/",
+    response_model=KnowledgeBasePaginated,
+    dependencies=[guard("feature:knowledge-base")],
+)
 def get_knowledge_bases(
     user: CurrentUser,
     controller: KnowledgeBaseControllerDeps,
@@ -47,7 +56,9 @@ def get_knowledge_bases(
     return KnowledgeBasePaginated(data=list(knowledge_bases), pagination=pagination)
 
 
-@router.post("/", response_model=KnowledgeBase)
+@router.post(
+    "/", response_model=KnowledgeBase, dependencies=[guard("feature:knowledge-base")]
+)
 def create_knowledge_base(
     user: CurrentUser,
     controller: KnowledgeBaseControllerDeps,
@@ -56,21 +67,33 @@ def create_knowledge_base(
     return controller.create_knowledge_base(body, user=user)
 
 
-@router.get("/{identifier}", response_model=KnowledgeBaseExtended)
+@router.get(
+    "/{identifier}",
+    response_model=KnowledgeBaseExtended,
+    dependencies=[guard("feature:knowledge-base")],
+)
 def get_knowledge_base(
     user: CurrentUser, controller: KnowledgeBaseControllerDeps, identifier: str
 ):
     return controller.get_knowledge_base(identifier, user)
 
 
-@router.delete("/{id}", response_model=KnowledgeBase)
+@router.delete(
+    "/{id}",
+    response_model=KnowledgeBase,
+    dependencies=[guard("feature:knowledge-base")],
+)
 def delete_knowledge_base(
     user: CurrentUser, controller: KnowledgeBaseControllerDeps, id: UUID
 ):
     return controller.remove_knowledge_base(id, user)
 
 
-@router.get("/{id}/files", response_model=list[KnowledgeBaseFileAndLink])
+@router.get(
+    "/{id}/files",
+    response_model=list[KnowledgeBaseFileAndLink],
+    dependencies=[guard("feature:knowledge-base")],
+)
 def get_knowledge_base_files(
     user: CurrentUser, controller: KnowledgeBaseControllerDeps, id: UUID
 ):
@@ -78,7 +101,11 @@ def get_knowledge_base_files(
     return controller.get_knowledge_base_files_with_links(knowledge_base.id)
 
 
-@router.patch("/{id}/file", response_model=KnowledgeBase)
+@router.patch(
+    "/{id}/file",
+    response_model=KnowledgeBase,
+    dependencies=[guard("feature:knowledge-base")],
+)
 def add_file_to_knowledge_base(
     user: CurrentUser,
     controller: KnowledgeBaseControllerDeps,
@@ -94,7 +121,11 @@ def add_file_to_knowledge_base(
     return controller.attach_file_to_knowledge_base(id, user, files)
 
 
-@router.delete("/{id}/file/{file_id}", response_model=KnowledgeBase)
+@router.delete(
+    "/{id}/file/{file_id}",
+    response_model=KnowledgeBase,
+    dependencies=[guard("feature:knowledge-base")],
+)
 def remove_file_from_knowledge_base(
     user: CurrentUser,
     controller: KnowledgeBaseControllerDeps,
@@ -106,7 +137,7 @@ def remove_file_from_knowledge_base(
     return controller.detach_file_from_knowledge_base(id, user, file)
 
 
-@router.post("/{id}/train")
+@router.post("/{id}/train", dependencies=[guard("feature:knowledge-base")])
 async def enqueue_knowledge_base_for_extraction(
     user: CurrentUser,
     controller: KnowledgeBaseControllerDeps,
@@ -117,7 +148,11 @@ async def enqueue_knowledge_base_for_extraction(
     return None
 
 
-@router.get("/{id}/file/{file_id}", response_model=FileKnowledgeBaseLink)
+@router.get(
+    "/{id}/file/{file_id}",
+    response_model=FileKnowledgeBaseLink,
+    dependencies=[guard("feature:knowledge-base")],
+)
 def get_knowledge_base_file_link(
     user: CurrentUser,
     id: UUID,
