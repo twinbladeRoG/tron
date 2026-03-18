@@ -14,6 +14,7 @@ import { getToken } from '@/apis/http';
 import { useRagAgentWorkflow } from '@/apis/queries/agent.queries';
 import { useKnowledgeBase } from '@/apis/queries/knowledge-base.queries';
 import { cn } from '@/lib/utils';
+import { useUserStore } from '@/store';
 import type { IConversation, IConversationMessageWithUsageLogs } from '@/types';
 
 import ChatInput from '../chat/ChatInput';
@@ -42,6 +43,7 @@ const RagAgent: React.FC<RagAgentProps> = ({
   conversation: existingConversation,
 }) => {
   const navigate = useNavigate();
+  const user = useUserStore((state) => state.user);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [tab, setTab] = useState<string | null>('conversations');
@@ -259,8 +261,8 @@ const RagAgent: React.FC<RagAgentProps> = ({
   };
 
   useLayoutEffect(() => {
-    scrollRef.current!.scrollTo({
-      top: scrollRef.current!.scrollHeight,
+    scrollRef.current?.scrollTo({
+      top: scrollRef.current?.scrollHeight,
       behavior: 'smooth',
     });
   }, [messages]);
@@ -281,7 +283,7 @@ const RagAgent: React.FC<RagAgentProps> = ({
           'lg:grid-cols-[1fr_0px]': !showPanel,
         }
       )}>
-      <div className="flex w-full flex-col overflow-y-auto">
+      <div className="flex min-h-full w-full flex-col overflow-y-auto">
         <div className="flex w-full items-center gap-4">
           <div className="flex items-center gap-4">
             <h1 className="font-bold">RAG Agent Chat</h1>
@@ -300,21 +302,47 @@ const RagAgent: React.FC<RagAgentProps> = ({
 
         <Divider className="my-3" />
 
-        <ScrollArea.Autosize offsetScrollbars viewportRef={scrollRef} className="mb-4">
-          <div className="mx-auto flex w-full max-w-2xl flex-col gap-y-3">
-            {messages.map((message) => (
-              <ChatMessage key={message.id} {...message} />
-            ))}
-          </div>
-        </ScrollArea.Autosize>
+        {messages.length > 0 && (
+          <ScrollArea.Autosize offsetScrollbars viewportRef={scrollRef} className="mb-4">
+            <div className="mx-auto flex w-full max-w-2xl flex-col gap-y-3">
+              {messages.map((message) => (
+                <ChatMessage key={message.id} {...message} />
+              ))}
+            </div>
+          </ScrollArea.Autosize>
+        )}
+
+        {!messages.length && (
+          <>
+            <h1 className="mt-[20dvh] mb-6 text-center">
+              {user ? <span className="text-4xl">Hi {user?.first_name}, welcome to </span> : null}
+              <span className="pointer-events-none z-10 bg-linear-to-b from-[#ffd319] via-[#ff2975] to-[#8c1eff] bg-clip-text text-center text-5xl leading-none font-bold tracking-tighter whitespace-pre-wrap text-transparent">
+                {import.meta.env.VITE_APP_NAME}
+              </span>
+            </h1>
+            <h2 className="text-center">Select Knowledge Base to start your chat</h2>
+          </>
+        )}
 
         <ChatInput
           ref={chatInputRef}
-          className="mx-auto mt-auto w-full max-w-2xl"
+          className={cn('mx-auto w-full max-w-2xl', {
+            'mt-auto': messages.length,
+            'mt-10': !messages.length,
+          })}
           onSubmit={handleSubmit}
           disabled={isStreaming}
-          isStreaming={isStreaming}
+          isStreaming={isStreaming || !messages.length}
           placeholder="Ask anything">
+          <SelectKnowledgeBase
+            value={knowledgeBaseId}
+            onChange={handleSelectKnowledgeBase}
+            size="xs"
+            variant="unstyled"
+            w={160}
+            placeholder="Knowledge Base"
+          />
+
           <SelectLlmModel
             size="xs"
             variant="unstyled"
@@ -328,15 +356,6 @@ const RagAgent: React.FC<RagAgentProps> = ({
             autoSelectFirstValue
           />
           <UserModelUsageTrack modelSlug={model} className="min-w-56" />
-
-          <SelectKnowledgeBase
-            value={knowledgeBaseId}
-            onChange={handleSelectKnowledgeBase}
-            size="xs"
-            variant="unstyled"
-            w={160}
-            placeholder="Knowledge Base"
-          />
         </ChatInput>
       </div>
 

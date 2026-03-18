@@ -13,6 +13,7 @@ import { v4 as uuid } from 'uuid';
 import { getToken } from '@/apis/http';
 import { useAgentWorkflow } from '@/apis/queries/agent.queries';
 import { cn } from '@/lib/utils';
+import { useUserStore } from '@/store';
 import type { IConversationMessageWithUsageLogs } from '@/types';
 
 import ChatInput from '../chat/ChatInput';
@@ -40,6 +41,7 @@ const Agent: React.FC<AgentProps> = ({
   conversationId: existingConversationId,
 }) => {
   const navigate = useNavigate();
+  const user = useUserStore((state) => state.user);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [tab, setTab] = useState<string | null>('conversations');
@@ -204,6 +206,7 @@ const Agent: React.FC<AgentProps> = ({
             appendVisitedNode('__end__');
             setIsStreaming(false);
             await queryClient.invalidateQueries({ queryKey: ['token-usage'] });
+            await queryClient.invalidateQueries({ queryKey: ['conversations'] });
             setTimeout(() => {
               chatInputRef.current?.focus();
             }, 100);
@@ -217,8 +220,8 @@ const Agent: React.FC<AgentProps> = ({
   };
 
   useLayoutEffect(() => {
-    scrollRef.current!.scrollTo({
-      top: scrollRef.current!.scrollHeight,
+    scrollRef.current?.scrollTo({
+      top: scrollRef.current?.scrollHeight,
       behavior: 'smooth',
     });
   }, [messages]);
@@ -241,7 +244,7 @@ const Agent: React.FC<AgentProps> = ({
           'lg:grid-cols-[1fr_0px]': !showPanel,
         }
       )}>
-      <div className="flex w-full flex-col overflow-y-auto">
+      <div className="flex min-h-full w-full flex-col overflow-y-auto">
         <div className="flex w-full items-center gap-4">
           <div className="flex items-center gap-4">
             <h1 className="font-bold">Agent Chat</h1>
@@ -266,20 +269,34 @@ const Agent: React.FC<AgentProps> = ({
 
         <Divider className="my-3" />
 
-        <ScrollArea.Autosize offsetScrollbars viewportRef={scrollRef} className="mb-4">
-          <div className="mx-auto flex w-full max-w-2xl flex-col gap-y-3">
-            {messages.map((message) => (
-              <ChatMessage key={message.id} {...message} />
-            ))}
-          </div>
-        </ScrollArea.Autosize>
+        {messages.length > 0 && (
+          <ScrollArea.Autosize offsetScrollbars viewportRef={scrollRef} className="mb-4">
+            <div className="mx-auto flex w-full max-w-2xl flex-col gap-y-3">
+              {messages.map((message) => (
+                <ChatMessage key={message.id} {...message} />
+              ))}
+            </div>
+          </ScrollArea.Autosize>
+        )}
+
+        {!messages.length && (
+          <h1 className="mt-[20dvh] mb-6 text-center">
+            {user ? <span className="text-4xl">Hi {user?.first_name}, welcome to </span> : null}
+            <span className="pointer-events-none z-10 bg-linear-to-b from-[#ffd319] via-[#ff2975] to-[#8c1eff] bg-clip-text text-center text-5xl leading-none font-bold tracking-tighter whitespace-pre-wrap text-transparent">
+              {import.meta.env.VITE_APP_NAME}
+            </span>
+          </h1>
+        )}
 
         <ChatInput
           ref={chatInputRef}
-          className="mx-auto mt-auto w-full max-w-2xl"
+          className={cn('mx-auto w-full max-w-2xl', {
+            'mt-auto': messages.length,
+            'mt-10': !messages.length,
+          })}
           onSubmit={handleSubmit}
           disabled={isStreaming}
-          isStreaming={isStreaming}
+          isStreaming={isStreaming || !messages.length}
           placeholder="Ask anything">
           <SelectLlmModel
             size="xs"
@@ -322,9 +339,9 @@ const Agent: React.FC<AgentProps> = ({
                 panel: '!grow h-full flex flex-col overflow-auto',
               }}>
               <Tabs.List>
+                <Tabs.Tab value="conversations">Conversations</Tabs.Tab>
                 <Tabs.Tab value="graph">Graph</Tabs.Tab>
                 <Tabs.Tab value="mermaid">Mermaid</Tabs.Tab>
-                <Tabs.Tab value="conversations">Conversations</Tabs.Tab>
                 <ActionIcon
                   className="ml-auto self-center"
                   variant="subtle"
