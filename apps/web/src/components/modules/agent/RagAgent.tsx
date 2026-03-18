@@ -1,8 +1,8 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { Icon } from '@iconify/react';
-import { ActionIcon, Divider, ScrollArea, Tabs, Tooltip } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
+import { ActionIcon, Divider, Kbd, ScrollArea, Tabs, Tooltip } from '@mantine/core';
+import { useDisclosure, useHotkeys } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { EventStreamContentType, fetchEventSource } from '@microsoft/fetch-event-source';
 import { useQueryClient } from '@tanstack/react-query';
@@ -55,8 +55,16 @@ const RagAgent: React.FC<RagAgentProps> = ({
   const [knowledgeBaseSlug, setKnowledgeBaseSlug] = useState<string | null | undefined>(null);
   const queryClient = useQueryClient();
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
-
   const knowledgeBase = useKnowledgeBase(knowledgeBaseSlug);
+
+  const handleNewConversation = async () => {
+    setMessages([]);
+    setConversationId(null);
+    await navigate(model ? `/rag-agent?model=${model}` : '/rag-agent', { replace: true });
+  };
+
+  useHotkeys([['ctrl + shift + O', () => handleNewConversation()]]);
+  useHotkeys([['ctrl + shift + B', panelHandler.toggle]]);
 
   useEffect(() => {
     if (existingConversation?.parameters) {
@@ -277,12 +285,6 @@ const RagAgent: React.FC<RagAgentProps> = ({
     });
   }, [messages]);
 
-  const handleClearConversation = async () => {
-    setMessages([]);
-    setConversationId(null);
-    await navigate(model ? `/rag-agent?model=${model}` : '/rag-agent', { replace: true });
-  };
-
   return (
     <section
       className={cn(
@@ -299,15 +301,29 @@ const RagAgent: React.FC<RagAgentProps> = ({
             <h1 className="font-bold">RAG Agent Chat</h1>
           </div>
 
-          <Tooltip label="New Conversation">
-            <ActionIcon variant="subtle" ml="auto" onClick={handleClearConversation}>
+          <Tooltip
+            position="left"
+            label={
+              <div className="flex">
+                <Kbd>Ctrl</Kbd> + <Kbd>Shift</Kbd> + <Kbd>O</Kbd>
+              </div>
+            }>
+            <ActionIcon variant="subtle" ml="auto" onClick={handleNewConversation}>
               <Icon icon="mdi:chat-plus" className="text-2xl" />
             </ActionIcon>
           </Tooltip>
 
-          <ActionIcon variant="subtle" onClick={panelHandler.toggle}>
-            <Icon icon="solar:siderbar-bold-duotone" className="text-2xl" />
-          </ActionIcon>
+          <Tooltip
+            position="left"
+            label={
+              <div className="flex">
+                <Kbd>Ctrl</Kbd> + <Kbd>Shift</Kbd> + <Kbd>B</Kbd>
+              </div>
+            }>
+            <ActionIcon variant="subtle" onClick={panelHandler.toggle}>
+              <Icon icon="solar:siderbar-bold-duotone" className="text-2xl" />
+            </ActionIcon>
+          </Tooltip>
         </div>
 
         <Divider className="my-3" />

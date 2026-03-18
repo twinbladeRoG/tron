@@ -51,7 +51,6 @@ const Agent: React.FC<AgentProps> = ({
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
-  useHotkeys([['ctrl + shift + B', panelHandler.toggle]]);
 
   const handleNewConversation = async () => {
     setMessages([]);
@@ -60,6 +59,7 @@ const Agent: React.FC<AgentProps> = ({
   };
 
   useHotkeys([['ctrl + shift + O', () => handleNewConversation()]]);
+  useHotkeys([['ctrl + shift + B', panelHandler.toggle]]);
 
   useEffect(() => {
     if (model === null && searchParams.get('model') !== null) {
