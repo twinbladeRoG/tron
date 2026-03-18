@@ -52,6 +52,12 @@ FEATURES = [
         "description": "Upload and manage documents and files that can be processed, indexed, and used within AI workflows.",
         "is_active": True,
     },
+    {
+        "name": "Admin",
+        "slug": "admin-panel",
+        "description": "Admin section for managing policies, users, and llm models",
+        "is_active": True,
+    },
 ]
 
 

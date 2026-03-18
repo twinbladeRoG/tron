@@ -35,7 +35,10 @@ const LlmModelList = () => {
           <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3">
             <Icon icon={getLlmProviderIcon(model.provider)} className="text-6xl" />
             <div>
-              <Anchor component={Link} to={`/models/${model.id}`} className="text-xl! font-bold!">
+              <Anchor
+                component={Link}
+                to={`/admin/models/${model.id}`}
+                className="text-xl! font-bold!">
                 {model.display_name}
               </Anchor>
               <Text>{model.name}</Text>

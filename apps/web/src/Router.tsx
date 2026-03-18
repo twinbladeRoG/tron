@@ -1,7 +1,13 @@
 import { createBrowserRouter } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 
+import Policies from './components/modules/acesss-control/Policies';
+import Divisions from './components/modules/divisions/Divisions';
+import Features from './components/modules/features/Features';
+import Organizations from './components/modules/organizations/Organizations';
 import RootLayout from './components/modules/shared/RootLayout';
+import Teams from './components/modules/teams/Teams';
+import Users from './components/modules/users/Users';
 import NotFound from './components/NotFound';
 import { protectedLoader } from './lib/loaders';
 import AdminPage from './pages/admin';
@@ -44,9 +50,6 @@ const router = createBrowserRouter([
         element: <RagAgentChatPage />,
         loader: protectedLoader('rag'),
       },
-      { path: '/models', element: <LlmModelsPage />, loader: protectedLoader('models') },
-      { path: '/models/:id', element: <ModelPage />, loader: protectedLoader('models') },
-      { path: '/model-usage', element: <UsageLogPage />, loader: protectedLoader('model-usage') },
       { path: '/files', element: <FilesPage />, loader: protectedLoader('files') },
       {
         path: '/knowledge-bases',
@@ -58,9 +61,21 @@ const router = createBrowserRouter([
         path: '/admin',
         element: <AdminPage />,
         children: [
+          { path: 'policies', element: <Policies /> },
+          { path: 'organizations', element: <Organizations /> },
+          { path: 'divisions', element: <Divisions /> },
+          { path: 'teams', element: <Teams /> },
+          { path: 'users', element: <Users /> },
           {
-            path: ':tabValue',
-            element: <AdminPage />,
+            path: 'features',
+            element: <Features />,
+          },
+          { path: 'models', element: <LlmModelsPage />, loader: protectedLoader('models') },
+          { path: 'models/:id', element: <ModelPage />, loader: protectedLoader('models') },
+          {
+            path: 'model-usage',
+            element: <UsageLogPage />,
+            loader: protectedLoader('model-usage'),
           },
         ],
       },

@@ -67,15 +67,9 @@ const RootLayout = () => {
     () =>
       [
         {
-          to: '/chat',
+          to: '/agent',
           label: 'Chat',
           icon: 'solar:chat-square-bold-duotone',
-          featureSlug: 'chat',
-        },
-        {
-          to: '/agent',
-          label: 'Agent',
-          icon: 'ph:robot-duotone',
           featureSlug: 'chat',
         },
         {
@@ -85,16 +79,9 @@ const RootLayout = () => {
           featureSlug: 'rag',
         },
         {
-          to: '/models',
-          label: 'Models',
-          icon: 'si:ai-duotone',
-          featureSlug: 'models',
-        },
-        {
-          to: '/model-usage',
-          label: 'Model Usage',
-          icon: 'solar:graph-bold-duotone',
-          featureSlug: 'model-usage',
+          to: '/agents',
+          label: 'Agent Garden',
+          icon: 'solar:black-hole-bold-duotone',
         },
         {
           to: '/files',
@@ -118,7 +105,7 @@ const RootLayout = () => {
           to: '/admin',
           label: 'Admin',
           icon: 'solar:folder-security-bold-duotone',
-          featureSlug: 'admin',
+          featureSlug: 'admin-panel',
         },
       ] as Array<NavItem>,
     []
