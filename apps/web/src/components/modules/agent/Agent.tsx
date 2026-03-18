@@ -51,6 +51,15 @@ const Agent: React.FC<AgentProps> = ({
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
+  useHotkeys([['ctrl + shift + B', panelHandler.toggle]]);
+
+  const handleNewConversation = async () => {
+    setMessages([]);
+    setConversationId(null);
+    await navigate(model ? `/agent?model=${model}` : '/agent', { replace: true });
+  };
+
+  useHotkeys([['ctrl + shift + O', () => handleNewConversation()]]);
 
   useEffect(() => {
     if (model === null && searchParams.get('model') !== null) {
@@ -226,14 +235,6 @@ const Agent: React.FC<AgentProps> = ({
     });
   }, [messages]);
 
-  const handleNewConversation = async () => {
-    setMessages([]);
-    setConversationId(null);
-    await navigate(model ? `/agent?model=${model}` : '/agent', { replace: true });
-  };
-
-  useHotkeys([['ctrl + shift + O', () => handleNewConversation()]]);
-
   return (
     <section
       className={cn(
@@ -262,9 +263,17 @@ const Agent: React.FC<AgentProps> = ({
             </ActionIcon>
           </Tooltip>
 
-          <ActionIcon variant="subtle" onClick={panelHandler.toggle}>
-            <Icon icon="solar:siderbar-bold-duotone" className="text-2xl" />
-          </ActionIcon>
+          <Tooltip
+            position="left"
+            label={
+              <div className="flex">
+                <Kbd>Ctrl</Kbd> + <Kbd>Shift</Kbd> + <Kbd>B</Kbd>
+              </div>
+            }>
+            <ActionIcon variant="subtle" onClick={panelHandler.toggle}>
+              <Icon icon="solar:siderbar-bold-duotone" className="text-2xl" />
+            </ActionIcon>
+          </Tooltip>
         </div>
 
         <Divider className="my-3" />
