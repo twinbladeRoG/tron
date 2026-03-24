@@ -1,4 +1,4 @@
-import { Button, Drawer } from '@mantine/core';
+import { Button, Divider, Drawer, Title } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 
 import AddTeam from './AddTeam';
@@ -10,10 +10,13 @@ const Teams = () => {
   return (
     <div>
       <div className="flex">
+        <Title>Teams</Title>
         <Button ml="auto" onClick={handler.open}>
           Add
         </Button>
       </div>
+
+      <Divider my="md" />
 
       <TeamTable />
 

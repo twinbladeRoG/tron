@@ -1,61 +1,128 @@
 import { Link, useMatch } from 'react-router';
 import { Icon, type IconifyIcon } from '@iconify/react';
+import { Menu, NavLink, type NavLinkProps } from '@mantine/core';
 import { AnimatePresence, motion } from 'motion/react';
 
 import { cn } from '@/lib/utils';
 
-interface AppNavLinkProps {
-  to: string;
-  icon: string | IconifyIcon;
-  label: string;
+export type NavItem =
+  | {
+      to: string;
+      label: string;
+      icon: IconifyIcon | string;
+      featureSlug?: string;
+    }
+  | {
+      label: string;
+      icon: IconifyIcon | string;
+      featureSlug?: string;
+      subMenu: Array<{
+        to: string;
+        label: string;
+        icon: IconifyIcon | string;
+        featureSlug?: string;
+      }>;
+    };
+
+interface AppNavLinkProps extends NavLinkProps {
   isCollapsed?: boolean;
   className?: string;
   disabled?: boolean;
+  item: NavItem;
 }
 
-const AppNavLink: React.FC<AppNavLinkProps> = ({
-  to,
-  icon,
-  label,
-  className,
-  isCollapsed,
-  disabled,
-}) => {
-  const match = useMatch({ path: to, end: false });
+const AppNavLink: React.FC<AppNavLinkProps> = ({ className, isCollapsed, disabled, item }) => {
+  const match = useMatch({ path: 'to' in item ? item.to : '', end: false });
 
-  return (
-    <Link
-      to={to}
-      className={cn(
-        className,
-        'flex h-12 items-center gap-3 rounded-2xl px-3 py-1',
-        'hover:bg-gray-200 dark:hover:bg-gray-800',
-        {
-          'bg-gray-300 text-blue-400 dark:bg-gray-900': !!match,
-        },
-        {
-          'opacity-40': disabled,
+  if ('to' in item)
+    return (
+      <NavLink
+        component={Link}
+        to={item.to}
+        leftSection={<Icon icon={item.icon} className="text-2xl" />}
+        active={!!match}
+        className={cn('rounded-lg', className)}
+        disabled={disabled}
+        label={
+          <AnimatePresence>
+            {!isCollapsed && (
+              <motion.p
+                className="flex-1 whitespace-nowrap"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{
+                  opacity: 0,
+                  transition: { duration: 0.3 },
+                }}>
+                {item.label}
+              </motion.p>
+            )}
+          </AnimatePresence>
         }
-      )}>
-      <div className="size-6">
-        <Icon icon={icon} className="text-2xl" />
-      </div>
-      <AnimatePresence>
-        {!isCollapsed && (
-          <motion.p
-            className="flex-1"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{
-              opacity: 0,
-              transition: { duration: 0.3 },
-            }}>
-            {label}
-          </motion.p>
+      />
+    );
+
+  if ('subMenu' in item)
+    return (
+      <Menu position="right-start" trigger="hover">
+        <Menu.Target>
+          <NavLink
+            leftSection={<Icon icon={item.icon} className="text-2xl" />}
+            active={!!match}
+            className={cn('rounded-lg', className)}
+            disabled={disabled}
+            rightSection={isCollapsed ? null : undefined}
+            classNames={{
+              children: 'pt-2',
+            }}
+            label={
+              <AnimatePresence>
+                {!isCollapsed && (
+                  <motion.p
+                    className="flex-1 whitespace-nowrap"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{
+                      opacity: 0,
+                      transition: { duration: 0.3 },
+                    }}>
+                    {item.label}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            }>
+            <AnimatePresence>
+              {!isCollapsed &&
+                item.subMenu?.map((menu) => (
+                  <AppNavLink
+                    key={menu.label}
+                    isCollapsed={isCollapsed}
+                    disabled={disabled}
+                    item={menu}
+                  />
+                ))}
+            </AnimatePresence>
+          </NavLink>
+        </Menu.Target>
+
+        {isCollapsed && (
+          <Menu.Dropdown>
+            {item.subMenu?.map((menu) => (
+              <Menu.Item
+                leftSection={<Icon icon={menu.icon} />}
+                component={Link}
+                to={menu.to}
+                key={menu.label}
+                disabled={disabled}>
+                {menu.label}
+              </Menu.Item>
+            ))}
+          </Menu.Dropdown>
         )}
-      </AnimatePresence>
-    </Link>
-  );
+      </Menu>
+    );
+
+  return null;
 };
 
 export default AppNavLink;

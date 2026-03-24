@@ -1,4 +1,4 @@
-import { Button, Drawer } from '@mantine/core';
+import { Button, Divider, Drawer, Title } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 
 import AddFeature from './AddFeature';
@@ -10,10 +10,13 @@ const Features = () => {
   return (
     <div>
       <div className="flex">
+        <Title>Features</Title>
         <Button onClick={handlers.open} size="sm" ml="auto">
           Add
         </Button>
       </div>
+
+      <Divider my="md" />
 
       <FeatureTable />
 

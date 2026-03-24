@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Link, Navigate, Outlet, useNavigate } from 'react-router';
-import { Icon, type IconifyIcon } from '@iconify/react';
+import { Icon } from '@iconify/react';
 import { ActionIcon, Avatar, Menu, Skeleton, Text } from '@mantine/core';
 import { useDisclosure, useHotkeys } from '@mantine/hooks';
 import { modals } from '@mantine/modals';
@@ -13,14 +13,7 @@ import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler';
 import { cn } from '@/lib/utils';
 import { useUserStore } from '@/store';
 
-import AppNavLink from './AppNavLink';
-
-interface NavItem {
-  to: string;
-  label: string;
-  icon: IconifyIcon | string;
-  featureSlug?: string;
-}
+import AppNavLink, { type NavItem } from './AppNavLink';
 
 const RootLayout = () => {
   const features = useUserFeatures();
@@ -99,12 +92,61 @@ const RootLayout = () => {
           featureSlug: 'scrapper',
         },
         {
-          to: '/admin',
           label: 'Admin',
           icon: 'solar:folder-security-bold-duotone',
           featureSlug: 'admin-panel',
+          subMenu: [
+            {
+              to: '/admin/policies',
+              label: 'Policies',
+              icon: 'solar:folder-security-bold-duotone',
+              featureSlug: 'admin-panel',
+            },
+            {
+              to: '/admin/organizations',
+              label: 'Organizations',
+              icon: 'solar:buildings-3-bold-duotone',
+              featureSlug: 'admin-panel',
+            },
+            {
+              to: '/admin/divisions',
+              label: 'Divisions',
+              icon: 'solar:buildings-bold-duotone',
+              featureSlug: 'admin-panel',
+            },
+            {
+              to: '/admin/teams',
+              label: 'Teams',
+              icon: 'solar:users-group-two-rounded-bold-duotone',
+              featureSlug: 'admin-panel',
+            },
+            {
+              to: '/admin/users',
+              label: 'Users',
+              icon: 'solar:users-group-rounded-bold-duotone',
+              featureSlug: 'admin-panel',
+            },
+            {
+              to: '/admin/features',
+              label: 'Features',
+              icon: 'solar:crown-minimalistic-bold-duotone',
+              featureSlug: 'admin-panel',
+            },
+            {
+              to: '/admin/models',
+              label: 'LLM Models',
+              icon: 'si:ai-duotone',
+              featureSlug: 'admin-panel',
+            },
+            {
+              to: '/admin/model-usage',
+              label: 'Model Usage',
+              icon: 'solar:graph-bold-duotone',
+              featureSlug: 'admin-panel',
+            },
+          ],
         },
-      ] as Array<NavItem>,
+      ] satisfies Array<NavItem>,
     []
   );
 
@@ -145,11 +187,9 @@ const RootLayout = () => {
         {navItems.map((item) => (
           <AppNavLink
             key={item.label}
-            to={item.to}
-            label={item.label}
-            icon={item.icon}
             isCollapsed={!desktopOpened}
             disabled={item.featureSlug ? !checkForAccess(item.featureSlug) : false}
+            item={item}
           />
         ))}
 

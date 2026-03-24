@@ -1,4 +1,4 @@
-import { Button, Divider, Drawer, Skeleton, Table } from '@mantine/core';
+import { Button, Divider, Drawer, Skeleton, Table, Title } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 
 import { usePolicies } from '@/apis/queries/policy.queries';
@@ -13,6 +13,7 @@ const Policies = () => {
   return (
     <section>
       <div className="flex w-full justify-between">
+        <Title>Policies</Title>
         <Button ml="auto" onClick={handler.open}>
           Add
         </Button>
