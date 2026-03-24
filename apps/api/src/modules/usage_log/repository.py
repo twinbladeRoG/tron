@@ -1,27 +1,59 @@
 from uuid import UUID
 
-from src.core.repository.base import BaseRepository
-from src.models.models import ModelUsageLog
-from src.modules.llm_models.controller import LlmModelController
+from sqlmodel import func, select
 
-from .schema import FilterParams
+from src.core.repository.base import BaseRepository
+from src.models.models import LlmModel, ModelUsageLog
+from src.models.pagination import get_pagination
+
+from .schema import PaginatedFilterParams
 
 
 class ModelUsageLogRepository(BaseRepository[ModelUsageLog]):
     def get_user_logs(
         self,
         user_id: UUID,
-        filter: FilterParams,
+        query: PaginatedFilterParams,
         *,
-        llm_model_controller: LlmModelController,
+        model: LlmModel,
     ):
-        model = llm_model_controller.get_llm_model_by_name(filter.model_name)
-        statement = self._query().where(
+        base_statement = self._query().where(
             ModelUsageLog.user_id == user_id, ModelUsageLog.model_id == model.id
         )
-        if filter.from_date and filter.to_date:
-            statement = statement.where(
-                ModelUsageLog.created_at >= filter.from_date,
-                ModelUsageLog.created_at <= filter.to_date,
+        count_statement = (
+            select(func.count())
+            .select_from(self.model_class)
+            .where(ModelUsageLog.user_id == user_id, ModelUsageLog.model_id == model.id)
+        )
+
+        if query.from_date and query.to_date:
+            base_statement = base_statement.where(
+                ModelUsageLog.created_at >= query.from_date,
+                ModelUsageLog.created_at <= query.to_date,
             )
-        return self.session.exec(statement).all()
+            count_statement = count_statement.where(
+                ModelUsageLog.created_at >= query.from_date,
+                ModelUsageLog.created_at <= query.to_date,
+            )
+
+        if query.user_id:
+            base_statement = base_statement.where(
+                ModelUsageLog.user_id == query.user_id
+            )
+            count_statement = count_statement.where(
+                ModelUsageLog.user_id == query.user_id
+            )
+
+        base_statement = base_statement.order_by(
+            ModelUsageLog.created_at.desc(),  # type: ignore
+            ModelUsageLog.id.desc(),  # type: ignore
+        )
+
+        statement = base_statement.offset(query.page * query.limit).limit(query.limit)
+        logs = self.session.exec(statement).all()
+
+        count = self.session.exec(count_statement).one()
+
+        pagination = get_pagination(query.page, query.limit, count)
+
+        return logs, pagination

@@ -4,7 +4,7 @@ from typing import Generic, List, TypeVar
 from pydantic.generics import GenericModel
 from sqlmodel import SQLModel
 
-from .models import File, KnowledgeBase, Organization
+from .models import File, KnowledgeBase, ModelUsageLog, Organization
 from .response import (
     DivisionWithOrganization,
     TeamExtended,
@@ -71,3 +71,7 @@ class KnowledgeBasePaginated(ModelPaginated[KnowledgeBase]):
 
 class TokenBucketPaginated(ModelPaginated[TokenBucketWithSubject]):
     data: list[TokenBucketWithSubject]
+
+
+class ModelUsageLogPaginated(ModelPaginated[ModelUsageLog]):
+    data: list[ModelUsageLog]

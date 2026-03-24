@@ -17,7 +17,11 @@ export interface IAddLlmModelRequest {
 }
 
 export interface IUsageLogQueryParams {
+  page: number;
+  limit: number;
   model_name: string;
+
+  user_id?: string;
   from_date?: Date;
   to_date?: Date;
 }

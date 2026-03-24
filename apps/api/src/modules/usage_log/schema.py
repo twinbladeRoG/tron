@@ -29,10 +29,15 @@ class CreateModelUsageLog(ModelUsageLogBase):
     message_id: UUID
 
 
-class FilterParams(SQLModel):
+class PaginatedFilterParams(SQLModel):
+    page: int = Field(0, ge=0)
+    limit: int = Field(100, gt=0, le=100)
+
     model_name: str = Field()
-    from_date: datetime | None = Field(default=None)
-    to_date: datetime | None = Field(default=None)
+    user_id: Optional[UUID] = None
+
+    from_date: Optional[datetime] = Field(default=None)
+    to_date: Optional[datetime] = Field(default=None)
 
     @model_validator(mode="after")
     def validate_dates(self):

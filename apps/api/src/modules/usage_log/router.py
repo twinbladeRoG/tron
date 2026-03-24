@@ -7,21 +7,21 @@ from src.core.dependencies import (
     LlmModelControllerDeps,
     ModelUsageLogControllerDeps,
 )
-from src.models.models import ModelUsageLog
+from src.models.pagination import ModelUsageLogPaginated
 
-from .schema import FilterParams
+from .schema import PaginatedFilterParams
 
 router = APIRouter(prefix="/usage-logs", tags=["Usage Logs"])
 
 
-@router.get("/", response_model=list[ModelUsageLog])
+@router.get("/", response_model=ModelUsageLogPaginated)
 def get_user_logs(
     user: CurrentUser,
     controller: ModelUsageLogControllerDeps,
-    query: Annotated[FilterParams, Query()],
+    query: Annotated[PaginatedFilterParams, Query()],
     *,
     llm_model_controller: LlmModelControllerDeps,
 ):
-    return controller.get_usage_logs(
-        user, query, llm_model_controller=llm_model_controller
-    )
+    model = llm_model_controller.get_llm_model_by_name(query.model_name)
+    logs, pagination = controller.get_usage_logs(user, query, model=model)
+    return ModelUsageLogPaginated(data=logs, pagination=pagination)

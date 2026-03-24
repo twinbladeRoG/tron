@@ -1,9 +1,8 @@
 from src.core.controller.base import BaseController
 from src.models.models import Conversation, LlmModel, Message, ModelUsageLog, User
-from src.modules.llm_models.controller import LlmModelController
 
 from .repository import ModelUsageLogRepository
-from .schema import CreateModelUsageLog, FilterParams, ModelUsageLogBase
+from .schema import CreateModelUsageLog, ModelUsageLogBase, PaginatedFilterParams
 
 
 class ModelUsageLogController(BaseController[ModelUsageLog]):
@@ -30,12 +29,6 @@ class ModelUsageLogController(BaseController[ModelUsageLog]):
         return self.repository.create(payload.model_dump())
 
     def get_usage_logs(
-        self,
-        user: User,
-        filter: FilterParams,
-        *,
-        llm_model_controller: LlmModelController,
+        self, user: User, filter: PaginatedFilterParams, *, model: LlmModel
     ):
-        return self.repository.get_user_logs(
-            user.id, filter, llm_model_controller=llm_model_controller
-        )
+        return self.repository.get_user_logs(user.id, filter, model=model)
