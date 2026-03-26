@@ -24,6 +24,7 @@ from src.models.models import (
     User,
 )
 from src.modules.access_control.controller import PolicyController
+from src.modules.agent.browser_agent.controller import BrowserAgentController
 from src.modules.agent.controller import AgentController
 from src.modules.agent.rag.controller import RagAgentController
 from src.modules.auth.controller import AuthController
@@ -167,3 +168,6 @@ class Factory:
         return TokenBalanceController(
             repository=self.token_balance_repository(session=db_session)
         )
+
+    def get_browser_agent_controller(self):
+        return BrowserAgentController()

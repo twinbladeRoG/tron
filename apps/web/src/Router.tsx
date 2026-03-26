@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 
 import Policies from './components/modules/acesss-control/Policies';
+import BrowserAgent from './components/modules/agent/browser-agent/BrowserAgent';
 import Divisions from './components/modules/divisions/Divisions';
 import Features from './components/modules/features/Features';
 import Organizations from './components/modules/organizations/Organizations';
@@ -53,6 +54,7 @@ const router = createBrowserRouter([
         element: <RagAgentChatPage />,
         loader: featureGuard('rag'),
       },
+      { path: '/browser-agent', element: <BrowserAgent /> },
       { path: '/agents', element: <AgentsPage /> },
       { path: '/files', element: <FilesPage />, loader: featureGuard('files') },
       {

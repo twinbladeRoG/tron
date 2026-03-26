@@ -1,6 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
-import { getAgentWorkflow, getRagAgentWorkflow } from '../requests/agent.requests';
+import {
+  chatWithBrowserAgent,
+  getAgentWorkflow,
+  getRagAgentWorkflow,
+} from '../requests/agent.requests';
 
 export const useAgentWorkflow = (model: string | null | undefined) =>
   useQuery({
@@ -20,4 +24,9 @@ export const useRagAgentWorkflow = (model: string | null | undefined) =>
       return res;
     },
     enabled: !!model,
+  });
+
+export const useChatWithBrowserAgent = () =>
+  useMutation({
+    mutationFn: (data: string) => chatWithBrowserAgent(data),
   });

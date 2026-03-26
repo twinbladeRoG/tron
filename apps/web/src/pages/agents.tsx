@@ -65,6 +65,20 @@ const AgentsPage = () => {
       icon: 'solar:book-bold-duotone',
     },
     {
+      name: 'Browser Agent',
+      description: 'An intelligent agent that allows users to automate browser tasks',
+      tools: [
+        {
+          name: 'Browser',
+          description: 'AI-Assisted browser',
+        },
+      ],
+      coming_soon: false,
+      className: 'from-orange-500 to-rose-500/0',
+      link: '/browser-agent',
+      icon: 'solar:planet-bold-duotone',
+    },
+    {
       name: 'SQL Agent',
       description:
         'An agent that converts natural language into SQL queries and interacts with databases to fetch results.',

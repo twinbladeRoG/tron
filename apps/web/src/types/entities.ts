@@ -234,3 +234,32 @@ export interface ITokenUsageForModel {
 
   buckets: Array<ITokenUsageForModelBucket>;
 }
+
+export interface IBrowserAgentAction {
+  attachments: unknown;
+  error: unknown;
+  extracted_content: string;
+  images: unknown;
+  include_extracted_content_only_once: boolean;
+  include_in_memory: boolean;
+  is_done: boolean;
+  judgement: boolean;
+  long_term_memory: string;
+  metadata: unknown;
+  success: unknown;
+}
+
+export interface IBrowserAgentThought {
+  evaluation_previous_goal: string;
+  memory: string;
+  next_goal: string;
+  thinking: string;
+}
+
+export interface IBrowserAgentResult {
+  actions: Array<IBrowserAgentAction>;
+  duration: number;
+  result: string;
+  thoughts: Array<IBrowserAgentThought>;
+  visited_urls: Array<string>;
+}

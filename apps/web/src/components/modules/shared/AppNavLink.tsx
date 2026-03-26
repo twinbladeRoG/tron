@@ -13,6 +13,7 @@ export type NavItem =
       featureSlug?: string;
     }
   | {
+      to: string;
       label: string;
       icon: IconifyIcon | string;
       featureSlug?: string;
@@ -32,35 +33,7 @@ interface AppNavLinkProps extends NavLinkProps {
 }
 
 const AppNavLink: React.FC<AppNavLinkProps> = ({ className, isCollapsed, disabled, item }) => {
-  const match = useMatch({ path: 'to' in item ? item.to : '', end: false });
-
-  if ('to' in item)
-    return (
-      <NavLink
-        component={Link}
-        to={item.to}
-        leftSection={<Icon icon={item.icon} className="text-2xl" />}
-        active={!!match}
-        className={cn('rounded-lg', className)}
-        disabled={disabled}
-        label={
-          <AnimatePresence>
-            {!isCollapsed && (
-              <motion.p
-                className="flex-1 whitespace-nowrap"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{
-                  opacity: 0,
-                  transition: { duration: 0.3 },
-                }}>
-                {item.label}
-              </motion.p>
-            )}
-          </AnimatePresence>
-        }
-      />
-    );
+  const match = useMatch({ path: item.to, end: false });
 
   if ('subMenu' in item)
     return (
@@ -120,6 +93,34 @@ const AppNavLink: React.FC<AppNavLinkProps> = ({ className, isCollapsed, disable
           </Menu.Dropdown>
         )}
       </Menu>
+    );
+
+  if ('to' in item)
+    return (
+      <NavLink
+        component={Link}
+        to={item.to}
+        leftSection={<Icon icon={item.icon} className="text-2xl" />}
+        active={!!match}
+        className={cn('rounded-lg', className)}
+        disabled={disabled}
+        label={
+          <AnimatePresence>
+            {!isCollapsed && (
+              <motion.p
+                className="flex-1 whitespace-nowrap"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{
+                  opacity: 0,
+                  transition: { duration: 0.3 },
+                }}>
+                {item.label}
+              </motion.p>
+            )}
+          </AnimatePresence>
+        }
+      />
     );
 
   return null;

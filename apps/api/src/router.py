@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from src.core.dependencies import guard
 from src.modules.access_control.router import router as access_control_router
+from src.modules.agent.browser_agent.router import router as browser_agent_router
 from src.modules.agent.rag.router import router as rag_router
 from src.modules.agent.router import router as agent_router
 from src.modules.auth.router import router as auth_router
@@ -30,6 +31,7 @@ router.include_router(chat_router, dependencies=[guard("feature:chat")])
 router.include_router(scrapper_router)
 router.include_router(agent_router, dependencies=[guard("feature:chat")])
 router.include_router(rag_router, dependencies=[guard("feature:rag")])
+router.include_router(browser_agent_router)
 router.include_router(usage_log_router, dependencies=[guard("feature:model-usage")])
 router.include_router(conversation_router)
 router.include_router(message_router)

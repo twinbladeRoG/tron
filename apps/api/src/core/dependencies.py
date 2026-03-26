@@ -19,6 +19,7 @@ from src.core.kafka.dependencies import get_kafka_producer
 from src.core.logger import logger
 from src.models.models import User
 from src.modules.access_control.controller import PolicyController
+from src.modules.agent.browser_agent.controller import BrowserAgentController
 from src.modules.agent.controller import AgentController
 from src.modules.agent.rag.controller import RagAgentController
 from src.modules.auth.controller import AuthController
@@ -148,6 +149,9 @@ TokenBucketControllerDeps = Annotated[
 ]
 TokenBalanceControllerDeps = Annotated[
     TokenBalanceController, Depends(Factory().get_token_balance_controller)
+]
+BrowserAgentControllerDeps = Annotated[
+    BrowserAgentController, Depends(Factory().get_browser_agent_controller)
 ]
 
 

@@ -92,6 +92,7 @@ const RootLayout = () => {
           featureSlug: 'scrapper',
         },
         {
+          to: '/admin',
           label: 'Admin',
           icon: 'solar:folder-security-bold-duotone',
           featureSlug: 'admin-panel',
