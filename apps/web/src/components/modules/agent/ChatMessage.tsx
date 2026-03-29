@@ -11,6 +11,7 @@ import {
   Skeleton,
   Table,
   Text,
+  ThemeIcon,
 } from '@mantine/core';
 import { useClipboard, useDisclosure } from '@mantine/hooks';
 import Markdown from 'marked-react';
@@ -301,6 +302,15 @@ const ChatMessage: React.FC<IMessage> = ({
               </Table>
             </Popover.Dropdown>
           </Popover>
+        )}
+
+        {!!usage?.time && (
+          <div className="flex items-center gap-0.5">
+            <ThemeIcon variant="transparent">
+              <Icon icon="solar:stopwatch-bold-duotone" />
+            </ThemeIcon>
+            <p className="text-sm">{formatDuration(usage.time)}</p>
+          </div>
         )}
       </div>
     </motion.div>

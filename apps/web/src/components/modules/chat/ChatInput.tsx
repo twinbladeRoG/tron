@@ -32,12 +32,13 @@ const ChatInput: React.FC<ChatInputProps> = ({
   placeholder,
   children,
   ref,
+  defaultValue,
 }) => {
   const [searchParams] = useSearchParams();
   const form = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
-      message: '',
+      message: defaultValue ? String(defaultValue) : '',
     },
   });
 

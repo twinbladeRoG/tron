@@ -37,7 +37,6 @@ class BrowserAgent:
         agent = Agent(
             task=task,
             calculate_cost=True,
-            generate_gif=True,
             llm=self._get_llm(),
             browser=self._get_browser(),
         )
