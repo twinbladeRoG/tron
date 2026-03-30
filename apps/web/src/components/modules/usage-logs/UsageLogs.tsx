@@ -20,6 +20,7 @@ import { cn, currencyFormatter, decimalNumberFormatter, formatDuration } from '@
 import type { IUsageLog, IUsageLogQueryParams } from '@/types';
 
 import SelectLlmModel from '../shared/form/SelectLlmModel';
+import SelectUser from '../shared/form/SelectUser';
 
 interface UsageLogsProps {
   className?: string;
@@ -27,6 +28,7 @@ interface UsageLogsProps {
 
 const schema = yup.object({
   model: yup.string().required('Required'),
+  user_id: yup.string().optional(),
   duration: yup.tuple([yup.date().nullable(), yup.date().nullable()]),
 });
 
@@ -52,11 +54,16 @@ const UsageLogs: React.FC<UsageLogsProps> = ({ className }) => {
   const handleSubmit = form.handleSubmit(async (data) => {
     const payload: typeof query = { model_name: data.model };
 
+    if (data.user_id) {
+      payload.user_id = data.user_id;
+    }
+
     if (data.duration?.[0] && data.duration?.[1]) {
       payload.from_date = dayjs(data.duration[0]).startOf('day').toDate();
       payload.to_date = dayjs(data.duration[1]).endOf('day').toDate();
     }
 
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
     setQuery(payload);
 
     await queryClient.invalidateQueries({ queryKey: ['usage-logs', payload] });
@@ -161,6 +168,21 @@ const UsageLogs: React.FC<UsageLogsProps> = ({ className }) => {
               value={field.value as DatesRangeValue}
               onChange={field.onChange}
               error={fieldState.error?.message}
+            />
+          )}
+        />
+
+        <Controller
+          control={form.control}
+          name="user_id"
+          render={({ field, fieldState }) => (
+            <SelectUser
+              label={undefined}
+              value={field.value}
+              onChange={field.onChange}
+              error={fieldState.error?.message}
+              size="sm"
+              w={220}
             />
           )}
         />

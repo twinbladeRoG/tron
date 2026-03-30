@@ -1,5 +1,13 @@
-import React, { useMemo, useState } from 'react';
-import { Combobox, Loader, Text, TextInput, type TextInputProps, useCombobox } from '@mantine/core';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  CloseButton,
+  Combobox,
+  Loader,
+  Text,
+  TextInput,
+  type TextInputProps,
+  useCombobox,
+} from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
 
 import { useUsersInfiniteQuery } from '@/apis/queries/users.queries';
@@ -23,6 +31,24 @@ const SelectUser: React.FC<SelectUserProps> = ({ valueKey = 'id', value, onChang
     return data?.pages.flatMap((page) => page.data) ?? [];
   }, [data]);
 
+  const selectedUser = useMemo(
+    () => options.find((option) => String(option[valueKey]) === value),
+    [options, value, valueKey]
+  );
+
+  useEffect(() => {
+    if (!value) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect, @eslint-react/hooks-extra/no-direct-set-state-in-use-effect
+      setSearch('');
+      return;
+    }
+
+    if (selectedUser) {
+      // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect
+      setSearch(selectedUser.username);
+    }
+  }, [selectedUser, value]);
+
   const handleScroll = async (event: React.UIEvent<HTMLDivElement>) => {
     const target = event.currentTarget;
 
@@ -35,10 +61,19 @@ const SelectUser: React.FC<SelectUserProps> = ({ valueKey = 'id', value, onChang
     }
   };
 
+  const handleClear = () => {
+    setSearch('');
+    onChange?.('');
+    combobox.closeDropdown();
+  };
+
   return (
     <Combobox
       store={combobox}
       onOptionSubmit={(val) => {
+        const nextUser = options.find((option) => String(option[valueKey]) === val);
+
+        setSearch(nextUser?.username ?? '');
         onChange?.(val);
         combobox.closeDropdown();
       }}>
@@ -48,14 +83,27 @@ const SelectUser: React.FC<SelectUserProps> = ({ valueKey = 'id', value, onChang
           placeholder="Search user..."
           mb="md"
           {...props}
-          value={options.find((o) => o[valueKey] === value)?.username || search}
+          value={search}
           onChange={(event) => {
-            setSearch(event.currentTarget.value);
+            const nextValue = event.currentTarget.value;
+
+            setSearch(nextValue);
+
+            if (value && nextValue !== selectedUser?.username) {
+              onChange?.('');
+            }
+
             combobox.openDropdown();
           }}
           onClick={() => combobox.openDropdown()}
           onFocus={() => combobox.openDropdown()}
-          rightSection={isFetching ? <Loader size="xs" /> : null}
+          rightSection={
+            isFetching ? (
+              <Loader size="xs" />
+            ) : search || value ? (
+              <CloseButton aria-label="Clear selected user" onClick={handleClear} />
+            ) : null
+          }
         />
       </Combobox.Target>
 
