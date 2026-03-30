@@ -13,7 +13,7 @@ async def chat(
     user: CurrentUser, controller: BrowserAgentControllerDeps, body: ChatPayload
 ):
     return StreamingResponse(
-        controller.chat(body.task),
+        controller.chat(body),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

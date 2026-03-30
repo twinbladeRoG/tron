@@ -15,7 +15,7 @@ const ImageSlider: React.FC<ImageSliderProps> = ({ sources, ...props }) => {
     [sources, selectedImageIndex]
   );
 
-  if (!sources) return null;
+  if (!sources || sources.length === 0) return null;
 
   return (
     <>

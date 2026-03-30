@@ -140,7 +140,7 @@ function browserAgentReducer(
       return { ...state, screenshots: action.payload };
 
     case 'RESET':
-      return initialState;
+      return { ...initialState, options: state.options };
 
     default:
       return state;
@@ -180,108 +180,111 @@ export function useBrowserAgent() {
     }
   };
 
-  const run = useCallback(async (task: string, options?: BrowserAgentRunOptions) => {
-    dispatch({ type: 'RESET' });
-    dispatch({ type: 'SET_IS_STREAMING', payload: true });
-    dispatch({ type: 'SET_QUERY', payload: task });
+  const run = useCallback(
+    async (message: string) => {
+      dispatch({ type: 'RESET' });
+      dispatch({ type: 'SET_IS_STREAMING', payload: true });
+      dispatch({ type: 'SET_QUERY', payload: message });
 
-    const controller = new AbortController();
-    abortRef.current = controller;
+      const controller = new AbortController();
+      abortRef.current = controller;
 
-    await fetchEventSource(`${API_URL}/api/browser-agent/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${await getToken()}`,
-      },
-      body: JSON.stringify({ task, ...options }),
-      signal: controller.signal,
+      await fetchEventSource(`${API_URL}/api/browser-agent/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${await getToken()}`,
+        },
+        body: JSON.stringify({ message, ...state.options }),
+        signal: controller.signal,
 
-      // eslint-disable-next-line @typescript-eslint/require-await
-      async onopen(response) {
-        if (response.ok && response.headers.get('content-type') === EventStreamContentType) {
-          return;
-        } else if (response.status >= 400 && response.status < 500 && response.status !== 429) {
-          notifications.show({ color: 'red', message: 'Fatal error occurred!' });
-        } else {
-          notifications.show({ color: 'yellow', message: 'Retry again!' });
-          dispatch({ type: 'SET_IS_STREAMING', payload: false });
-        }
-      },
-
-      onmessage(msg) {
-        try {
-          switch (msg.event as AgentEvent['type']) {
-            case 'step_start': {
-              const { step, thought } = JSON.parse(msg.data) as StepStartPayload;
-              const event = { type: 'step_start', step, thought } satisfies StepStartEvent;
-              pushEvent(event);
-              pushStep(event);
-              break;
-            }
-            case 'step_end': {
-              const { step, last_action, urls } = JSON.parse(msg.data) as StepEndPayload;
-              const event = {
-                type: 'step_end',
-                step,
-                last_action: last_action ?? null,
-                urls: urls ?? [],
-              } satisfies StepEndEvent;
-              pushEvent(event);
-              pushStep(event);
-              break;
-            }
-            case 'result': {
-              const { result } = JSON.parse(msg.data) as ResultPayload;
-              pushEvent({ type: 'result', result });
-              dispatch({ type: 'SET_FINAL_RESULT', payload: result });
-              break;
-            }
-            case 'usage': {
-              const { usage } = JSON.parse(msg.data) as UsagePayload;
-              pushEvent({ type: 'usage', usage });
-              dispatch({ type: 'SET_USAGE', payload: usage });
-              break;
-            }
-            case 'error': {
-              const { message } = JSON.parse(msg.data) as ErrorPayload;
-              pushEvent({ type: 'error', message });
-              notifications.show({ color: 'red', message });
-              dispatch({ type: 'SET_IS_STREAMING', payload: false });
-              break;
-            }
-            case 'plan': {
-              const { plan } = JSON.parse(msg.data) as PlanPayload;
-              dispatch({ type: 'SET_PLANS', payload: plan });
-              break;
-            }
-            case 'screenshots': {
-              const { screenshots } = JSON.parse(msg.data) as ScreenshotPayload;
-              dispatch({ type: 'SET_SCREENSHOTS', payload: screenshots });
-              break;
-            }
-            default:
-              // eslint-disable-next-line no-console
-              console.warn('[useBrowserAgent] Unknown event:', msg.event, msg.data);
+        // eslint-disable-next-line @typescript-eslint/require-await
+        async onopen(response) {
+          if (response.ok && response.headers.get('content-type') === EventStreamContentType) {
+            return;
+          } else if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+            notifications.show({ color: 'red', message: 'Fatal error occurred!' });
+          } else {
+            notifications.show({ color: 'yellow', message: 'Retry again!' });
+            dispatch({ type: 'SET_IS_STREAMING', payload: false });
           }
-        } catch (err) {
-          // eslint-disable-next-line no-console
-          console.error('[useBrowserAgent] Failed to parse event data:', msg, err);
-        }
-      },
+        },
 
-      onclose() {
-        dispatch({ type: 'SET_IS_STREAMING', payload: false });
-        dispatch({ type: 'SET_IS_DONE', payload: true });
-      },
+        onmessage(msg) {
+          try {
+            switch (msg.event as AgentEvent['type']) {
+              case 'step_start': {
+                const { step, thought } = JSON.parse(msg.data) as StepStartPayload;
+                const event = { type: 'step_start', step, thought } satisfies StepStartEvent;
+                pushEvent(event);
+                pushStep(event);
+                break;
+              }
+              case 'step_end': {
+                const { step, last_action, urls } = JSON.parse(msg.data) as StepEndPayload;
+                const event = {
+                  type: 'step_end',
+                  step,
+                  last_action: last_action ?? null,
+                  urls: urls ?? [],
+                } satisfies StepEndEvent;
+                pushEvent(event);
+                pushStep(event);
+                break;
+              }
+              case 'result': {
+                const { result } = JSON.parse(msg.data) as ResultPayload;
+                pushEvent({ type: 'result', result });
+                dispatch({ type: 'SET_FINAL_RESULT', payload: result });
+                break;
+              }
+              case 'usage': {
+                const { usage } = JSON.parse(msg.data) as UsagePayload;
+                pushEvent({ type: 'usage', usage });
+                dispatch({ type: 'SET_USAGE', payload: usage });
+                break;
+              }
+              case 'error': {
+                const { message } = JSON.parse(msg.data) as ErrorPayload;
+                pushEvent({ type: 'error', message });
+                notifications.show({ color: 'red', message });
+                dispatch({ type: 'SET_IS_STREAMING', payload: false });
+                break;
+              }
+              case 'plan': {
+                const { plan } = JSON.parse(msg.data) as PlanPayload;
+                dispatch({ type: 'SET_PLANS', payload: plan });
+                break;
+              }
+              case 'screenshots': {
+                const { screenshots } = JSON.parse(msg.data) as ScreenshotPayload;
+                dispatch({ type: 'SET_SCREENSHOTS', payload: screenshots });
+                break;
+              }
+              default:
+                // eslint-disable-next-line no-console
+                console.warn('[useBrowserAgent] Unknown event:', msg.event, msg.data);
+            }
+          } catch (err) {
+            // eslint-disable-next-line no-console
+            console.error('[useBrowserAgent] Failed to parse event data:', msg, err);
+          }
+        },
 
-      onerror(_err) {
-        dispatch({ type: 'SET_IS_STREAMING', payload: false });
-        dispatch({ type: 'SET_IS_DONE', payload: true });
-        controller.abort();
-      },
-    });
-  }, []);
+        onclose() {
+          dispatch({ type: 'SET_IS_STREAMING', payload: false });
+          dispatch({ type: 'SET_IS_DONE', payload: true });
+        },
+
+        onerror(_err) {
+          dispatch({ type: 'SET_IS_STREAMING', payload: false });
+          dispatch({ type: 'SET_IS_DONE', payload: true });
+          controller.abort();
+        },
+      });
+    },
+    [state.options]
+  );
 
   const stop = useCallback(() => {
     abortRef.current?.abort();

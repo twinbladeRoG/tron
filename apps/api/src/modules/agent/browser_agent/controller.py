@@ -9,6 +9,7 @@ from src.modules.usage_log.schema import ModelUsageLogBase
 from src.utils.time import utcnow
 
 from .agent import BrowserAgent
+from .schema import ChatPayload
 
 _SENTINEL = object()  # signals the queue is done, used as a poison pill or stop token
 
@@ -88,16 +89,16 @@ class BrowserAgentController:
 
         return on_step_start, on_step_end
 
-    async def chat(self, task: str):
+    async def chat(self, data: ChatPayload):
         queue: asyncio.Queue = asyncio.Queue()
         on_step_start, on_step_end = await self._make_hooks(queue)
-        agent = self._browser_agent.get_agent(task=task)
+        agent = self._browser_agent.get_agent(task=data.message)
 
         async def run_agent():
             try:
                 start_time = utcnow()
                 history = await agent.run(
-                    max_steps=7,
+                    max_steps=data.max_steps if data.max_steps != None else 7,
                     on_step_start=on_step_start,
                     on_step_end=on_step_end,
                 )

@@ -57,6 +57,8 @@ const BrowserAgent: React.FC<BrowserAgentProps> = ({ className }) => {
   useHotkeys([['ctrl + shift + B', panelHandler.toggle]]);
 
   const handleSubmit = async (message: string) => {
+    planHandler.open();
+    stepHandler.open();
     await run(message);
   };
 
