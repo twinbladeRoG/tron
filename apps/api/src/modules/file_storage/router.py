@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Query, UploadFile
 from fastapi.responses import FileResponse
 
-from src.core.dependencies import CurrentUser, FileControllerDeps
+from src.core.dependencies import CurrentUser, FileControllerDeps, guard
 from src.core.exception import NotFoundException
 from src.models.models import File
 from src.models.pagination import FilePaginated
@@ -14,7 +14,7 @@ from .schema import PaginatedFilterParams
 router = APIRouter(prefix="/file-storage", tags=["File Storage"])
 
 
-@router.get("/", response_model=FilePaginated)
+@router.get("/", response_model=FilePaginated, dependencies=[guard("feature:files")])
 def get_all_files(
     file_controller: FileControllerDeps,
     user: CurrentUser,
@@ -24,7 +24,7 @@ def get_all_files(
     return FilePaginated(data=list(files), pagination=pagination)
 
 
-@router.post("/", response_model=File)
+@router.post("/", response_model=File, dependencies=[guard("feature:files")])
 async def create_file(
     file: UploadFile,
     user: CurrentUser,
@@ -33,7 +33,7 @@ async def create_file(
     return await file_controller.upload(user_id=user.id, file=file)
 
 
-@router.get("/{file_id}", response_model=File)
+@router.get("/{file_id}", response_model=File, dependencies=[guard("feature:files")])
 def get_file(
     file_controller: FileControllerDeps,
     user: CurrentUser,
@@ -69,7 +69,7 @@ def view_file(
     )
 
 
-@router.delete("/{file_id}")
+@router.delete("/{file_id}", dependencies=[guard("feature:files")])
 def delete_file(
     file_id: UUID,
     file_controller: FileControllerDeps,
@@ -78,14 +78,14 @@ def delete_file(
     return file_controller.remove_file(id=file_id, user_id=user.id)
 
 
-@router.patch("/{file_id}/mark-as-private")
+@router.patch("/{file_id}/mark-as-private", dependencies=[guard("feature:files")])
 def mark_file_as_private(
     user: CurrentUser, file_id: UUID, file_controller: FileControllerDeps
 ):
     return file_controller.mark_file_as_private(file_id, user.id)
 
 
-@router.patch("/{file_id}/mark-as-public")
+@router.patch("/{file_id}/mark-as-public", dependencies=[guard("feature:files")])
 def mark_file_as_public(
     user: CurrentUser, file_id: UUID, file_controller: FileControllerDeps
 ):
