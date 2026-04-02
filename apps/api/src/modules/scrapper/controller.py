@@ -33,7 +33,7 @@ class ScrapeController:
             return result.markdown  # type: ignore
 
     def generate_tags(self, content: str, *, llm_model_controller: LlmModelController):
-        model = llm_model_controller.get_llm_model_by_name("gpt-5")
+        model = llm_model_controller.get_llm_model_by_slug("gpt-5")
         chat_model = llm_model_controller.get_chat_model(model)
 
         system_message = SystemMessage(

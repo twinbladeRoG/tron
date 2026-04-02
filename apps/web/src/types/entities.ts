@@ -48,11 +48,19 @@ export interface IFile extends IBaseEntity {
 }
 
 export interface ILlmModel extends IBaseEntity {
+  slug: string;
   name: string;
   display_name: string;
   provider: LlmProvider;
+  credential_id?: string | null;
   context_window: number;
   max_output_tokens: number;
+}
+
+export interface ILlmCredential extends IBaseEntity {
+  name: string;
+  provider: LlmProvider;
+  has_payload: boolean;
 }
 
 export interface ILlmModelWithAccess extends ILlmModel {

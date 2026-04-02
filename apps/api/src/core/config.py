@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7
     SECRET_KEY: str = "change_this"
+    APP_KEY: SecretStr = SecretStr("change_this")
 
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"
 
@@ -104,6 +105,16 @@ class Settings(BaseSettings):
     AZURE_OPEN_AI_ENDPOINT: str = ""
     AZURE_OPEN_AI_VERSION: str = ""
 
+    GOOGLE_SERVICE_ACCOUNT_FILE_PATH: str = "~/google_application_credentials.json"
+    GOOGLE_CLOUD_PROJECT: str = ""
+    GOOGLE_CLOUD_LOCATION: str = ""
+    GOOGLE_GENAI_USE_VERTEXAI: bool = True
+
+    AWS_ACCESS_KEY_ID: SecretStr = SecretStr("")
+    AWS_SECRET_ACCESS_KEY: SecretStr = SecretStr("")
+    AWS_DEFAULT_REGION: str = ""
+    AWS_ENDPOINT: str = ""
+
     QDRANT_DB_URL: str = "http://localhost:6333"
 
     REDIS_URL: str = "redis://localhost:6379"
@@ -132,6 +143,7 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def _enforce_non_default_secrets(self) -> Self:
         self._check_default_secret("SECRET_KEY", self.SECRET_KEY)
+        self._check_default_secret("APP_KEY", self.APP_KEY.get_secret_value())
         self._check_default_secret("POSTGRES_PASSWORD", self.POSTGRES_PASSWORD)
 
         return self

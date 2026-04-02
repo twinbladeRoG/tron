@@ -134,6 +134,12 @@ const RootLayout = () => {
               featureSlug: 'admin-panel',
             },
             {
+              to: '/admin/credentials',
+              label: 'LLM Credentials',
+              icon: 'solar:key-minimalistic-square-3-bold-duotone',
+              featureSlug: 'admin-panel',
+            },
+            {
               to: '/admin/models',
               label: 'LLM Models',
               icon: 'si:ai-duotone',

@@ -27,7 +27,7 @@ def get_models(
     for model in llm_models:
         try:
             has_access = policy_controller.check_if_user_has_access(
-                f"model:{model.name}", "view", user=user
+                f"model:{model.slug}", "view", user=user
             ).is_allowed
         except:
             has_access = False

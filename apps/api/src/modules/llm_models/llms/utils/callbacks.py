@@ -31,6 +31,7 @@ from src.models.models import (
     User,
 )
 from src.modules.conversation.controller import ConversationController
+from src.modules.llm_models.llms.utils.messages import get_message_text
 from src.modules.messages.controller import MessageController
 from src.modules.messages.schema import MessageBase
 from src.modules.token_usage.service import TokeUsageService
@@ -218,7 +219,7 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
                         self.llm_message = self.message_controller.upsert_message(
                             data=MessageBase(
                                 type="ai",
-                                content=str(message.content),
+                                content=get_message_text(message.content),
                                 reason=message.additional_kwargs.get(
                                     "reasoning_content", None
                                 ),

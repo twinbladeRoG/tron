@@ -11,15 +11,23 @@ export interface ITokenResponse {
 }
 
 export interface IAddLlmModelRequest {
+  slug: string;
   name: string;
   display_name: string;
   provider: LlmProvider;
+  credential_id?: string | null;
+}
+
+export interface ILlmCredentialPayload {
+  name: string;
+  provider: LlmProvider;
+  encrypted_payload?: string;
 }
 
 export interface IUsageLogQueryParams {
   page: number;
   limit: number;
-  model_name: string;
+  model_slug: string;
 
   user_id?: string;
   from_date?: Date;

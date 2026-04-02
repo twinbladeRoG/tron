@@ -15,6 +15,7 @@ from src.modules.conversation.controller import ConversationController
 from src.modules.conversation.schema import ConversationBase
 from src.modules.llm_models.controller import LlmModelController
 from src.modules.llm_models.llms.utils.callbacks import get_llm_callback
+from src.modules.llm_models.llms.utils.messages import get_message_text
 from src.modules.messages.controller import MessageController
 from src.modules.messages.schema import MessageBase
 from src.modules.token_usage.service import TokeUsageService
@@ -39,7 +40,7 @@ class AgentController:
         pass
 
     def get_agent(self, model: str, *, llm_model_controller: LlmModelController):
-        llm_model = llm_model_controller.get_llm_model_by_name(model)
+        llm_model = llm_model_controller.get_llm_model_by_slug(model)
         chat_model = llm_model_controller.get_chat_model(llm_model)
 
         agent = create_agent(
@@ -172,7 +173,7 @@ class AgentController:
                             if reason:
                                 yield f"event: reason\ndata: {json.dumps({'text': reason})}\n\n"
 
-                            content = message.content
+                            content = get_message_text(message.content)
                             if content:
                                 yield f"event: message\ndata: {json.dumps({'text': content})}\n\n"
 

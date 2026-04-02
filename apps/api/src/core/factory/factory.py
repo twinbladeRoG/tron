@@ -12,6 +12,7 @@ from src.models.models import (
     Feature,
     File,
     KnowledgeBase,
+    LlmCredential,
     LlmModel,
     Message,
     ModelUsageLog,
@@ -39,6 +40,8 @@ from src.modules.file_storage.controller import FileController
 from src.modules.file_storage.repository import FileRepository
 from src.modules.knowledge_base.controller import KnowledgeBaseController
 from src.modules.knowledge_base.repository import KnowledgeBaseRepository
+from src.modules.llm_credentials.controller import LlmCredentialController
+from src.modules.llm_credentials.repository import LlmCredentialRepository
 from src.modules.llm_models.controller import LlmModelController
 from src.modules.llm_models.repository import LlmModelRepository
 from src.modules.messages.controller import MessageController
@@ -63,6 +66,7 @@ from src.modules.users.repository import UserRepository
 
 class Factory:
     user_repository = partial(UserRepository, User)
+    llm_credentials_repository = partial(LlmCredentialRepository, LlmCredential)
     llm_models_repository = partial(LlmModelRepository, LlmModel)
     model_usage_log_repository = partial(ModelUsageLogRepository, ModelUsageLog)
     conversation_repository = partial(ConversationRepository, Conversation)
@@ -86,7 +90,13 @@ class Factory:
 
     def get_llm_model_controller(self, db_session: SessionDep):
         return LlmModelController(
-            repository=self.llm_models_repository(session=db_session)
+            repository=self.llm_models_repository(session=db_session),
+            credential_repository=self.llm_credentials_repository(session=db_session),
+        )
+
+    def get_llm_credential_controller(self, db_session: SessionDep):
+        return LlmCredentialController(
+            repository=self.llm_credentials_repository(session=db_session)
         )
 
     def get_chat_controller(self, db_session: SessionDep):

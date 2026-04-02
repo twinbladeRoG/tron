@@ -52,8 +52,10 @@
       "checkpointer",
       "cuid",
       "fastembed",
+      "GENAI",
       "iconify",
-      "Qdrant"
+      "Qdrant",
+      "VERTEXAI"
     ]
   },
 "extensions": {

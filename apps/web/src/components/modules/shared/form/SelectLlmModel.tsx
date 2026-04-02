@@ -14,7 +14,7 @@ interface SelectLlmModelProps extends SelectProps {
 
 const SelectLlmModel: React.FC<SelectLlmModelProps> = ({
   value,
-  valueKey = 'name',
+  valueKey = 'slug',
   onChange,
   autoSelectFirstValue = false,
   allowSelectDisabledModels = false,
@@ -44,7 +44,8 @@ const SelectLlmModel: React.FC<SelectLlmModelProps> = ({
     <Group flex="1" gap="xs">
       <Icon
         icon={getLlmProviderIcon(
-          (models.data ?? []).find((m) => m.name === option.value)?.provider as LlmProvider
+          (models.data ?? []).find((m) => String(m[valueKey]) === option.value)
+            ?.provider as LlmProvider
         )}
       />
       <div className="whitespace-nowrap">{option.label}</div>
@@ -65,7 +66,7 @@ const SelectLlmModel: React.FC<SelectLlmModelProps> = ({
       leftSection={
         <Icon
           icon={getLlmProviderIcon(
-            (models.data ?? []).find((m) => m[valueKey] === value)?.provider as LlmProvider
+            (models.data ?? []).find((m) => String(m[valueKey]) === value)?.provider as LlmProvider
           )}
         />
       }

@@ -8,6 +8,6 @@ export const useUsageLogs = (query?: IUsageLogQueryParams) =>
   useQuery({
     queryKey: ['usage-logs', query],
     queryFn: async () => getUsageLogs(query!),
-    enabled: !!query?.model_name,
+    enabled: !!query?.model_slug,
     placeholderData: keepPreviousData,
   });

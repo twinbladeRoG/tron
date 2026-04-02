@@ -8,6 +8,7 @@ from src.core.exception import BadRequestException
 from src.core.logger import logger
 from src.models.models import User
 from src.modules.llm_models.controller import LlmModelController
+from src.modules.llm_models.llms.utils.messages import get_message_text
 from src.modules.llm_models.llms.utils.tokens import get_num_tokens_from_messages
 
 from .schema import ChatPayload
@@ -20,7 +21,7 @@ class ChatController:
     async def chat(
         self, data: ChatPayload, *, user: User, llm_model_controller: LlmModelController
     ):
-        llm_model = llm_model_controller.get_llm_model_by_name(data.model)
+        llm_model = llm_model_controller.get_llm_model_by_slug(data.model)
         chat_model = llm_model_controller.get_chat_model(llm_model)
 
         messages = [
@@ -48,7 +49,7 @@ class ChatController:
                     "tags": ["chat"],
                 },
             ):
-                message = {"text": chunk.content}
+                message = {"text": get_message_text(chunk.content)}
                 yield f"event: message\ndata: {json.dumps(message)}\n\n"
 
                 if chunk.usage_metadata:

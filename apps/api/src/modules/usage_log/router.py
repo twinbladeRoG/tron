@@ -22,6 +22,6 @@ def get_user_logs(
     *,
     llm_model_controller: LlmModelControllerDeps,
 ):
-    model = llm_model_controller.get_llm_model_by_name(query.model_name)
+    model = llm_model_controller.get_llm_model_by_slug(query.model_slug)
     logs, pagination = controller.get_usage_logs(user, query, model=model)
     return ModelUsageLogPaginated(data=logs, pagination=pagination)

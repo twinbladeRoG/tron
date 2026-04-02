@@ -12,6 +12,7 @@ from src.modules.divisions.router import router as division_router
 from src.modules.features.router import router as feature_router
 from src.modules.file_storage.router import router as file_router
 from src.modules.knowledge_base.router import router as knowledge_base_router
+from src.modules.llm_credentials.router import router as llm_credentials_router
 from src.modules.llm_models.router import router as llm_models_router
 from src.modules.messages.router import router as message_router
 from src.modules.organizations.router import router as organization_router
@@ -26,6 +27,7 @@ router = APIRouter()
 
 router.include_router(user_router)
 router.include_router(auth_router)
+router.include_router(llm_credentials_router)
 router.include_router(llm_models_router)
 router.include_router(chat_router, dependencies=[guard("feature:chat")])
 router.include_router(scrapper_router)

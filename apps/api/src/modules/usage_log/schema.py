@@ -33,7 +33,7 @@ class PaginatedFilterParams(SQLModel):
     page: int = Field(0, ge=0)
     limit: int = Field(100, gt=0, le=100)
 
-    model_name: str = Field()
+    model_slug: str = Field()
     user_id: Optional[UUID] = None
 
     from_date: Optional[datetime] = Field(default=None)

@@ -6,7 +6,7 @@ export const getUsageLogs = (payload: IUsageLogQueryParams) => {
   const query = new URLSearchParams({
     page: payload.page.toString(),
     limit: payload.limit.toString(),
-    model_name: payload.model_name,
+    model_slug: payload.model_slug,
   });
 
   if (payload.user_id) query.append('user_id', payload.user_id);

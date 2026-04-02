@@ -4,6 +4,7 @@ import { RouterProvider } from 'react-router/dom';
 import Policies from './components/modules/acesss-control/Policies';
 import Divisions from './components/modules/divisions/Divisions';
 import Features from './components/modules/features/Features';
+import LlmCredentials from './components/modules/llm-credentials/LlmCredentials';
 import Organizations from './components/modules/organizations/Organizations';
 import RootLayout from './components/modules/shared/RootLayout';
 import Teams from './components/modules/teams/Teams';
@@ -80,6 +81,10 @@ const router = createBrowserRouter([
           {
             path: 'features',
             element: <Features />,
+          },
+          {
+            path: 'credentials',
+            element: <LlmCredentials />,
           },
           { path: 'models', element: <LlmModelsPage />, loader: featureGuard('models') },
           { path: 'models/:id', element: <ModelPage />, loader: featureGuard('models') },

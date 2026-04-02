@@ -233,7 +233,7 @@ const AddPolicy: React.FC<AddPolicyProps> = ({ className, onSubmit }) => {
                 onChange={field.onChange}
                 error={fieldState.error?.message}
                 required
-                valueKey="name"
+                valueKey="slug"
                 w="auto"
                 variant="default"
                 size="md"

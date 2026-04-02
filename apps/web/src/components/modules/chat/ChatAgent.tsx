@@ -44,7 +44,7 @@ const ChatAgent: React.FC<ChatAgentProps> = ({ className }) => {
       setModel(searchParams.get('model'));
     } else if (model === null && models.data && models.data.length > 0) {
       // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect
-      setModel(models.data[0].name);
+      setModel(models.data[0].slug);
     }
   }, [searchParams, model, models.data]);
 
@@ -52,7 +52,7 @@ const ChatAgent: React.FC<ChatAgentProps> = ({ className }) => {
     <Group flex="1" gap="xs">
       <Icon
         icon={getLlmProviderIcon(
-          (models.data ?? []).find((m) => m.name === option.value)?.provider as LlmProvider
+          (models.data ?? []).find((m) => m.slug === option.value)?.provider as LlmProvider
         )}
       />
       <div className="whitespace-nowrap">{option.label}</div>
@@ -257,12 +257,12 @@ const ChatAgent: React.FC<ChatAgentProps> = ({ className }) => {
             variant="unstyled"
             disabled={models.isFetching}
             data={(models.data ?? []).map((model) => ({
-              value: model.name,
+              value: model.slug,
               label: model.display_name,
             }))}
             renderOption={renderSelectOption}
             value={model}
-            defaultValue={models?.data?.[0].name}
+            defaultValue={models?.data?.[0].slug}
             onChange={(value) => {
               setModel(value);
               if (value)
@@ -277,7 +277,7 @@ const ChatAgent: React.FC<ChatAgentProps> = ({ className }) => {
             leftSection={
               <Icon
                 icon={getLlmProviderIcon(
-                  (models.data ?? []).find((m) => m.name === model)?.provider as LlmProvider
+                  (models.data ?? []).find((m) => m.slug === model)?.provider as LlmProvider
                 )}
               />
             }

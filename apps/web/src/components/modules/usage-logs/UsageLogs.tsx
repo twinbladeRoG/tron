@@ -52,7 +52,7 @@ const UsageLogs: React.FC<UsageLogsProps> = ({ className }) => {
   } as IUsageLogQueryParams);
 
   const handleSubmit = form.handleSubmit(async (data) => {
-    const payload: typeof query = { model_name: data.model };
+    const payload: typeof query = { model_slug: data.model };
 
     if (data.user_id) {
       payload.user_id = data.user_id;

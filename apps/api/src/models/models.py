@@ -12,6 +12,7 @@ from src.modules.divisions.schema import DivisionBase
 from src.modules.features.schema import FeatureBase
 from src.modules.file_storage.schema import FileBase
 from src.modules.knowledge_base.schema import KnowledgeBaseBase
+from src.modules.llm_credentials.schema import LlmCredentialBase
 from src.modules.llm_models.schema import LlmModelBase
 from src.modules.messages.schema import MessageBase
 from src.modules.organizations.schema import OrganizationBase
@@ -67,11 +68,30 @@ class User(BaseModelMixin, UserBase, table=True):
     )
 
 
+class LlmCredential(BaseModelMixin, LlmCredentialBase, table=True):
+    encrypted_payload: str
+    models: list["LlmModel"] = Relationship(back_populates="credential")
+
+
 class LlmModel(BaseModelMixin, LlmModelBase, table=True):
+    __table_args__ = (
+        UniqueConstraint(
+            "provider",
+            "name",
+            "credential_id",
+            name="unique_llm_model_provider_name_credential",
+        ),
+    )
+
+    credential_id: UUID | None = Field(
+        default=None, foreign_key="llmcredential.id", nullable=True, index=True
+    )
+
     usage_logs: list["ModelUsageLog"] = Relationship(back_populates="model")
     messages: list["Message"] = Relationship(back_populates="model")
     balances: list["TokenBalance"] = Relationship(back_populates="model")
     buckets: list["TokenBucket"] = Relationship(back_populates="model")
+    credential: Optional["LlmCredential"] = Relationship(back_populates="models")
 
 
 class ModelUsageLog(BaseModelMixin, ModelUsageLogBase, table=True):

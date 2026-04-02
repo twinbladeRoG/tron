@@ -30,6 +30,7 @@ from src.modules.divisions.controller import DivisionController
 from src.modules.features.controller import FeatureController
 from src.modules.file_storage.controller import FileController
 from src.modules.knowledge_base.controller import KnowledgeBaseController
+from src.modules.llm_credentials.controller import LlmCredentialController
 from src.modules.llm_models.controller import LlmModelController
 from src.modules.messages.controller import MessageController
 from src.modules.organizations.controller import OrganizationController
@@ -104,6 +105,9 @@ UserControllerDeps = Annotated[UserController, Depends(Factory().get_user_contro
 AuthControllerDeps = Annotated[AuthController, Depends(Factory().get_auth_controller)]
 LlmModelControllerDeps = Annotated[
     LlmModelController, Depends(Factory().get_llm_model_controller)
+]
+LlmCredentialControllerDeps = Annotated[
+    LlmCredentialController, Depends(Factory().get_llm_credential_controller)
 ]
 ChatControllerDeps = Annotated[ChatController, Depends(Factory().get_chat_controller)]
 ScrapeControllerDeps = Annotated[

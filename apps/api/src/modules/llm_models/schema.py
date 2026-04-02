@@ -1,4 +1,5 @@
 from enum import Enum
+from uuid import UUID
 
 from sqlmodel import Column, Field, Integer, SQLModel, String, text
 
@@ -12,7 +13,8 @@ class LlmProvider(str, Enum):
 
 
 class LlmModelBase(SQLModel):
-    name: str = Field(unique=True)
+    slug: str = Field(unique=True, index=True)
+    name: str
     display_name: str = Field(unique=True)
     provider: LlmProvider = Field(sa_column=Column(String))
     context_window: int = Field(
@@ -21,3 +23,4 @@ class LlmModelBase(SQLModel):
     max_output_tokens: int = Field(
         sa_column=Column(Integer, server_default=text("4096")), default=4096
     )
+    credential_id: UUID | None
