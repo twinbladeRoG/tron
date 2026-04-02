@@ -22,9 +22,7 @@ class LlmCredentialRepository(BaseRepository[LlmCredential]):
     ) -> LlmCredential:
         return super().update(id, self._encrypt_payload(attributes))
 
-    def _encrypt_payload(
-        self, attributes: Optional[dict[str, Any]]
-    ) -> dict[str, Any]:
+    def _encrypt_payload(self, attributes: Optional[dict[str, Any]]) -> dict[str, Any]:
         payload = dict(attributes or {})
         raw_payload = payload.get("encrypted_payload")
         if raw_payload is not None:

@@ -61,6 +61,8 @@ class LlmCredentialCrypto:
     def _key(self) -> bytes:
         app_key = settings.APP_KEY.get_secret_value().strip()
         if not app_key:
-            raise BadRequestException("APP_KEY must be configured for credential encryption.")
+            raise BadRequestException(
+                "APP_KEY must be configured for credential encryption."
+            )
 
         return hashlib.sha256(app_key.encode("utf-8")).digest()

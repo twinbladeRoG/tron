@@ -39,9 +39,7 @@ class LlmCredentialController(BaseController[LlmCredential]):
                 "Updating the provider requires a new credential payload."
             )
 
-        return self._serialize(
-            self.repository.update(id, attributes)
-        )
+        return self._serialize(self.repository.update(id, attributes))
 
     def remove_llm_credential(self, id: UUID):
         credential = self.get_by_id(id)
@@ -58,7 +56,8 @@ class LlmCredentialController(BaseController[LlmCredential]):
                 "name": credential.name,
                 "provider": credential.provider,
                 "has_payload": bool(
-                    credential.encrypted_payload and credential.encrypted_payload.strip()
+                    credential.encrypted_payload
+                    and credential.encrypted_payload.strip()
                 ),
             }
         )

@@ -56,7 +56,9 @@ class LlmModelController(BaseController[LlmModel]):
 
     def get_chat_model(self, model: LlmModel):
         credential = self._get_runtime_credential(model)
-        resolved_credential = self.credential_service.resolve(model.provider, credential)
+        resolved_credential = self.credential_service.resolve(
+            model.provider, credential
+        )
 
         match model.provider:
             case LlmProvider.OPEN_AI.value:
