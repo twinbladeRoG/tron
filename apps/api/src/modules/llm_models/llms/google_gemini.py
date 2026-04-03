@@ -4,6 +4,9 @@ from google.oauth2 import service_account
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 from src.core.config import settings
+from src.modules.llm_models.llms.schema import GoogleGeminiChatModelParams
+
+from .common import get_google_model_params
 
 
 class GoogleGeminiModelProvider:
@@ -12,7 +15,10 @@ class GoogleGeminiModelProvider:
     """
 
     def get_model(
-        self, model_name: str, credential: dict[str, Any] | None = None
+        self,
+        model_name: str,
+        credential: dict[str, Any] | None = None,
+        model_params: GoogleGeminiChatModelParams | None = None,
     ) -> ChatGoogleGenerativeAI:
         if credential and credential.get("service_account_info"):
             credentials = service_account.Credentials.from_service_account_info(
@@ -30,6 +36,7 @@ class GoogleGeminiModelProvider:
             "location": settings.GOOGLE_CLOUD_LOCATION or None,
             "vertexai": settings.GOOGLE_GENAI_USE_VERTEXAI,
         }
+        params = model_params or GoogleGeminiChatModelParams()
 
         return ChatGoogleGenerativeAI(
             credentials=credentials,
@@ -37,8 +44,5 @@ class GoogleGeminiModelProvider:
             location=config.get("location"),
             vertexai=config.get("vertexai"),
             model=model_name,
-            temperature=1.0,
-            max_tokens=None,
-            request_timeout=None,
-            retries=2,
+            **get_google_model_params(params),
         )

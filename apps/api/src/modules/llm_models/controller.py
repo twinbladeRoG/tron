@@ -11,6 +11,14 @@ from .llms.azure_openai import AzureOpenAIModelProvider
 from .llms.google_gemini import GoogleGeminiModelProvider
 from .llms.llama_cpp import LlamaCppProvider
 from .llms.openai import OpenAIModelProvider
+from .llms.schema import (
+    AWSBedrockChatModelParams,
+    AzureOpenAIChatModelParams,
+    ChatModelParams,
+    GoogleGeminiChatModelParams,
+    LlamaCppChatModelParams,
+    OpenAIChatModelParams,
+)
 from .repository import LlmModelRepository
 from .schema import LlmModelBase, LlmProvider
 
@@ -54,7 +62,9 @@ class LlmModelController(BaseController[LlmModel]):
                 "Selected credential provider must match the LLM model provider."
             )
 
-    def get_chat_model(self, model: LlmModel):
+    def get_chat_model(
+        self, model: LlmModel, *, model_params: ChatModelParams | None = None
+    ):
         credential = self._get_runtime_credential(model)
         resolved_credential = self.credential_service.resolve(
             model.provider, credential
@@ -63,19 +73,42 @@ class LlmModelController(BaseController[LlmModel]):
         match model.provider:
             case LlmProvider.OPEN_AI.value:
                 openai = OpenAIModelProvider()
-                return openai.get_model(model.name, resolved_credential)
+                params = self._validate_chat_model_params(
+                    model.provider, model_params, OpenAIChatModelParams
+                )
+                return openai.get_model(
+                    model.name, resolved_credential, model_params=params
+                )
             case LlmProvider.LLAMA_CPP.value:
                 llama_cpp = LlamaCppProvider()
-                return llama_cpp.get_model(model.name)
+                params = self._validate_chat_model_params(
+                    model.provider, model_params, LlamaCppChatModelParams
+                )
+                return llama_cpp.get_model(model.name, model_params=params)
             case LlmProvider.AZURE.value:
                 azure = AzureOpenAIModelProvider()
-                return azure.get_model(model.name, resolved_credential)
+                params = self._validate_chat_model_params(
+                    model.provider, model_params, AzureOpenAIChatModelParams
+                )
+                return azure.get_model(
+                    model.name, resolved_credential, model_params=params
+                )
             case LlmProvider.GOOGLE.value:
                 google = GoogleGeminiModelProvider()
-                return google.get_model(model.name, resolved_credential)
+                params = self._validate_chat_model_params(
+                    model.provider, model_params, GoogleGeminiChatModelParams
+                )
+                return google.get_model(
+                    model.name, resolved_credential, model_params=params
+                )
             case LlmProvider.AWS.value:
                 aws = AWSBedrockModelProvider()
-                return aws.get_model(model.name, resolved_credential)
+                params = self._validate_chat_model_params(
+                    model.provider, model_params, AWSBedrockChatModelParams
+                )
+                return aws.get_model(
+                    model.name, resolved_credential, model_params=params
+                )
             case _:
                 raise NotFoundException(
                     f"No model found named: {model.name} for provider {model.provider}"
@@ -96,3 +129,20 @@ class LlmModelController(BaseController[LlmModel]):
                 "Selected credential provider must match the LLM model provider."
             )
         return credential
+
+    def _validate_chat_model_params[T](
+        self,
+        provider: str,
+        model_params: ChatModelParams | None,
+        expected_type: type[T],
+    ) -> T | None:
+        if model_params is None:
+            return None
+
+        if isinstance(model_params, expected_type):
+            return model_params
+
+        raise BadRequestException(
+            f"Invalid model params for provider {provider}. "
+            f"Expected {expected_type.__name__}, got {type(model_params).__name__}."
+        )

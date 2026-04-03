@@ -3,6 +3,9 @@ from typing import Any
 from langchain_aws import ChatBedrockConverse
 
 from src.core.config import settings
+from src.modules.llm_models.llms.schema import AWSBedrockChatModelParams
+
+from .common import get_bedrock_model_params
 
 
 class AWSBedrockModelProvider:
@@ -12,7 +15,10 @@ class AWSBedrockModelProvider:
     """
 
     def get_model(
-        self, model_name: str, credential: dict[str, Any] | None = None
+        self,
+        model_name: str,
+        credential: dict[str, Any] | None = None,
+        model_params: AWSBedrockChatModelParams | None = None,
     ) -> ChatBedrockConverse:
         config = credential or {
             "aws_access_key_id": settings.AWS_ACCESS_KEY_ID.get_secret_value() or None,
@@ -20,13 +26,12 @@ class AWSBedrockModelProvider:
             or None,
             "region_name": settings.AWS_DEFAULT_REGION or None,
         }
+        params = model_params or AWSBedrockChatModelParams()
 
         return ChatBedrockConverse(
             aws_access_key_id=config.get("aws_access_key_id"),
             aws_secret_access_key=config.get("aws_secret_access_key"),
             region_name=config.get("region_name"),
             model=model_name,
-            temperature=0,
-            timeout=None,
-            max_retries=2,
+            **get_bedrock_model_params(params),
         )
