@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from src.core.controller.base import BaseController
-from src.core.exception import BadRequestException, NotFoundException
+from src.core.exception import NotFoundException
 from src.models.models import TokenBucket, User
 
 from .repository import TokenBucketRepository
@@ -26,9 +26,6 @@ class TokenBucketController(BaseController[TokenBucket]):
     def create_user_bucket(self, user: User, data: CreateUserTokenBucket):
         user_base_bucket = self.repository.get_user_bucket(user.id, data.model_id)
 
-        if user_base_bucket:
-            raise BadRequestException("User level bucket already exists")
-
         bucket = TokenBucketBase(
             subject_type="user",
             subject_id=user.id,
@@ -37,9 +34,21 @@ class TokenBucketController(BaseController[TokenBucket]):
             token_limit=data.token_limit,
         )
 
+        if user_base_bucket:
+            return self.repository.update(user_base_bucket.id, bucket.model_dump())
+
         return self.repository.create(bucket.model_dump())
 
     def create_bucket(self, data: TokenBucketBase):
+        existing_bucket = self.repository.get_bucket(
+            subject_type=data.subject_type,
+            subject_id=data.subject_id,
+            model_id=data.model_id,
+        )
+
+        if existing_bucket:
+            return self.repository.update(existing_bucket.id, data.model_dump())
+
         return self.create(data)
 
     def get_all_model_buckets(self, model_id: UUID, query: ModelBucketQueryParams):

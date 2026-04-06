@@ -2,6 +2,7 @@ from uuid import UUID
 
 from sqlmodel import func, select
 
+from src.core.exception import BadRequestException
 from src.core.logger import logger
 from src.core.repository.base import BaseRepository
 from src.models.models import TokenBucket
@@ -13,6 +14,27 @@ from .schema import ModelBucketQueryParams
 
 
 class TokenBucketRepository(BaseRepository[TokenBucket]):
+    def get_bucket(
+        self,
+        *,
+        subject_type: str,
+        subject_id: UUID,
+        model_id: UUID,
+    ) -> TokenBucket | None:
+        statement = self._query().where(
+            TokenBucket.subject_type == subject_type,
+            TokenBucket.subject_id == subject_id,
+            TokenBucket.model_id == model_id,
+        )
+        buckets = self.session.exec(statement).all()
+
+        if len(buckets) > 1:
+            raise BadRequestException(
+                "Multiple token buckets found for the same subject and model"
+            )
+
+        return buckets[0] if buckets else None
+
     def get_bucket_chain(self, bucket: TokenBucket):
         chain: list[TokenBucket] = []
         current: TokenBucket | None = bucket
@@ -40,12 +62,11 @@ class TokenBucketRepository(BaseRepository[TokenBucket]):
         return self.session.exec(statement).all()
 
     def get_user_bucket(self, user_id: UUID, model_id: UUID):
-        statement = self._query().where(
-            TokenBucket.subject_id == user_id,
-            TokenBucket.subject_type == "user",
-            TokenBucket.model_id == model_id,
+        return self.get_bucket(
+            subject_type="user",
+            subject_id=user_id,
+            model_id=model_id,
         )
-        return self.session.exec(statement).first()
 
     def get_model_buckets(self, model_id: UUID, query: ModelBucketQueryParams):
         base_statement = self._query().where(TokenBucket.model_id == model_id)

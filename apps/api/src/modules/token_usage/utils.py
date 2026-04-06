@@ -27,7 +27,9 @@ def get_period_key(period_type: str, now: datetime | None = None):
         case "yearly":
             return current.strftime("%Y")
         case _:
-            raise BadRequestException(f"Unsupported token bucket period_type: {period_type}")
+            raise BadRequestException(
+                f"Unsupported token bucket period_type: {period_type}"
+            )
 
 
 def get_token_subject(session: Session, subject_type: str, subject_id: UUID):

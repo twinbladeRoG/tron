@@ -226,9 +226,7 @@ class TokenBucket(BaseModelMixin, TokenBucketBase, table=True):
             "subject_type",
             "subject_id",
             "model_id",
-            "token_limit",
-            "period_type",
-            name="idx_token_bucket_unique_constraint",
+            name="unique_token_bucket_subject_model",
         ),
     )
 
