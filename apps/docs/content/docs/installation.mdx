@@ -1,0 +1,208 @@
+---
+title: Installation
+description: Set up the TRON monorepo and each application locally
+---
+
+# Installation
+
+This guide walks through local setup for the TRON monorepo and each app in the workspace:
+
+- `apps/api`
+- `apps/web`
+- `apps/notebooks`
+- `apps/docs`
+
+## Prerequisites
+
+Install the following tools before starting:
+
+- Node.js `20` or later via [`nvm`](https://github.com/nvm-sh/nvm)
+- [`pnpm 9`](https://pnpm.io/installation)
+- Python `3.12` or later
+- [`uv`](https://docs.astral.sh/uv/)
+- Docker and Docker Compose for local infrastructure used by the API
+
+## Set Up the Monorepo
+
+Clone the repository and install the shared JavaScript dependencies from the workspace root.
+
+### 1. Install Node.js with nvm
+
+Install `nvm` by following the official guide:
+
+- [`nvm` installation documentation](https://github.com/nvm-sh/nvm#installing-and-updating)
+
+Then install and use Node.js `20`:
+
+```bash
+nvm install 20
+nvm use 20
+```
+
+### 2. Install pnpm
+
+Follow the official `pnpm` installation guide if it is not already installed:
+
+- [`pnpm` installation documentation](https://pnpm.io/installation)
+
+### 3. Install workspace dependencies
+
+```bash
+git clone <your-repo-url>
+cd tron
+pnpm install
+```
+
+The monorepo uses:
+
+- `pnpm-workspace.yaml` to define workspace packages
+- `turbo` for task orchestration
+- root scripts such as `pnpm dev`, `pnpm build`, and `pnpm lint`
+
+## Set Up the API
+
+The API lives in `apps/api` and uses FastAPI with Python dependencies managed by `uv`.
+
+Before continuing, install `uv` if needed:
+
+- [`uv` installation documentation](https://docs.astral.sh/uv/getting-started/installation/)
+
+### 1. Create the environment file
+
+```bash
+cd apps/api
+cp .env.example .env
+```
+
+Update the values in `.env` before running the application. At minimum, review database credentials, secrets, and provider API keys.
+
+### 2. Create a virtual environment and install dependencies
+
+```bash
+uv venv
+source .venv/bin/activate
+uv sync
+```
+
+### 3. Start local infrastructure
+
+The API expects PostgreSQL, Redis, Qdrant, and Kafka-related services locally.
+
+```bash
+docker compose up --build -d
+```
+
+### 4. Run database migrations
+
+```bash
+uv run alembic upgrade head
+```
+
+### 5. Start the API
+
+```bash
+fastapi dev main.py
+```
+
+You can also use the workspace script after activating the virtual environment:
+
+```bash
+pnpm --filter @tron/api dev
+```
+
+Optional development services:
+
+```bash
+pnpm --filter @tron/api celery:worker
+pnpm --filter @tron/api celery:flower
+```
+
+## Set Up the Web App
+
+The web client lives in `apps/web` and uses Vite with React.
+
+### 1. Create the environment file
+
+```bash
+cd apps/web
+cp .env.example .env
+```
+
+Review the web environment variables before starting the app. The current example includes:
+
+- `VITE_API_URL` for the API base URL
+- `VITE_API_URL_BASE` for host-based API and streaming usage
+- `VITE_APP_NAME` for the displayed application name
+
+With the local API running, the example values point to `http://localhost:8000` and `localhost:8000`.
+
+### 2. Start the web app
+
+From the repository root:
+
+```bash
+pnpm --filter @tron/web dev
+```
+
+To work directly inside the app:
+
+```bash
+cd apps/web
+pnpm dev
+```
+
+### 3. Useful commands
+
+```bash
+pnpm --filter @tron/web check-types
+pnpm --filter @tron/web lint
+pnpm --filter @tron/web build
+```
+
+## Set Up the Notebooks App
+
+The notebooks workspace lives in `apps/notebooks` and uses Python dependencies managed by `uv`.
+
+```bash
+cd apps/notebooks
+uv venv
+source .venv/bin/activate
+uv sync
+```
+
+This workspace currently contains Python utilities and notebooks, including the `docling` notebook content. After setup, you can open the notebooks with your preferred notebook environment while using the created virtual environment.
+
+## Set Up the Docs App
+
+The documentation site lives in `apps/docs` and uses Next.js with FumaDocs.
+
+From the repository root:
+
+```bash
+pnpm --filter @tron/docs dev
+```
+
+Or from inside the app:
+
+```bash
+cd apps/docs
+pnpm dev
+```
+
+Useful commands:
+
+```bash
+pnpm --filter @tron/docs check-types
+pnpm --filter @tron/docs build
+```
+
+## Recommended Local Workflow
+
+For a full local development setup:
+
+1. Install root workspace dependencies with `pnpm install`.
+2. Set up Python environments in `apps/api` and `apps/notebooks` with `uv`.
+3. Copy `apps/api/.env.example` to `apps/api/.env` and configure it.
+4. Copy `apps/web/.env.example` to `apps/web/.env` and verify the API URLs.
+5. Start API infrastructure with Docker Compose.
+6. Run the API, web app, and docs app in separate terminals.

@@ -4,6 +4,7 @@
     { "name": "@tron/api", "path": "../apps/api" },
     { "name": "@tron/notebooks", "path": "../apps/notebooks" },
     { "name": "@tron/web", "path": "../apps/web" },
+    { "name": "@tron/docs", "path": "../apps/docs" },
     { "name": "@tron/prettier", "path": "../packages/prettier" },
   ],
   "settings": {

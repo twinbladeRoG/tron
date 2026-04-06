@@ -1,0 +1,140 @@
+---
+title: App Management CLI
+description: Use the API management CLI to create users and run seeders
+---
+
+# App Management CLI
+
+The API application includes a Typer-based command-line interface for common management tasks. This CLI is defined in `apps/api/src/cli/manage.py` and currently exposes grouped commands for:
+
+- `users`
+- `seeders`
+
+The root repository README also references this CLI as the entry point for application management tasks.
+
+## CLI Entry Point
+
+Run the CLI from the API app directory:
+
+```bash
+cd apps/api
+python -m src.cli.manage --help
+```
+
+If you are using the local `uv` environment, make sure the virtual environment is active first:
+
+```bash
+source .venv/bin/activate
+python -m src.cli.manage --help
+```
+
+## Available Command Groups
+
+Based on the current CLI code, the following command groups are registered:
+
+```bash
+python -m src.cli.manage users --help
+python -m src.cli.manage seeders --help
+```
+
+These groups are wired in `src.cli.manage` with:
+
+- `app.add_typer(users.app, name="users")`
+- `app.add_typer(seeders.app, name="seeders")`
+
+## Users Commands
+
+The `users` command group is defined in `apps/api/src/cli/users/users.py`.
+
+### Create a User
+
+The currently implemented user command is:
+
+```bash
+python -m src.cli.manage users create
+```
+
+This command prompts for:
+
+- `username`
+- `email`
+- `password`
+- `first_name`
+- `last_name`
+
+### What the Command Does
+
+The CLI creates a `UserCreate` payload, prints the JSON preview, asks for confirmation, and then calls the user controller to persist the record.
+
+Typical flow:
+
+1. Enter user details through interactive prompts.
+2. Review the generated JSON payload.
+3. Confirm with `Create this user?`
+4. The command creates the user in the database.
+
+If the operation succeeds, the command prints the created user ID. If it fails, it exits with a non-zero status code.
+
+## Seeder Commands
+
+The `seeders` command group is defined in `apps/api/src/cli/seeders/seeder.py`.
+
+### Seed Features
+
+The currently implemented seeder command is:
+
+```bash
+python -m src.cli.manage seeders features
+```
+
+### What the Seeder Includes
+
+The feature seeder currently inserts predefined feature records such as:
+
+- `chat`
+- `model-usage`
+- `scrapper`
+- `models`
+- `rag`
+- `knowledge-base`
+- `files`
+- `admin-panel`
+
+The command checks whether each feature already exists by `slug`:
+
+- existing records are skipped
+- missing records are created
+
+When the run completes, it reports how many features were created and how many were skipped.
+
+## Requirements Before Running CLI Commands
+
+Because the CLI interacts with application services and the database, make sure the API setup is already complete:
+
+1. Create `apps/api/.env` from `.env.example`
+2. Activate the Python virtual environment
+3. Install dependencies with `uv sync`
+4. Start the required infrastructure such as PostgreSQL
+5. Run database migrations
+
+If you have not completed that setup yet, see the [Installation](/docs/installation) page.
+
+## Example Workflow
+
+Create a local user and seed the default features:
+
+```bash
+cd apps/api
+source .venv/bin/activate
+python -m src.cli.manage users create
+python -m src.cli.manage seeders features
+```
+
+## Current Scope
+
+At the moment, the API management CLI exposes:
+
+- one user command: `users create`
+- one seeder command: `seeders features`
+
+As more CLI modules are added under `apps/api/src/cli`, this page should be updated to reflect the new commands.

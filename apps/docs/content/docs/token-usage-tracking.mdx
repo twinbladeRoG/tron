@@ -1,0 +1,484 @@
+---
+title: Token Usage Tracking
+description: How token buckets, balances, reservations, and ledger entries work in the API
+---
+
+# Token Usage Tracking
+
+The API implements token usage tracking as a quota system around LLM requests. The goal is to prevent a request from exceeding its allowed quota while still supporting hierarchical limits such as:
+
+- user-level quota
+- team-level quota
+- division-level quota
+- organization-level quota
+
+The implementation lives under `apps/api/src/modules/token_usage` and is used by the LLM callback flow in `apps/api/src/modules/llm_models/llms/utils/callbacks.py`.
+
+## Core Concepts
+
+The system is built from four main storage models:
+
+- `TokenBucket`
+- `TokenBalance`
+- `TokenReservation`
+- `TokenLedger`
+
+Each of them serves a different purpose.
+
+## Component Relationship
+
+<Mermaid
+   chart="
+flowchart TD
+    U[User Request]
+    B[TokenBucket<br/>quota definition]
+    R[TokenReservation<br/>temporary hold]
+    BA[TokenBalance<br/>used tokens per period]
+    L[TokenLedger<br/>usage history]
+
+    U --> B
+    B -->|during reservation| R
+    R -->|on success| L
+    R -->|on success| BA
+    R -->|on failure or cancel| X[Reservation deleted]
+    BA -->|used to compute available quota| B"
+/>
+
+## Buckets
+
+`TokenBucket` defines the quota limit for a subject and a model.
+
+A bucket includes:
+
+- `subject_type`
+- `subject_id`
+- `model_id`
+- `parent_bucket_id`
+- `token_limit`
+- `period_type`
+
+### What a Bucket Represents
+
+A bucket answers the question:
+
+"How many tokens can this subject use for this model in this period?"
+
+Examples:
+
+- a user can have a bucket for `gpt-4o`
+- a team can have a parent bucket for the same model
+- an organization can have a higher-level parent bucket for that model
+
+### Bucket Chain
+
+The repository builds a bucket chain by starting from the user bucket and walking up through `parent_bucket_id`.
+
+That means a request can reserve quota from multiple levels in order, for example:
+
+1. user bucket
+2. team bucket
+3. division bucket
+4. organization bucket
+
+The chain is returned from leaf to parent.
+
+## Balances
+
+`TokenBalance` stores how many tokens have already been used for a subject, model, and period.
+
+The primary key is:
+
+- `subject_type`
+- `subject_id`
+- `period_key`
+- `model_id`
+
+`used_tokens` is cumulative for that subject and period.
+
+### What a Balance Represents
+
+A balance answers the question:
+
+"How many tokens have already been consumed from this quota window?"
+
+Balances are not created in advance. They are created lazily during commit when usage is first recorded.
+
+## Reservations
+
+`TokenReservation` is a temporary hold placed before an LLM request starts running.
+
+It stores:
+
+- `request_id`
+- `bucket_id`
+- `reserved_tokens`
+- `period_key`
+- `expires_at`
+
+### Why Reservations Exist
+
+Reservations protect quota before the model finishes. Without them, two concurrent requests could both see free quota and overspend it.
+
+The service sets `expires_at` to five minutes from reservation time.
+
+### Important Behavior
+
+Active reservations are counted when calculating availability.
+
+Expired reservations are ignored by the availability query, but this code path does not actively delete expired rows. They stop affecting quota checks because `get_active_reserved_tokens` filters by `expires_at > utcnow()`.
+
+## Ledger
+
+`TokenLedger` is the append-style record of token movements.
+
+It stores:
+
+- `bucket_id`
+- `tokens`
+- `entry_type`
+- `period_key`
+
+The schema supports these entry types:
+
+- `usage`
+- `refund`
+- `credit`
+
+### Current Implementation Detail
+
+In the current service implementation, only `usage` ledger entries are written during commit. Refund and credit entry types are supported by schema but are not written by the token service yet.
+
+## Period Handling
+
+The system derives a `period_key` from `period_type`.
+
+Supported period types are:
+
+- `daily`
+- `weekly`
+- `monthly`
+- `yearly`
+
+Examples:
+
+- daily: `2026-04-06`
+- weekly: `2026-W14`
+- monthly: `2026-04`
+- yearly: `2026`
+
+This key is used consistently across balances, reservations, and ledger entries so usage stays isolated to the correct quota window.
+
+## How the Flow Works
+
+The main flow is implemented in `TokeUsageService` and is triggered from the LLM callback handler.
+
+<Mermaid
+   chart="
+flowchart TD
+    A[Find user bucket] --> B[Estimate tokens]
+    B --> C[Reserve tokens across bucket chain]
+    C --> D{Enough quota?}
+    D -- No --> E[Rollback reservation<br/>raise QuotaExceededException]
+    D -- Yes --> F[Run LLM request]
+    F --> G{LLM finished with usable token metadata?}
+    G -- No --> H[Refund reservations]
+    G -- Yes --> I[Commit usage]
+    I --> J{tokens_used <= total_reserved?}
+    J -- No --> K[Rollback commit<br/>refund reservations]
+    J -- Yes --> L[Write ledger entries]
+    L --> M[Update balances]
+    M --> N[Delete reservations]
+    N --> O[Commit transaction]"
+/>
+
+### Step 1. Find the User Bucket
+
+When an agent or RAG chat starts, the code fetches the user bucket for the selected model.
+
+If there is no bucket for that user and model, the request fails before the LLM call starts.
+
+### Step 2. Estimate Tokens
+
+Before the request runs, the callback estimates token demand as:
+
+- estimated prompt tokens
+- plus a fixed buffer of `4000` tokens for optimistic max output
+
+That estimate becomes `tokens_needed` for reservation.
+
+### Step 3. Reserve Tokens
+
+`reserve_tokens` does the following:
+
+1. Build the bucket chain from the user bucket up through parents.
+2. Lock the involved bucket rows with `FOR UPDATE`.
+3. For each bucket:
+   - compute the current `period_key`
+   - read the current balance
+   - sum active reservations for that bucket
+   - compute `available = token_limit - used - reserved`
+4. Reserve as many tokens as possible from that bucket.
+5. Move to the next parent bucket if more tokens are still needed.
+
+If the full amount cannot be reserved across the chain, the whole reservation flow rolls back and raises `QuotaExceededException`.
+
+### Step 4. Run the LLM Request
+
+After reservation succeeds, the model request runs.
+
+The callback also creates or updates message records while the request streams.
+
+### Step 5. Finalize Usage
+
+When the LLM ends successfully:
+
+1. Actual token usage is extracted from response metadata.
+2. Usage logs are updated.
+3. `commit_usage` is called with the reservations and the actual `total_tokens`.
+
+During commit:
+
+1. The service verifies `tokens_used <= total_reserved`.
+2. It walks reservations in order.
+3. For each reservation:
+   - write a negative `usage` ledger entry
+   - get or create the matching balance
+   - increment `used_tokens`
+4. Delete the reservations.
+5. Commit the transaction.
+
+### Step 6. Refund Reservations on Failure
+
+If the LLM call errors, or if the response does not contain usable token metadata, the callback refunds the reservations by deleting them.
+
+No balance is incremented and no ledger usage entry is written in that case.
+
+### Sequence View
+
+<Mermaid
+   chart="
+sequenceDiagram
+    autonumber
+    participant CB as LLM Callback
+    participant TS as TokenUsageService
+    participant TB as TokenBucket
+    participant TR as TokenReservation
+    participant TL as TokenLedger
+    participant BA as TokenBalance
+    participant LLM as LLM Provider
+
+    CB->>TS: reserve_tokens(bucket, estimated_tokens, request_id)
+    TS->>TB: load bucket chain and lock rows
+    TS->>TR: create reservation holds
+    TS-->>CB: reservations
+    CB->>LLM: run request
+    alt success with token metadata
+        LLM-->>CB: total_tokens
+        CB->>TS: commit_usage(reservations, total_tokens)
+        TS->>TL: write usage entries
+        TS->>BA: increment used_tokens
+        TS->>TR: delete reservations
+        TS-->>CB: committed
+    else failure or missing metadata
+        CB->>TS: refund_tokens(reservations)
+        TS->>TR: delete reservations
+        TS-->>CB: refunded
+    end"
+/>
+
+## Normal Case Example
+
+Assume this bucket chain for model `gpt-4o`:
+
+- user bucket: limit `1000`
+- team bucket: limit `5000`
+- organization bucket: limit `20000`
+
+Current usage and reservations:
+
+- user balance used: `700`
+- user active reservations: `100`
+- team balance used: `1000`
+- team active reservations: `200`
+- organization balance used: `4000`
+- organization active reservations: `0`
+
+Now a new request estimates it needs `500` tokens.
+
+### Reservation Phase
+
+Available quota is calculated like this:
+
+- user available = `1000 - 700 - 100 = 200`
+- team available = `5000 - 1000 - 200 = 3800`
+- organization available = `20000 - 4000 - 0 = 16000`
+
+The service reserves:
+
+- `200` from the user bucket
+- `300` from the team bucket
+
+No reservation is needed from the organization bucket because the target has already been met.
+
+### Commit Phase
+
+If the actual LLM usage is `420` tokens:
+
+- `200` is committed to the user bucket
+- `220` is committed to the team bucket
+- the remaining `80` reserved tokens are simply released when reservations are deleted
+
+Balances increase only by actual usage, not by reserved amount.
+
+Ledger entries written:
+
+- user bucket: `tokens = -200`, `entry_type = "usage"`
+- team bucket: `tokens = -220`, `entry_type = "usage"`
+
+## Edge Cases
+
+### Edge Case 1. Not Enough Quota Across the Chain
+
+If the request needs more tokens than the combined currently available quota across the bucket chain:
+
+- reservations created earlier in the same attempt are rolled back
+- `QuotaExceededException("Quota exceeded")` is raised
+- no balance or ledger changes are committed
+
+### Edge Case 2. Actual Usage Is Lower Than Reserved
+
+This is a normal and expected case.
+
+Example:
+
+- reserved total: `500`
+- actual used: `320`
+
+Result:
+
+- only `320` tokens are committed to balances and ledger
+- the unused `180` reserved tokens disappear when reservations are deleted
+- no refund ledger entry is written
+
+### Edge Case 3. Actual Usage Is Higher Than Reserved
+
+If actual usage is greater than the total reservation:
+
+- `commit_usage` raises `QuotaExceededException("Usage exceeded reserved quota")`
+- the transaction is rolled back
+- balances and ledger writes from that commit are not persisted
+- the callback then attempts to refund reservations
+
+This is effectively a safety check against underestimated reservations.
+
+### Edge Case 4. Missing Token Usage Metadata
+
+If the LLM response does not include usable token usage metadata:
+
+- reservations are refunded
+- usage is not committed
+- the callback exits without writing balance or ledger usage
+
+This prevents charging usage when the system cannot determine the final token count.
+
+### Edge Case 5. Missing Parent Bucket
+
+If a bucket references a parent bucket that no longer exists:
+
+- the repository logs a debug message
+- chain traversal stops at that point
+- reservation continues only with the buckets that were found
+
+This means broken bucket hierarchies can reduce the effective quota chain.
+
+### Edge Case 6. Unsupported Period Type
+
+If a bucket uses an unsupported `period_type`:
+
+- `get_period_key` raises `BadRequestException`
+- the request cannot reserve or report usage for that bucket
+
+## What Happens When Errors Occur
+
+The implementation handles errors at several stages.
+
+### Reservation Errors
+
+During reservation:
+
+- the reservation session is rolled back
+- no temporary holds remain from that attempt
+- the exception is re-raised
+
+### Commit Errors
+
+During commit:
+
+- the balance session is rolled back
+- ledger writes and balance increments from that commit do not persist
+- the exception is re-raised
+- the callback then calls refund logic to delete reservations
+
+### LLM Runtime Errors
+
+If the LLM itself raises an error:
+
+- `_refund_reservations()` is called
+- the open session is rolled back
+- reservations are deleted
+- no token usage is committed
+
+### Response Parsing Errors
+
+If token metadata extraction fails or response content is incomplete:
+
+- reservations are refunded
+- usage is not charged
+
+This design favors not charging tokens when final usage cannot be safely determined.
+
+## Read APIs
+
+The token usage module currently exposes a few relevant read APIs:
+
+- `GET /api/token-buckets/usage/{model_identifier}`
+- `GET /api/token-buckets/model/{model_id}`
+- `GET /api/token-buckets/models/{model_id}`
+- `GET /api/token-balance/model/{model_id}`
+
+### Usage Response
+
+`get_user_token_usage_per_model` returns:
+
+- `total_limit`
+- `total_used`
+- `total_remaining`
+- per-bucket breakdown with subject details
+
+One important detail is that this usage view is based on balances, not active reservations. That means it shows committed usage, not in-flight reserved quota.
+
+## Current Implementation Notes
+
+There are a few details worth knowing if you are debugging or extending this system:
+
+- reservation uses row locking on bucket rows to reduce concurrency races
+- reservations expire logically after five minutes
+- expired reservations are ignored in quota math but are not automatically deleted here
+- ledger currently records usage only
+- balances are created lazily on first successful commit
+- the public usage summary does not include active reservations
+
+The balance controller also appears to have inconsistent lookup arguments for team, division, and organization aggregation, so the dedicated balance endpoint may not always reflect hierarchical balances as intended.
+
+## Summary
+
+The token tracking system works like this:
+
+1. find the user bucket for the selected model
+2. build the bucket chain
+3. reserve estimated tokens across the chain
+4. run the LLM request
+5. commit actual usage to ledger and balances
+6. refund reservations if the request fails or usage cannot be finalized
+
+This gives the system a practical way to enforce quota during concurrent requests while still recording finalized token consumption by period and subject.

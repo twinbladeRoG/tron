@@ -1,0 +1,171 @@
+---
+title: Application Design
+description: Overview of the TRON system architecture and application design
+---
+
+# Application Design and System Architecture
+
+TRON, short for Temporal Reasoning & Orchestration Neuron, is designed as a multi-application platform for AI-powered workflows. The system combines a React-based frontend, a FastAPI backend, background workers, and supporting infrastructure for messaging, caching, authorization, and vector search.
+
+## Design Goals
+
+The platform architecture is built around a few core ideas:
+
+- Separate user-facing application flows from long-running background work
+- Support AI chat, agents, browser automation, and retrieval-augmented workflows
+- Stream progress and results back to users in near real time
+- Keep access control, usage tracking, and storage centralized
+
+## System Overview
+
+At a high level, TRON consists of the following parts:
+
+- A web frontend for user interaction
+- A FastAPI backend for APIs, orchestration, and streaming responses
+- PostgreSQL for application data and policy storage
+- Redis for caching and Celery task brokering
+- Kafka for event-driven communication
+- Qdrant for vector storage and retrieval workflows
+- Celery workers for background execution
+- Casbin for authorization and policy enforcement
+
+## Application Layers
+
+### Frontend
+
+The frontend is built with React and Vite. It handles:
+
+- Authentication and session-driven user flows
+- Chat and agent interfaces
+- File and knowledge base interactions
+- Streaming updates from backend workflows
+- Admin and operations features such as usage logs and model configuration
+
+### Backend
+
+The backend is built with FastAPI and acts as the main orchestration layer. It is responsible for:
+
+- Serving the API used by the frontend
+- Enforcing access control
+- Managing application data
+- Producing and consuming events
+- Coordinating AI and retrieval workflows
+- Streaming task updates back to the frontend
+
+### Background Processing
+
+Long-running or asynchronous operations are handled outside the request-response path. This includes:
+
+- Document extraction and ingestion
+- Knowledge base processing
+- Agent or automation tasks
+- Progress updates and task status handling
+
+This separation helps the application stay responsive while still supporting heavier workloads.
+
+## System Architecture
+
+The root repository README describes the system as a flow between the user, frontend, backend, supporting services, and workers.
+
+<Mermaid
+    chart="
+flowchart TB
+    User[User]
+    FE[React Frontend]
+    BE[FastAPI Backend]
+    CASBIN[Casbin Authorization]
+    DB[(PostgreSQL)]
+    CACHE[(Redis)]
+    KAFKA[(Kafka Message Broker)]
+    VECTOR[(Qdrant Vector DB)]
+    WORKER[Celery Worker]
+
+    User -->|JWT Authentication| FE
+    FE -->|HTTP / WebSocket / SSE| BE
+    BE --> CASBIN
+    CASBIN -->|Store Policies| DB
+    BE --> DB
+    BE --> CACHE
+    BE --> VECTOR
+    BE -->|Produce Events| KAFKA
+    KAFKA -->|Consume Events| CACHE
+    CACHE -->|Get Jobs| WORKER
+    WORKER -->|Stream Progress| KAFKA
+    WORKER -->|Store Results| DB
+    WORKER -->|Update Job Status| CACHE"
+/>
+
+### How to Read This Architecture
+
+- Users interact with the React frontend
+- The frontend talks to the FastAPI backend over HTTP, WebSocket, or server-sent events
+- The backend stores relational data in PostgreSQL
+- Authorization rules are managed through Casbin with persistence in PostgreSQL
+- Vector search and document retrieval use Qdrant
+- Events are published through Kafka to decouple request handling from background execution
+- Redis supports caching and task queue workflows
+- Celery workers process asynchronous jobs and publish progress updates
+
+## Event-Driven Processing Flow
+
+One of the key design choices in TRON is the use of an event-driven pipeline for asynchronous work.
+
+<Mermaid
+    chart="
+sequenceDiagram
+    autonumber
+
+    participant FE as React Frontend
+    participant BE as FastAPI Backend
+    participant KP as Kafka Producer
+    participant KC as Kafka Consumer
+    participant K as Kafka Broker
+    participant R as Redis
+    participant CW as Celery Worker
+    participant DB as PostgreSQL
+
+    FE->>BE: Request new job
+    BE->>KP: Produce event
+    KP->>K: Publish event
+    K-->>KC: Deliver event
+    KC->>R: Push Celery task
+    CW->>R: Pull task
+    CW->>CW: Execute job
+    CW->>DB: Store intermediate or final result
+    CW->>K: Publish status update
+    K-->>BE: Deliver update
+    BE->>FE: Stream progress to client"
+/>
+
+### Why This Flow Matters
+
+This approach gives TRON a few important benefits:
+
+- API requests stay lightweight even when the underlying task is expensive
+- Background jobs can scale independently from the web-facing backend
+- Progress can be streamed back to users as work happens
+- Different services can evolve with looser coupling
+
+## Supporting Infrastructure
+
+The local development setup described in the repository includes several operational services:
+
+- PostgreSQL for the primary relational database
+- Adminer and pgAdmin for database inspection
+- Redis and Redis Commander for broker and cache visibility
+- Qdrant for vector storage and semantic retrieval
+- Kafka and Kafka UI for message broker inspection
+- Celery Flower for worker monitoring
+
+These tools make it easier to inspect state across the system while developing and debugging complex workflows.
+
+## Summary
+
+TRON is organized as a layered, event-driven platform:
+
+- the frontend handles user interaction
+- the backend coordinates APIs, policies, and orchestration
+- infrastructure services provide persistence, messaging, caching, and retrieval
+- workers execute asynchronous jobs and report progress back into the system
+
+This design supports both interactive AI experiences and longer-running orchestration flows in the same platform.

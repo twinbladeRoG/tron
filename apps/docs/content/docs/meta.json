@@ -1,0 +1,9 @@
+{
+  "pages": [
+    "index",
+    "installation",
+    "application-design",
+    "app-management-cli",
+    "token-usage-tracking"
+  ]
+}
