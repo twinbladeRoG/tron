@@ -6,6 +6,7 @@ from src.core.repository.base import BaseRepository
 from src.models.models import TokenReservation
 from src.utils.time import utcnow
 
+
 class TokenReservationRepository(BaseRepository[TokenReservation]):
     def get_active_reserved_tokens(
         self,

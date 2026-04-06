@@ -14,7 +14,7 @@ class TokenBalanceController(BaseController[TokenBalance]):
 
     def get_balance_by_model(self, user: User, model_id: UUID):
         balances: list[TokenBalance] = []
-        period_key = get_period_key()
+        period_key = get_period_key("monthly")
 
         user_balance = self.repository.get_balance(
             model_id=model_id,

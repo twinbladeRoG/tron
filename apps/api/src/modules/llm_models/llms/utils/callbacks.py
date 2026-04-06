@@ -249,7 +249,10 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
                         response_metadata = message.response_metadata
 
                         # For Agent end message
-                        if message.response_metadata.get("finish_reason", None) == "stop":
+                        if (
+                            message.response_metadata.get("finish_reason", None)
+                            == "stop"
+                        ):
                             self.llm_message = self.message_controller.upsert_message(
                                 data=MessageBase(
                                     type="ai",

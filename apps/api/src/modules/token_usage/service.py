@@ -40,7 +40,6 @@ class TokeUsageService:
         self.llm_model_repository = llm_model_repository
 
     def reserve_tokens(self, bucket: TokenBucket, tokens_needed: int, request_id: UUID):
-        period_key = get_period_key()
         try:
             chain = self.token_bucket_repository.get_bucket_chain(bucket)
 
@@ -55,6 +54,8 @@ class TokeUsageService:
             for bucket in chain:
                 if remaining <= 0:
                     break
+
+                period_key = get_period_key(bucket.period_type)
 
                 balance = self.token_balance_repository.get_balance(
                     subject_type=bucket.subject_type,
@@ -169,7 +170,6 @@ class TokeUsageService:
 
     def get_user_token_usage_per_model(self, user_id: UUID, model_identifier: str):
         model = self.llm_model_repository.get_model(model_identifier)
-        period_key = get_period_key()
 
         user_bucket = self.get_user_bucket(user_id, model.id)
 
@@ -181,6 +181,8 @@ class TokeUsageService:
         result = TokenUsage(total_limit=0, total_used=0, total_remaining=0, buckets=[])
 
         for bucket in bucket_chain:
+            period_key = get_period_key(bucket.period_type)
+
             balance = self.token_balance_repository.get_balance(
                 subject_type=bucket.subject_type,
                 subject_id=bucket.subject_id,
