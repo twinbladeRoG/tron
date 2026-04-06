@@ -26,7 +26,11 @@ class ModelUsageLogController(BaseController[ModelUsageLog]):
             conversation_id=conversation.id,
             message_id=message.id,
         )
-        return self.repository.create(payload.model_dump())
+        usage_log = ModelUsageLog.model_validate(payload.model_dump())
+        self.repository.session.add(usage_log)
+        self.repository.session.flush()
+        self.repository.session.refresh(usage_log)
+        return usage_log
 
     def get_usage_logs(
         self, user: User, filter: PaginatedFilterParams, *, model: LlmModel

@@ -21,8 +21,7 @@ from .utils import get_period_key, get_token_subject
 
 class QuotaExceededException(Exception):
     def __init__(self, message: str = "Quota exceeded"):
-        if message:
-            self.message = message
+        super().__init__(message)
 
 
 class TokeUsageService:
@@ -42,119 +41,128 @@ class TokeUsageService:
 
     def reserve_tokens(self, bucket: TokenBucket, tokens_needed: int, request_id: UUID):
         period_key = get_period_key()
+        try:
+            chain = self.token_bucket_repository.get_bucket_chain(bucket)
 
-        chain = self.token_bucket_repository.get_bucket_chain(bucket)
+            bucket_ids = [b.id for b in chain]
 
-        bucket_ids = [b.id for b in chain]
+            # Lock the full hierarchy while calculating and creating reservation holds.
+            self.token_bucket_repository.lock_buckets(bucket_ids)
 
-        # lock hierarchy
-        self.token_bucket_repository.lock_buckets(bucket_ids)
+            remaining = tokens_needed
+            reservations: list[TokenReservation] = []
 
-        remaining = tokens_needed
+            for bucket in chain:
+                if remaining <= 0:
+                    break
 
-        reservations: list[TokenReservation] = []
-
-        for bucket in chain:
-            if remaining <= 0:
-                break
-
-            balance = self.token_balance_repository.get_balance(
-                subject_type=bucket.subject_type,
-                subject_id=bucket.subject_id,
-                model_id=bucket.model_id,
-                period_key=period_key,
-            )
-
-            used = balance.used_tokens if balance else 0
-
-            available = bucket.token_limit - used
-
-            if available <= 0:
-                continue
-
-            reserve = min(available, remaining)
-
-            reservation = TokenReservation(
-                request_id=request_id,
-                bucket_id=bucket.id,
-                reserved_tokens=reserve,
-                period_key=period_key,
-                expires_at=utcnow() + timedelta(minutes=5),
-            )
-
-            self.token_reservation_repository.session.add(reservation)
-
-            reservations.append(reservation)
-
-            remaining -= reserve
-
-        if remaining > 0:
-            raise QuotaExceededException("Quota exceeded")
-
-        self.token_reservation_repository.session.flush()
-
-        return reservations
-
-    def commit_usage(self, reservations: list[TokenReservation], tokens_used: int):
-        period_key = get_period_key()
-
-        remaining = tokens_used
-
-        for reservation in reservations:
-            if remaining <= 0:
-                break
-
-            debit = min(reservation.reserved_tokens, remaining)
-
-            bucket = self.token_bucket_repository.get_by(
-                "id", reservation.bucket_id, unique=True
-            )
-
-            ledger = TokenLedger(
-                bucket_id=bucket.id,
-                tokens=-debit,
-                entry_type="usage",
-                period_key=period_key,
-            )
-
-            self.token_ledger_repository.create(ledger.model_dump())
-
-            balance = self.token_balance_repository.get_balance(
-                subject_type=bucket.subject_type,
-                subject_id=bucket.subject_id,
-                model_id=bucket.model_id,
-                period_key=period_key,
-            )
-
-            if not balance:
-                balance = TokenBalance(
+                balance = self.token_balance_repository.get_balance(
                     subject_type=bucket.subject_type,
                     subject_id=bucket.subject_id,
                     model_id=bucket.model_id,
                     period_key=period_key,
-                    used_tokens=0,
                 )
 
-            balance.used_tokens += debit
+                used = balance.used_tokens if balance else 0
+                reserved = self.token_reservation_repository.get_active_reserved_tokens(
+                    bucket_id=bucket.id,
+                    period_key=period_key,
+                    exclude_request_id=request_id,
+                )
+                available = bucket.token_limit - used - reserved
 
-            self.token_balance_repository.session.add(balance)
+                if available <= 0:
+                    continue
 
-            remaining -= debit
+                reserve = min(available, remaining)
 
-        self.token_balance_repository.session.commit()
+                reservation = TokenReservation(
+                    request_id=request_id,
+                    bucket_id=bucket.id,
+                    reserved_tokens=reserve,
+                    period_key=period_key,
+                    expires_at=utcnow() + timedelta(minutes=5),
+                )
+
+                self.token_reservation_repository.session.add(reservation)
+                reservations.append(reservation)
+                remaining -= reserve
+
+            if remaining > 0:
+                raise QuotaExceededException("Quota exceeded")
+
+            self.token_reservation_repository.session.flush()
+
+            return reservations
+        except Exception:
+            self.token_reservation_repository.session.rollback()
+            raise
+
+    def commit_usage(self, reservations: list[TokenReservation], tokens_used: int):
+        try:
+            total_reserved = sum(
+                reservation.reserved_tokens for reservation in reservations
+            )
+            if tokens_used > total_reserved:
+                raise QuotaExceededException("Usage exceeded reserved quota")
+
+            remaining = tokens_used
+
+            for reservation in reservations:
+                if remaining <= 0:
+                    break
+
+                debit = min(reservation.reserved_tokens, remaining)
+
+                bucket = self.token_bucket_repository.get_by(
+                    "id", reservation.bucket_id, unique=True
+                )
+
+                ledger = TokenLedger(
+                    bucket_id=bucket.id,
+                    tokens=-debit,
+                    entry_type="usage",
+                    period_key=reservation.period_key,
+                )
+
+                self.token_ledger_repository.session.add(ledger)
+
+                balance = self.token_balance_repository.get_balance(
+                    subject_type=bucket.subject_type,
+                    subject_id=bucket.subject_id,
+                    model_id=bucket.model_id,
+                    period_key=reservation.period_key,
+                )
+
+                if not balance:
+                    balance = TokenBalance(
+                        subject_type=bucket.subject_type,
+                        subject_id=bucket.subject_id,
+                        model_id=bucket.model_id,
+                        period_key=reservation.period_key,
+                        used_tokens=0,
+                    )
+
+                balance.used_tokens += debit
+
+                self.token_balance_repository.session.add(balance)
+
+                remaining -= debit
+
+            self.token_reservation_repository.delete_reservations(reservations)
+            self.token_balance_repository.session.flush()
+            self.token_balance_repository.session.commit()
+        except Exception:
+            self.token_balance_repository.session.rollback()
+            raise
 
     def refund_tokens(self, reservations: list[TokenReservation]):
-        for reservation in reservations:
-            ledger = TokenLedger(
-                bucket_id=reservation.bucket_id,
-                tokens=reservation.reserved_tokens,
-                entry_type="refund",
-                period_key=reservation.period_key,
-            )
-
-            self.token_reservation_repository.session.add(ledger)
-
-        self.token_reservation_repository.session.commit()
+        try:
+            self.token_reservation_repository.delete_reservations(reservations)
+            self.token_reservation_repository.session.commit()
+        except Exception:
+            self.token_reservation_repository.session.rollback()
+            raise
 
     def get_user_bucket(self, user_id: UUID, model_id: UUID):
         return self.token_bucket_repository.get_user_bucket(user_id, model_id)

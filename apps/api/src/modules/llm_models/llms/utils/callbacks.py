@@ -77,6 +77,7 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
 
         self.llm_message: Message | None = None
         self.usage_logs: list[dict] = []
+        self.reservations = []
 
     def __repr__(self) -> str:
         return (
@@ -193,6 +194,38 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
                 previous_message=self.llm_message,
             )
 
+    def _refund_reservations(self) -> None:
+        if not self.reservations:
+            return
+
+        self.session.rollback()
+        self.token_service.refund_tokens(self.reservations)
+        self.reservations = []
+
+    def _finalize_usage(self) -> None:
+        model_usage_log: ModelUsageLog | None = None
+
+        if self.llm_message is not None:
+            model_usage_log = self.model_usage_log_controller.log(
+                self.usage_log,
+                user=self.user,
+                model=self.model,
+                conversation=self.conversation,
+                message=self.llm_message,
+            )
+
+        if self.reservations:
+            self.token_service.commit_usage(
+                reservations=self.reservations,
+                tokens_used=self.usage_log.total_tokens,
+            )
+            self.reservations = []
+        else:
+            self.session.commit()
+
+        if model_usage_log is not None:
+            self.usage_logs.append(model_usage_log.model_dump())
+
     def on_llm_end(
         self,
         response: LLMResult,
@@ -202,137 +235,140 @@ class LlmUsageCallbackHandler(BaseCallbackHandler):
         **kwargs: Any,
     ) -> Any:
         try:
-            generation = response.generations[0][0]
-        except IndexError:
-            generation = None
-
-        if isinstance(generation, ChatGeneration):
             try:
-                message = generation.message
+                generation = response.generations[0][0]
+            except IndexError:
+                generation = None
 
-                if isinstance(message, AIMessage):
-                    usage_metadata = message.usage_metadata
-                    response_metadata = message.response_metadata
+            if isinstance(generation, ChatGeneration):
+                try:
+                    message = generation.message
 
-                    # For Agent end message
-                    if message.response_metadata.get("finish_reason", None) == "stop":
-                        self.llm_message = self.message_controller.upsert_message(
-                            data=MessageBase(
-                                type="ai",
-                                content=get_message_text(message.content),
-                                reason=message.additional_kwargs.get(
-                                    "reasoning_content", None
+                    if isinstance(message, AIMessage):
+                        usage_metadata = message.usage_metadata
+                        response_metadata = message.response_metadata
+
+                        # For Agent end message
+                        if message.response_metadata.get("finish_reason", None) == "stop":
+                            self.llm_message = self.message_controller.upsert_message(
+                                data=MessageBase(
+                                    type="ai",
+                                    content=get_message_text(message.content),
+                                    reason=message.additional_kwargs.get(
+                                        "reasoning_content", None
+                                    ),
+                                    run_id=run_id,
                                 ),
-                                run_id=run_id,
-                            ),
-                            user=self.user,
-                            conversation=self.conversation,
-                            model=self.model,
-                            previous_message=self.llm_message,
-                        )
-                else:
+                                user=self.user,
+                                conversation=self.conversation,
+                                model=self.model,
+                                previous_message=self.llm_message,
+                            )
+                    else:
+                        usage_metadata = None
+                        response_metadata = None
+                except AttributeError:
                     usage_metadata = None
                     response_metadata = None
-            except AttributeError:
+            else:
                 usage_metadata = None
                 response_metadata = None
-        else:
-            usage_metadata = None
-            response_metadata = None
 
-        prompt_tokens_cached = 0
-        reasoning_tokens = 0
+            prompt_tokens_cached = 0
+            reasoning_tokens = 0
 
-        if usage_metadata:
-            token_usage = {"total_tokens": usage_metadata["total_tokens"]}
-            completion_tokens = usage_metadata["output_tokens"]
-            prompt_tokens = usage_metadata["input_tokens"]
+            if usage_metadata:
+                token_usage = {"total_tokens": usage_metadata["total_tokens"]}
+                completion_tokens = usage_metadata["output_tokens"]
+                prompt_tokens = usage_metadata["input_tokens"]
 
-            if response_model_name := (response_metadata or {}).get("model_name"):
-                model_name = standardize_model_name(response_model_name)
-            elif response.llm_output is None:
-                model_name = ""
+                if response_model_name := (response_metadata or {}).get("model_name"):
+                    model_name = standardize_model_name(response_model_name)
+                elif response.llm_output is None:
+                    model_name = ""
+                else:
+                    model_name = standardize_model_name(
+                        response.llm_output.get("model_name", "")
+                    )
+
+                if "cache_read" in usage_metadata.get("input_token_details", {}):
+                    prompt_tokens_cached = usage_metadata.get(
+                        "input_token_details", {}
+                    ).get("cache_read", 0)
+                if "reasoning" in usage_metadata.get("output_token_details", {}):
+                    reasoning_tokens = usage_metadata.get(
+                        "output_token_details", {}
+                    ).get("reasoning", 0)
             else:
+                if response.llm_output is None:
+                    self._refund_reservations()
+                    return None
+
+                if "token_usage" not in response.llm_output:
+                    self._refund_reservations()
+                    return None
+
+                # compute tokens and cost for this request
+                token_usage = response.llm_output["token_usage"]
+                completion_tokens = token_usage.get("completion_tokens", 0)
+                prompt_tokens = token_usage.get("prompt_tokens", 0)
                 model_name = standardize_model_name(
                     response.llm_output.get("model_name", "")
                 )
 
-            if "cache_read" in usage_metadata.get("input_token_details", {}):
-                prompt_tokens_cached = usage_metadata.get(
-                    "input_token_details", {}
-                ).get("cache_read", 0)
-            if "reasoning" in usage_metadata.get("output_token_details", {}):
-                reasoning_tokens = usage_metadata.get("output_token_details", {}).get(
-                    "reasoning", 0
+            if model_name in MODEL_COST_PER_1K_TOKENS:
+                uncached_prompt_tokens = prompt_tokens - prompt_tokens_cached
+                uncached_prompt_cost = get_openai_token_cost_for_model(
+                    model_name, uncached_prompt_tokens, token_type=TokenType.PROMPT
                 )
-        else:
-            if response.llm_output is None:
-                return None
-
-            if "token_usage" not in response.llm_output:
-                with self._lock:
-                    self.successful_requests += 1
-                return None
-
-            # compute tokens and cost for this request
-            token_usage = response.llm_output["token_usage"]
-            completion_tokens = token_usage.get("completion_tokens", 0)
-            prompt_tokens = token_usage.get("prompt_tokens", 0)
-            model_name = standardize_model_name(
-                response.llm_output.get("model_name", "")
-            )
-
-        if model_name in MODEL_COST_PER_1K_TOKENS:
-            uncached_prompt_tokens = prompt_tokens - prompt_tokens_cached
-            uncached_prompt_cost = get_openai_token_cost_for_model(
-                model_name, uncached_prompt_tokens, token_type=TokenType.PROMPT
-            )
-            cached_prompt_cost = get_openai_token_cost_for_model(
-                model_name, prompt_tokens_cached, token_type=TokenType.PROMPT_CACHED
-            )
-            prompt_cost = uncached_prompt_cost + cached_prompt_cost
-            completion_cost = get_openai_token_cost_for_model(
-                model_name, completion_tokens, token_type=TokenType.COMPLETION
-            )
-        else:
-            completion_cost = 0
-            prompt_cost = 0
-
-        with self._lock:
-            self.usage_log.total_cost += prompt_cost + completion_cost
-            self.usage_log.total_tokens += token_usage.get("total_tokens", 0)
-            self.usage_log.prompt_tokens += prompt_tokens
-            self.usage_log.prompt_tokens_cached += prompt_tokens_cached
-            self.usage_log.completion_tokens += completion_tokens
-            self.usage_log.reasoning_tokens += reasoning_tokens
-            self.usage_log.successful_requests += 1
-            self.usage_log.end_time = utcnow()
-
-            if (
-                self.usage_log.start_time is not None
-                and self.usage_log.end_time is not None
-            ):
-                self.usage_log.time = (
-                    self.usage_log.end_time - self.usage_log.start_time
-                ).total_seconds()
-
-            # Log usage to database
-            if self.llm_message is not None:
-                model_usage_log = self.model_usage_log_controller.log(
-                    self.usage_log,
-                    user=self.user,
-                    model=self.model,
-                    conversation=self.conversation,
-                    message=self.llm_message,
+                cached_prompt_cost = get_openai_token_cost_for_model(
+                    model_name, prompt_tokens_cached, token_type=TokenType.PROMPT_CACHED
                 )
-                self.usage_logs.append(model_usage_log.model_dump())
-
-            if self.reservations:
-                self.token_service.commit_usage(
-                    reservations=self.reservations,
-                    tokens_used=self.usage_log.total_tokens,
+                prompt_cost = uncached_prompt_cost + cached_prompt_cost
+                completion_cost = get_openai_token_cost_for_model(
+                    model_name, completion_tokens, token_type=TokenType.COMPLETION
                 )
-                self.reservations = []
+            else:
+                completion_cost = 0
+                prompt_cost = 0
+
+            with self._lock:
+                self.usage_log.total_cost += prompt_cost + completion_cost
+                self.usage_log.total_tokens += token_usage.get("total_tokens", 0)
+                self.usage_log.prompt_tokens += prompt_tokens
+                self.usage_log.prompt_tokens_cached += prompt_tokens_cached
+                self.usage_log.completion_tokens += completion_tokens
+                self.usage_log.reasoning_tokens += reasoning_tokens
+                self.usage_log.successful_requests += 1
+                self.usage_log.end_time = utcnow()
+
+                if (
+                    self.usage_log.start_time is not None
+                    and self.usage_log.end_time is not None
+                ):
+                    self.usage_log.time = (
+                        self.usage_log.end_time - self.usage_log.start_time
+                    ).total_seconds()
+
+                try:
+                    self._finalize_usage()
+                except Exception:
+                    self._refund_reservations()
+                    raise
+        except Exception:
+            self._refund_reservations()
+            raise
+
+    def on_llm_error(
+        self,
+        error: BaseException,
+        *,
+        run_id: UUID,
+        parent_run_id: UUID | None = None,
+        **kwargs: Any,
+    ) -> Any:
+        self._refund_reservations()
+        return error
 
 
 llm_callback_var: ContextVar[Optional[LlmUsageCallbackHandler]] = ContextVar(
