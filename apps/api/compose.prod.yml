@@ -1,0 +1,22 @@
+name: tron-prod
+
+services:
+  tron-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tron-api
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      ENVIRONMENT: production
+      POSTGRES_SERVER: ${DOCKER_POSTGRES_SERVER:-host.docker.internal}
+      REDIS_URL: ${DOCKER_REDIS_URL:-redis://host.docker.internal:6379}
+      QDRANT_DB_URL: ${DOCKER_QDRANT_DB_URL:-http://host.docker.internal:6333}
+      KAFKA_BOOTSTRAP_SERVER: ${DOCKER_KAFKA_BOOTSTRAP_SERVER:-host.docker.internal:9092}
+      LOCAL_LLM_HOST: ${DOCKER_LOCAL_LLM_HOST:-http://host.docker.internal:8090}
+      EMBEDDING_MODEL_HOST: ${DOCKER_EMBEDDING_MODEL_HOST:-http://host.docker.internal:9090}
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
